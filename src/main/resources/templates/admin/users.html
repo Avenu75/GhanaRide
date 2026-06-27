@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html th:replace="~{layout :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Manage Users - GhanaRide</title>
+</head>
+<body>
+    <main th:fragment="main">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="text-light">Manage Users</h2>
+            <a th:href="@{/admin/dashboard}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+        </div>
+        
+        <div class="card bg-transparent border-0">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover align-middle border border-secondary rounded">
+                    <thead class="table-dark text-warning">
+                        <tr>
+                            <th>ID</th>
+                            <th>Full Name</th>
+                            <th>Username</th>
+                            <th>Contact</th>
+                            <th>Role</th>
+                            <th>Joined</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="user : ${users}">
+                            <td th:text="${user.id}">1</td>
+                            <td class="text-light fw-bold" th:text="${user.fullName}">Name</td>
+                            <td class="text-muted">@<span th:text="${user.username}">user</span></td>
+                            <td>
+                                <div class="small" th:text="${user.email}">email</div>
+                                <div class="small text-muted" th:text="${user.phoneNumber}">phone</div>
+                            </td>
+                            <td>
+                                <span th:if="${user.role.name() == 'USER'}" class="badge bg-primary rounded-pill">USER</span>
+                                <span th:if="${user.role.name() == 'DRIVER'}" class="badge bg-warning text-dark rounded-pill">DRIVER</span>
+                                <span th:if="${user.role.name() == 'ADMIN'}" class="badge bg-success rounded-pill">ADMIN</span>
+                            </td>
+                            <td class="small text-muted" th:text="${#temporals.format(user.createdAt, 'dd MMM yyyy')}">Date</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

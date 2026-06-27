@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html th:replace="~{layout :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Add New Trip - GhanaRide</title>
+</head>
+<body>
+<main th:fragment="main">
+    <div class="row justify-content-center py-4">
+        <div class="col-lg-8">
+
+            <!-- Page Header -->
+            <div class="mb-4">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a th:href="@{/driver/dashboard}" class="text-warning text-decoration-none">
+                                <i class="bi bi-speedometer2"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item active text-muted">Add New Trip</li>
+                    </ol>
+                </nav>
+                <h2 class="text-light fw-bold mb-1">
+                    <i class="bi bi-plus-circle-fill text-warning me-2"></i>Add New Trip
+                </h2>
+                <p class="text-muted">Fill in your vehicle and trip details below. Your trip will be reviewed by an admin before going live.</p>
+            </div>
+
+            <!-- Error Alert -->
+            <div th:if="${error}" class="alert alert-danger d-flex align-items-center gap-2 mb-4">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <span th:text="${error}"></span>
+            </div>
+
+            <!-- Main Form Card -->
+            <div class="card border-0 shadow-lg" style="background: #1a1a2e;">
+                <div class="card-body p-4 p-md-5">
+                    <form th:action="@{/driver/add-trip}" method="post" enctype="multipart/form-data"
+                          id="addTripForm" novalidate>
+
+                        <!-- ===== SECTION 1: VEHICLE DETAILS ===== -->
+                        <div class="section-header mb-3">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <div class="section-badge">1</div>
+                                <h5 class="text-warning mb-0 fw-semibold">Vehicle Details</h5>
+                            </div>
+                            <p class="text-muted small ms-4 mb-0">Enter your car information</p>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label text-light fw-semibold">
+                                    <i class="bi bi-car-front me-1 text-warning"></i>Car Brand
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <input type="text"
+                                       class="form-control form-control-dark"
+                                       name="carBrand"
+                                       placeholder="e.g. Toyota Hiace, Mercedes Sprinter"
+                                       required>
+                                <div class="form-text text-muted">Enter the make and model of your vehicle</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-light fw-semibold">
+                                    <i class="bi bi-credit-card me-1 text-warning"></i>Number Plate
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <input type="text"
+                                       class="form-control form-control-dark"
+                                       name="numberPlate"
+                                       placeholder="e.g. GR-1234-22"
+                                       style="text-transform: uppercase;"
+                                       required>
+                                <div class="form-text text-muted">Enter your vehicle registration number</div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label text-light fw-semibold">
+                                    <i class="bi bi-image me-1 text-warning"></i>Car Image
+                                    <span class="text-muted fw-normal">(Optional)</span>
+                                </label>
+                                <input type="file"
+                                       class="form-control form-control-dark"
+                                       name="carImage"
+                                       accept="image/*"
+                                       id="carImageInput"
+                                       onchange="previewImage(this)">
+                                <div class="form-text text-muted">Upload a photo of your vehicle (JPG, PNG — max 10MB)</div>
+
+                                <!-- Image Preview -->
+                                <div id="imagePreview" class="mt-3 d-none">
+                                    <img id="previewImg"
+                                         src=""
+                                         alt="Car preview"
+                                         class="rounded"
+                                         style="max-height: 180px; max-width: 100%; object-fit: cover; border: 2px solid rgba(255,193,7,0.3);">
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-danger ms-2 mt-1"
+                                            onclick="clearImage()">
+                                        <i class="bi bi-x"></i> Remove
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="border-secondary my-4">
+
+                        <!-- ===== SECTION 2: TRIP DETAILS ===== -->
+                        <div class="section-header mb-3">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <div class="section-badge">2</div>
+                                <h5 class="text-warning mb-0 fw-semibold">Trip Details</h5>
+                            </div>
+                            <p class="text-muted small ms-4 mb-0">Set your route, time, and pricing</p>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+
+                            <!-- FROM LOCATION -->
+                            <div class="col-md-6">
+                                <label class="form-label text-light fw-semibold">
+                                    <i class="bi bi-geo-alt me-1 text-warning"></i>From Location
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select form-control-dark"
+                                        id="fromLocationSelect"
+                                        onchange="handleLocationChange(this, 'fromCustomInput', 'fromLocation')"
+                                        required>
+                                    <option value="">Select departure city...</option>
+                                    <option value="Accra">Accra</option>
+                                    <option value="Cape Coast">Cape Coast</option>
+                                    <option value="Kumasi">Kumasi</option>
+                                    <option value="Takoradi">Takoradi</option>
+                                    <option value="Tamale">Tamale</option>
+                                    <option value="Koforidua">Koforidua</option>
+                                    <option value="Sunyani">Sunyani</option>
+                                    <option value="Ho">Ho</option>
+                                    <option value="Tema">Tema</option>
+                                    <option value="Winneba">Winneba</option>
+                                    <option value="Techiman">Techiman</option>
+                                    <option value="Bolgatanga">Bolgatanga</option>
+                                    <option value="Wa">Wa</option>
+                                    <option value="Bawku">Bawku</option>
+                                    <option value="Navrongo">Navrongo</option>
+                                    <option value="Berekum">Berekum</option>
+                                    <option value="Obuasi">Obuasi</option>
+                                    <option value="Tarkwa">Tarkwa</option>
+                                    <option value="Axim">Axim</option>
+                                    <option value="other">📍 Other — type your location</option>
+                                </select>
+                                <!-- Custom From Location Input -->
+                                <div id="fromCustomWrapper" class="d-none mt-2">
+                                    <input type="text"
+                                           id="fromCustomInput"
+                                           class="form-control form-control-dark"
+                                           placeholder="Type your departure location..."
+                                           oninput="updateHiddenField(this, 'fromLocationHidden')">
+                                    <div class="form-text text-warning">
+                                        <i class="bi bi-pencil me-1"></i>Type your exact departure location
+                                    </div>
+                                </div>
+                                <input type="hidden" id="fromLocationHidden" name="fromLocation">
+                            </div>
+
+                            <!-- TO LOCATION -->
+                            <div class="col-md-6">
+                                <label class="form-label text-light fw-semibold">
+                                    <i class="bi bi-geo-alt-fill me-1 text-warning"></i>To Location
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select form-control-dark"
+                                        id="toLocationSelect"
+                                        onchange="handleLocationChange(this, 'toCustomInput', 'toLocation')"
+                                        required>
+                                    <option value="">Select destination city...</option>
+                                    <option value="Accra">Accra</option>
+                                    <option value="Cape Coast">Cape Coast</option>
+                                    <option value="Kumasi">Kumasi</option>
+                                    <option value="Takoradi">Takoradi</option>
+                                    <option value="Tamale">Tamale</option>
+                                    <option value="Koforidua">Koforidua</option>
+                                    <option value="Sunyani">Sunyani</option>
+                                    <option value="Ho">Ho</option>
+                                    <option value="Tema">Tema</option>
+                                    <option value="Winneba">Winneba</option>
+                                    <option value="Techiman">Techiman</option>
+                                    <option value="Bolgatanga">Bolgatanga</option>
+                                    <option value="Wa">Wa</option>
+                                    <option value="Bawku">Bawku</option>
+                                    <option value="Navrongo">Navrongo</option>
+                                    <option value="Berekum">Berekum</option>
+                                    <option value="Obuasi">Obuasi</option>
+                                    <option value="Tarkwa">Tarkwa</option>
+                                    <option value="Axim">Axim</option>
+                                    <option value="other">📍 Other — type your location</option>
+                                </select>
+                                <!-- Custom To Location Input -->
+                                <div id="toCustomWrapper" class="d-none mt-2">
+                                    <input type="text"
+                                           id="toCustomInput"
+                                           class="form-control form-control-dark"
+                                           placeholder="Type your destination..."
+                                           oninput="updateHiddenField(this, 'toLocationHidden')">
+                                    <div class="form-text text-warning">
+                                        <i class="bi bi-pencil me-1"></i>Type your exact destination
+                                    </div>
+                                </div>
+                                <input type="hidden" id="toLocationHidden" name="toLocation">
+                            </div>
+
+                            <!-- Route Preview -->
+                            <div class="col-12" id="routePreview" style="display:none;">
+                                <div class="p-3 rounded d-flex align-items-center gap-3"
+                                     style="background: rgba(252,209,22,0.08); border: 1px solid rgba(252,209,22,0.2);">
+                                    <i class="bi bi-map text-warning fs-5"></i>
+                                    <div>
+                                        <div class="small text-muted">Route Preview</div>
+                                        <div class="text-light fw-semibold">
+                                            <span id="previewFrom">—</span>
+                                            <i class="bi bi-arrow-right text-warning mx-2"></i>
+                                            <span id="previewTo">—</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- DEPARTURE TIME -->
+                            <div class="col-md-4">
+                                <label class="form-label text-light fw-semibold">
+                                    <i class="bi bi-calendar-event me-1 text-warning"></i>Departure Time
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <input type="datetime-local"
+                                       class="form-control form-control-dark"
+                                       name="departureTime"
+                                       id="departureTime"
+                                       required>
+                                <div class="form-text text-muted">Select date and time of departure</div>
+                            </div>
+
+                            <!-- TRIP AMOUNT -->
+                            <div class="col-md-4">
+                                <label class="form-label text-light fw-semibold">
+                                    <i class="bi bi-currency-dollar me-1 text-warning"></i>Trip Amount
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                        <span class="input-group-text border-secondary text-warning fw-bold"
+                                              style="background: rgba(255,255,255,0.05);">GHC</span>
+                                    <input type="number"
+                                           class="form-control form-control-dark"
+                                           name="tripAmount"
+                                           placeholder="0.00"
+                                           step="0.01"
+                                           min="1"
+                                           required>
+                                </div>
+                                <div class="form-text text-muted">Price per passenger seat</div>
+                            </div>
+
+                            <!-- TOTAL SEATS -->
+                            <div class="col-md-4">
+                                <label class="form-label text-light fw-semibold">
+                                    <i class="bi bi-people me-1 text-warning"></i>Total Seats
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <input type="number"
+                                       class="form-control form-control-dark"
+                                       name="totalSeats"
+                                       placeholder="e.g. 14"
+                                       min="1"
+                                       max="60"
+                                       required>
+                                <div class="form-text text-muted">Number of passenger seats available</div>
+                            </div>
+                        </div>
+
+                        <!-- Info Notice -->
+                        <div class="p-3 rounded mb-4 d-flex align-items-start gap-3"
+                             style="background: rgba(13,110,253,0.08); border: 1px solid rgba(13,110,253,0.2);">
+                            <i class="bi bi-shield-check text-primary fs-5 mt-1"></i>
+                            <div>
+                                <div class="text-light fw-semibold mb-1">Admin Review Required</div>
+                                <div class="text-muted small">Your trip will be reviewed by an admin before it becomes visible to passengers. You will see its status on your dashboard.</div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between align-items-center gap-2 mt-2">
+                            <a th:href="@{/driver/dashboard}" class="btn btn-outline-secondary px-4">
+                                <i class="bi bi-arrow-left me-1"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-warning text-dark fw-bold px-5">
+                                <i class="bi bi-send-fill me-2"></i>Submit Trip for Review
+                            </button>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== STYLES ===== -->
+    <style>
+        .form-control-dark,
+        .form-select.form-control-dark {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.15);
+            color: #f1f5f9;
+            transition: all 0.2s;
+        }
+        .form-control-dark:focus,
+        .form-select.form-control-dark:focus {
+            background: rgba(255,255,255,0.08);
+            border-color: #fcd116;
+            color: #f1f5f9;
+            box-shadow: 0 0 0 3px rgba(252,209,22,0.15);
+        }
+        .form-control-dark::placeholder { color: #64748b; }
+        .form-select.form-control-dark option { background: #1a1a2e; color: #f1f5f9; }
+        .section-badge {
+            width: 28px; height: 28px;
+            background: linear-gradient(135deg, #fcd116, #ce1126);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 0.85rem; color: white;
+            flex-shrink: 0;
+        }
+        .input-group-text { border-color: rgba(255,255,255,0.15); }
+        .btn-warning { background: #fcd116; border-color: #fcd116; }
+        .btn-warning:hover { background: #e6be00; border-color: #e6be00; transform: translateY(-1px); }
+    </style>
+
+    <!-- ===== JAVASCRIPT ===== -->
+    <script>
+        // Set minimum datetime to now
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        document.getElementById('departureTime').min = now.toISOString().slice(0, 16);
+
+        // Handle dropdown change - show/hide custom input
+        function handleLocationChange(select, customInputId, fieldName) {
+            const customWrapper = document.getElementById(customInputId + 'Wrapper') ||
+                select.parentElement.querySelector('.d-none, [id$="Wrapper"]');
+            const wrapperEl = fieldName === 'fromLocation'
+                ? document.getElementById('fromCustomWrapper')
+                : document.getElementById('toCustomWrapper');
+            const hiddenField = document.getElementById(fieldName + 'Hidden');
+
+            if (select.value === 'other') {
+                wrapperEl.classList.remove('d-none');
+                select.removeAttribute('name');
+                hiddenField.value = '';
+            } else {
+                wrapperEl.classList.add('d-none');
+                select.setAttribute('name', fieldName);
+                hiddenField.removeAttribute('name');
+                hiddenField.value = select.value;
+                updateRoutePreview();
+            }
+        }
+
+        // Update hidden field when typing custom location
+        function updateHiddenField(input, hiddenId) {
+            document.getElementById(hiddenId).value = input.value;
+            updateRoutePreview();
+        }
+
+        // Show route preview card
+        function updateRoutePreview() {
+            const fromSelect = document.getElementById('fromLocationSelect');
+            const toSelect = document.getElementById('toLocationSelect');
+            const fromCustom = document.getElementById('fromCustomInput');
+            const toCustom = document.getElementById('toCustomInput');
+
+            const fromVal = fromSelect.value === 'other'
+                ? fromCustom.value
+                : fromSelect.value;
+            const toVal = toSelect.value === 'other'
+                ? toCustom.value
+                : toSelect.value;
+
+            const preview = document.getElementById('routePreview');
+            if (fromVal && toVal && fromVal !== 'other' && toVal !== 'other') {
+                document.getElementById('previewFrom').textContent = fromVal;
+                document.getElementById('previewTo').textContent = toVal;
+                preview.style.display = 'block';
+            } else {
+                preview.style.display = 'none';
+            }
+        }
+
+        // Listen for select changes to update preview
+        document.getElementById('fromLocationSelect').addEventListener('change', updateRoutePreview);
+        document.getElementById('toLocationSelect').addEventListener('change', updateRoutePreview);
+
+        // Image preview
+        function previewImage(input) {
+            const preview = document.getElementById('imagePreview');
+            const img = document.getElementById('previewImg');
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    img.src = e.target.result;
+                    preview.classList.remove('d-none');
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // Clear image selection
+        function clearImage() {
+            document.getElementById('carImageInput').value = '';
+            document.getElementById('imagePreview').classList.add('d-none');
+            document.getElementById('previewImg').src = '';
+        }
+
+        // Form validation before submit
+        document.getElementById('addTripForm').addEventListener('submit', function(e) {
+            const fromSelect = document.getElementById('fromLocationSelect');
+            const toSelect = document.getElementById('toLocationSelect');
+            const fromCustom = document.getElementById('fromCustomInput');
+            const toCustom = document.getElementById('toCustomInput');
+
+            if (fromSelect.value === 'other' && !fromCustom.value.trim()) {
+                e.preventDefault();
+                fromCustom.focus();
+                fromCustom.style.borderColor = '#dc3545';
+                alert('Please type your departure location.');
+                return;
+            }
+
+            if (toSelect.value === 'other' && !toCustom.value.trim()) {
+                e.preventDefault();
+                toCustom.focus();
+                toCustom.style.borderColor = '#dc3545';
+                alert('Please type your destination.');
+                return;
+            }
+
+            if (fromSelect.value === toSelect.value && fromSelect.value !== 'other') {
+                e.preventDefault();
+                alert('Departure and destination cannot be the same city.');
+                return;
+            }
+        });
+    </script>
+</main>
+</body>
+</html>

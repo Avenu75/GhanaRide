@@ -1,0 +1,58 @@
+package com.ghanaride.entity;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "trips")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Trip {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "car_id", nullable = false)
+    private Car car;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "driver_id", nullable = false)
+    private User driver;
+
+    @Column(name = "from_location", length = 100, nullable = false)
+    private String fromLocation;
+
+    @Column(name = "to_location", length = 100, nullable = false)
+    private String toLocation;
+
+    @Column(name = "departure_time", nullable = false)
+    private LocalDateTime departureTime;
+
+    @Column(name = "trip_amount", precision = 10, scale = 2, nullable = false)
+    private BigDecimal tripAmount;
+
+    @Column(name = "available_seats", nullable = false)
+    private Integer availableSeats;
+
+    @Column(name = "total_seats", nullable = false)
+    private Integer totalSeats;
+
+    @Enumerated(EnumType.STRING)
+    private TripStatus status;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+    }
+}

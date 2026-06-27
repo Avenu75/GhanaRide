@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:fragment="layout(title, content)">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:replace="${title}">GhanaRide</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.2/css/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark" sec:authorize="isAuthenticated()">
+        <div class="container">
+            <a class="navbar-brand" th:href="@{/}"><i class="bi bi-bus-front"></i> GhanaRide</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <!-- USER links -->
+                    <li class="nav-item" sec:authorize="hasRole('USER')">
+                        <a class="nav-link" th:href="@{/dashboard}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasRole('USER')">
+                        <a class="nav-link" th:href="@{/my-bookings}"><i class="bi bi-ticket-perforated"></i> My Bookings</a>
+                    </li>
+                    <!-- DRIVER links -->
+                    <li class="nav-item" sec:authorize="hasRole('DRIVER')">
+                        <a class="nav-link" th:href="@{/driver/dashboard}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasRole('DRIVER')">
+                        <a class="nav-link" th:href="@{/driver/add-trip}"><i class="bi bi-plus-circle"></i> Add Trip</a>
+                    </li>
+                    <!-- ADMIN links -->
+                    <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                        <a class="nav-link" th:href="@{/admin/dashboard}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                        <a class="nav-link" th:href="@{/admin/trips}"><i class="bi bi-signpost-2"></i> Manage Trips</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                        <a class="nav-link" th:href="@{/admin/users}"><i class="bi bi-people"></i> Manage Users</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <span class="nav-link" sec:authentication="name"></span>
+                    </li>
+                    <li class="nav-item">
+                        <form th:action="@{/logout}" method="post" class="d-inline">
+                            <button type="submit" class="btn btn-outline-danger btn-sm mt-1 ms-2"><i class="bi bi-box-arrow-right"></i> Logout</button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-4 mb-5">
+        <th:block th:replace="${content}"/>
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-center py-3 mt-auto" sec:authorize="isAuthenticated()">
+        <p class="text-muted mb-0">&copy; 2026 GhanaRide — Campus & Intercity Transport</p>
+    </footer>
+
+    <script th:src="@{/webjars/bootstrap/5.3.2/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>

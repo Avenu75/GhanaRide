@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html th:replace="~{layout :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Manage Trips - GhanaRide</title>
+</head>
+<body>
+    <main th:fragment="main">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="text-light">Manage Trips</h2>
+            <a th:href="@{/admin/dashboard}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+        </div>
+        
+        <div class="card bg-transparent border-0">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover align-middle border border-secondary rounded">
+                    <thead class="table-dark text-warning">
+                        <tr>
+                            <th>ID</th>
+                            <th>Route</th>
+                            <th>Driver</th>
+                            <th>Car</th>
+                            <th>Date / Price</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="trip : ${trips}">
+                            <td th:text="${trip.id}">1</td>
+                            <td>
+                                <span class="text-light" th:text="${trip.fromLocation}">From</span> &rarr; <span class="text-light" th:text="${trip.toLocation}">To</span>
+                            </td>
+                            <td th:text="${trip.driver.fullName}">Driver</td>
+                            <td>
+                                <span th:text="${trip.car.carBrand}">Car</span>
+                                <div class="small text-muted" th:text="${trip.car.numberPlate}">Plate</div>
+                            </td>
+                            <td>
+                                <span th:text="${#temporals.format(trip.departureTime, 'dd MMM yyyy, h:mm a')}">Date</span>
+                                <div class="text-success small">GHC <span th:text="${trip.tripAmount}">0</span></div>
+                            </td>
+                            <td>
+                                <span th:if="${trip.status.name() == 'PENDING'}" class="badge badge-pending rounded-pill">PENDING</span>
+                                <span th:if="${trip.status.name() == 'APPROVED'}" class="badge badge-approved rounded-pill">APPROVED</span>
+                                <span th:if="${trip.status.name() == 'REJECTED'}" class="badge badge-rejected rounded-pill">REJECTED</span>
+                            </td>
+                            <td>
+                                <div th:if="${trip.status.name() == 'PENDING'}" class="d-flex gap-2">
+                                    <form th:action="@{/admin/trips/{id}/approve(id=${trip.id})}" method="post">
+                                        <button type="submit" class="btn btn-sm btn-success"><i class="bi bi-check"></i> Approve</button>
+                                    </form>
+                                    <form th:action="@{/admin/trips/{id}/reject(id=${trip.id})}" method="post">
+                                        <button type="submit" class="btn btn-sm btn-danger"><i class="bi bi-x"></i> Reject</button>
+                                    </form>
+                                </div>
+                                <span th:if="${trip.status.name() == 'APPROVED'}" class="text-success"><i class="bi bi-check-circle"></i> Approved</span>
+                                <span th:if="${trip.status.name() == 'REJECTED'}" class="text-danger"><i class="bi bi-x-circle"></i> Rejected</span>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(trips)}">
+                            <td colspan="7" class="text-center text-muted py-4">No trips found in the system.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

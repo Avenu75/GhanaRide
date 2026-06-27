@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html th:replace="~{layout :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Booking Receipt - GhanaRide</title>
+</head>
+<body>
+    <main th:fragment="main">
+        <div class="receipt-container">
+            <div class="text-center mb-4">
+                <h2 class="text-success mb-2"><i class="bi bi-check-circle-fill"></i> Booking Confirmed</h2>
+                <h4 class="text-light">GhanaRide Official Receipt</h4>
+                <div class="mt-3">
+                    <span class="text-muted">Reference: </span>
+                    <span class="fs-4 text-warning fw-bold font-monospace" th:text="${booking.bookingReference}">GR-123</span>
+                </div>
+            </div>
+            
+            <hr class="border-secondary mb-4">
+            
+            <div class="row g-4 mb-4">
+                <div class="col-md-6">
+                    <h6 class="text-muted text-uppercase mb-2">Trip Details</h6>
+                    <p class="mb-1 text-light"><strong>From:</strong> <span th:text="${booking.trip.fromLocation}">Accra</span></p>
+                    <p class="mb-1 text-light"><strong>To:</strong> <span th:text="${booking.trip.toLocation}">Kumasi</span></p>
+                    <p class="mb-1 text-light"><strong>Date:</strong> <span th:text="${#temporals.format(booking.trip.departureTime, 'dd MMM yyyy')}">Date</span></p>
+                    <p class="mb-1 text-light"><strong>Time:</strong> <span th:text="${#temporals.format(booking.trip.departureTime, 'h:mm a')}">Time</span></p>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="text-muted text-uppercase mb-2">Driver & Vehicle</h6>
+                    <p class="mb-1 text-light"><strong>Driver:</strong> <span th:text="${booking.trip.driver.fullName}">Driver</span></p>
+                    <p class="mb-1 text-light"><strong>Contact:</strong> <span th:text="${booking.trip.driver.phoneNumber}">Phone</span></p>
+                    <p class="mb-1 text-light"><strong>Car:</strong> <span th:text="${booking.trip.car.carBrand}">Car</span></p>
+                    <p class="mb-1 text-light"><strong>Plate:</strong> <span th:text="${booking.trip.car.numberPlate}">Plate</span></p>
+                </div>
+            </div>
+            
+            <div class="bg-dark rounded p-3 mb-4 border border-secondary d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted d-block">Seat Number</span>
+                    <span class="fs-4 text-light fw-bold">#<span th:text="${booking.seatNumber}">1</span></span>
+                </div>
+                <div class="text-end">
+                    <span class="text-muted d-block">Total Paid</span>
+                    <span class="fs-3 text-warning fw-bold">GHC <span th:text="${booking.totalAmount}">0.00</span></span>
+                </div>
+            </div>
+            
+            <div class="text-center text-muted small mb-4">
+                Booked on <span th:text="${#temporals.format(booking.bookingDate, 'dd MMM yyyy HH:mm')}">Date</span>
+                <br>Please present this receipt to the driver before boarding.
+            </div>
+            
+            <div class="d-flex justify-content-center gap-3 d-print-none">
+                <button onclick="window.print()" class="btn btn-primary"><i class="bi bi-printer"></i> Print Receipt</button>
+                <a th:href="@{/my-bookings}" class="btn btn-outline-light"><i class="bi bi-list"></i> My Bookings</a>
+                <a th:href="@{/dashboard}" class="btn btn-outline-warning">Home</a>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

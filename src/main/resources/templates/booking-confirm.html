@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html th:replace="~{layout :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Confirm Booking - GhanaRide</title>
+</head>
+<body>
+    <main th:fragment="main">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+                <div class="card trip-card">
+                    <div class="card-body p-4">
+                        <div class="text-center mb-4">
+                            <h3 class="text-light">Confirm Your Booking</h3>
+                            <p class="text-muted">Please review the details before confirming.</p>
+                        </div>
+                        
+                        <div class="bg-dark rounded p-3 mb-4 border border-secondary">
+                            <div class="row mb-2">
+                                <div class="col-5 text-muted">Route</div>
+                                <div class="col-7 text-light fw-bold">
+                                    <span th:text="${trip.fromLocation}">From</span> &rarr; <span th:text="${trip.toLocation}">To</span>
+                                </div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-5 text-muted">Departure</div>
+                                <div class="col-7 text-light">
+                                    <span th:text="${#temporals.format(trip.departureTime, 'dd MMM yyyy, h:mm a')}">Date</span>
+                                </div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-5 text-muted">Driver</div>
+                                <div class="col-7 text-light" th:text="${trip.driver.fullName}">Driver Name</div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-5 text-muted">Vehicle</div>
+                                <div class="col-7 text-light">
+                                    <span th:text="${trip.car.carBrand}">Car</span> (<span th:text="${trip.car.numberPlate}">Plate</span>)
+                                </div>
+                            </div>
+                            <hr class="border-secondary">
+                            <div class="row align-items-center">
+                                <div class="col-5 text-muted">Total Amount</div>
+                                <div class="col-7 text-warning fs-4 fw-bold">
+                                    GHC <span th:text="${trip.tripAmount}">0.00</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <form th:action="@{/booking/{id}(id=${trip.id})}" method="post">
+                            <div class="d-grid gap-3">
+                                <button type="submit" class="btn btn-primary btn-lg">Confirm & Book</button>
+                                <a th:href="@{/dashboard}" class="btn btn-outline-secondary">Cancel</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
