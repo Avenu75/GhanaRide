@@ -74,12 +74,34 @@ public class TripService {
     public void deleteTrip(Long tripId) {
         Trip trip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new RuntimeException("Trip not found with id: " + tripId));
-
-        // Delete all bookings for this trip first
-        // to avoid foreign key constraint errors
         bookingRepository.deleteByTripId(tripId);
-
-        // Now delete the trip
         tripRepository.delete(trip);
+    }
+
+    // ===== MARK TRIP AS FULL =====
+    @Transactional
+    public Trip markAsFull(Long tripId) {
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new RuntimeException("Trip not found"));
+        trip.setStatus(TripStatus.FULL);
+        trip.setAvailableSeats(0);
+        return tripRepository.save(trip);
+    }
+
+    // ===== CHECK IF DRIVER HAS ACTIVE TRIP =====
+    public boolean driverHasActiveTrip(User driver) {
+        List<Trip> trips = tripRepository.findByDriver(driver);
+        return trips.stream().anyMatch(t ->
+                t.getStatus() == TripStatus.PENDING ||
+                        t.getStatus() == TripStatus.APPROVED ||
+                        t.getStatus() == TripStatus.FULL
+        );
+    }
+
+    // ===== FIND ALL APPROVED AND FULL TRIPS FOR USER DASHBOARD =====
+    public List<Trip> findApprovedAndFullTrips() {
+        return tripRepository.findByStatusIn(
+                List.of(TripStatus.APPROVED, TripStatus.FULL)
+        );
     }
 }

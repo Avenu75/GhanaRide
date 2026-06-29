@@ -25,30 +25,47 @@ public class DriverController {
     private final BookingService bookingService;
     private final FileStorageService fileStorageService;
 
-    private final List<String> locations = Arrays.asList("Accra", "Cape Coast", "Kumasi", "Takoradi", "Tamale", "Sunyani", "Ho", "Koforidua", "Tema", "Winneba");
+    private final List<String> locations = Arrays.asList(
+            "Accra", "Cape Coast", "Kumasi", "Takoradi", "Tamale",
+            "Sunyani", "Ho", "Koforidua", "Tema", "Winneba"
+    );
 
     @GetMapping("/dashboard")
     public String dashboard(Principal principal, Model model) {
         User currentUser = userService.getCurrentUser(principal);
         List<Trip> trips = tripService.findByDriver(currentUser);
         List<Car> cars = carService.findByDriver(currentUser);
-        
+
         Map<Long, List<Booking>> bookingsMap = new HashMap<>();
         for (Trip trip : trips) {
             bookingsMap.put(trip.getId(), bookingService.findByTripId(trip.getId()));
         }
 
+        boolean hasActiveTrip = tripService.driverHasActiveTrip(currentUser);
+
         model.addAttribute("currentUser", currentUser);
         model.addAttribute("trips", trips);
         model.addAttribute("cars", cars);
         model.addAttribute("bookingsMap", bookingsMap);
+        model.addAttribute("hasActiveTrip", hasActiveTrip);
 
         return "driver/dashboard";
     }
 
     @GetMapping("/add-trip")
     public String showAddTripForm(Principal principal, Model model) {
-        model.addAttribute("currentUser", userService.getCurrentUser(principal));
+        User currentUser = userService.getCurrentUser(principal);
+
+        // Block driver from adding trip if they already have an active one
+        if (tripService.driverHasActiveTrip(currentUser)) {
+            model.addAttribute("currentUser", currentUser);
+            model.addAttribute("error",
+                    "You already have an active trip. Please delete or complete your current trip before adding a new one.");
+            model.addAttribute("locations", locations);
+            return "driver/add-trip";
+        }
+
+        model.addAttribute("currentUser", currentUser);
         model.addAttribute("locations", locations);
         return "driver/add-trip";
     }
@@ -67,15 +84,22 @@ public class DriverController {
 
         User currentUser = userService.getCurrentUser(principal);
 
+        // Block if driver already has active trip
+        if (tripService.driverHasActiveTrip(currentUser)) {
+            redirectAttributes.addFlashAttribute("error",
+                    "You already have an active trip. Delete your current trip before adding a new one.");
+            return "redirect:/driver/dashboard";
+        }
+
         Car car;
         if (carService.existsByNumberPlate(numberPlate)) {
             car = carService.findByDriver(currentUser).stream()
                     .filter(c -> c.getNumberPlate().equals(numberPlate))
                     .findFirst()
-                    .orElse(null); // Assuming number plates are unique per driver for simplicity here
+                    .orElse(null);
             if (car == null) {
-                // Another driver has this plate, handle error appropriately in real app
-                redirectAttributes.addFlashAttribute("error", "Number plate belongs to another driver.");
+                redirectAttributes.addFlashAttribute("error",
+                        "Number plate belongs to another driver.");
                 return "redirect:/driver/add-trip";
             }
         } else {
@@ -105,7 +129,53 @@ public class DriverController {
 
         tripService.saveTrip(trip);
 
-        redirectAttributes.addFlashAttribute("success", "Trip added successfully and is pending admin approval.");
+        redirectAttributes.addFlashAttribute("success",
+                "Trip added successfully and is pending admin approval.");
+        return "redirect:/driver/dashboard";
+    }
+
+    // ===== DELETE TRIP =====
+    @PostMapping("/trips/{tripId}/delete")
+    public String deleteTrip(@PathVariable Long tripId,
+                             Principal principal,
+                             RedirectAttributes redirectAttributes) {
+        try {
+            User currentUser = userService.getCurrentUser(principal);
+            Optional<Trip> tripOpt = tripService.findById(tripId);
+
+            if (tripOpt.isEmpty() || !tripOpt.get().getDriver().getId().equals(currentUser.getId())) {
+                redirectAttributes.addFlashAttribute("error", "Trip not found or access denied.");
+                return "redirect:/driver/dashboard";
+            }
+
+            tripService.deleteTrip(tripId);
+            redirectAttributes.addFlashAttribute("success", "Trip deleted successfully!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Cannot delete trip: " + e.getMessage());
+        }
+        return "redirect:/driver/dashboard";
+    }
+
+    // ===== MARK TRIP AS FULL =====
+    @PostMapping("/trips/{tripId}/full")
+    public String markTripFull(@PathVariable Long tripId,
+                               Principal principal,
+                               RedirectAttributes redirectAttributes) {
+        try {
+            User currentUser = userService.getCurrentUser(principal);
+            Optional<Trip> tripOpt = tripService.findById(tripId);
+
+            if (tripOpt.isEmpty() || !tripOpt.get().getDriver().getId().equals(currentUser.getId())) {
+                redirectAttributes.addFlashAttribute("error", "Trip not found or access denied.");
+                return "redirect:/driver/dashboard";
+            }
+
+            tripService.markAsFull(tripId);
+            redirectAttributes.addFlashAttribute("success",
+                    "Trip marked as full. It will show as unavailable to users.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error: " + e.getMessage());
+        }
         return "redirect:/driver/dashboard";
     }
 }

@@ -4,58 +4,240 @@
     <title>My Bookings - GhanaRide</title>
 </head>
 <body>
-    <main th:fragment="main">
-        <h2 class="text-light mb-4">My Bookings</h2>
-        
-        <div th:if="${#lists.isEmpty(bookings)}" class="alert alert-info text-center py-5">
-            <i class="bi bi-journal-x fs-1 d-block mb-3"></i>
-            <h4>No bookings yet</h4>
-            <p>You haven't booked any trips yet. <a th:href="@{/dashboard}" class="alert-link">Browse available trips</a> to get started!</p>
+<main th:fragment="main">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="text-light fw-bold mb-1">
+                <i class="bi bi-ticket-perforated text-warning me-2"></i>My Bookings
+            </h2>
+            <p class="text-muted mb-0">View and manage your ride bookings</p>
         </div>
-        
-        <div th:if="${not #lists.isEmpty(bookings)}" class="card bg-transparent border-0">
+        <a th:href="@{/dashboard}" class="btn btn-outline-warning btn-sm">
+            <i class="bi bi-plus-circle me-1"></i>Book a Ride
+        </a>
+    </div>
+
+    <!-- Flash Messages -->
+    <div th:if="${success}" class="alert alert-success d-flex align-items-center gap-2 mb-4">
+        <i class="bi bi-check-circle-fill"></i>
+        <span th:text="${success}"></span>
+    </div>
+    <div th:if="${error}" class="alert alert-danger d-flex align-items-center gap-2 mb-4">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span th:text="${error}"></span>
+    </div>
+
+    <!-- Empty State -->
+    <div th:if="${#lists.isEmpty(bookings)}" class="alert alert-info text-center py-5">
+        <i class="bi bi-journal-x fs-1 d-block mb-3"></i>
+        <h4>No bookings yet</h4>
+        <p>You haven't booked any trips yet.
+            <a th:href="@{/dashboard}" class="alert-link">Browse available trips</a>
+            to get started!
+        </p>
+    </div>
+
+    <!-- Bookings Table -->
+    <div th:if="${not #lists.isEmpty(bookings)}" class="card border-0 shadow" style="background: #1a1a2e;">
+        <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-dark table-hover align-middle border border-secondary rounded">
-                    <thead class="table-dark text-warning">
-                        <tr>
-                            <th>Reference</th>
-                            <th>Route</th>
-                            <th>Date & Time</th>
-                            <th>Amount</th>
-                            <th>Status</th>
-                            <th>Action</th>
-                        </tr>
+                <table class="table table-dark table-hover align-middle mb-0">
+                    <thead style="background: rgba(252,209,22,0.1); border-bottom: 2px solid rgba(252,209,22,0.3);">
+                    <tr>
+                        <th class="text-warning py-3 ps-3">Reference</th>
+                        <th class="text-warning py-3">Route</th>
+                        <th class="text-warning py-3">Departure</th>
+                        <th class="text-warning py-3">Seat</th>
+                        <th class="text-warning py-3">Amount</th>
+                        <th class="text-warning py-3">Booked At</th>
+                        <th class="text-warning py-3">Status</th>
+                        <th class="text-warning py-3">Actions</th>
+                    </tr>
                     </thead>
                     <tbody>
-                        <tr th:each="booking : ${bookings}">
-                            <td>
-                                <span class="font-monospace text-light" th:text="${booking.bookingReference}">REF</span>
-                            </td>
-                            <td>
-                                <span th:text="${booking.trip.fromLocation}">From</span> &rarr; <span th:text="${booking.trip.toLocation}">To</span>
-                                <div class="small text-muted" th:text="${booking.trip.driver.fullName}">Driver</div>
-                            </td>
-                            <td>
-                                <span th:text="${#temporals.format(booking.trip.departureTime, 'dd MMM yyyy')}">Date</span>
-                                <div class="small text-muted" th:text="${#temporals.format(booking.trip.departureTime, 'h:mm a')}">Time</div>
-                            </td>
-                            <td class="text-warning fw-bold">
+                    <tr th:each="booking : ${bookings}"
+                        style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+
+                        <!-- Reference -->
+                        <td class="ps-3">
+                            <span class="font-monospace text-warning small"
+                                  th:text="${booking.bookingReference}">REF</span>
+                        </td>
+
+                        <!-- Route -->
+                        <td>
+                            <div class="text-light fw-bold small">
+                                <i class="bi bi-geo-alt text-warning me-1"></i>
+                                <span th:text="${booking.trip.fromLocation}">From</span>
+                            </div>
+                            <div class="small text-muted">
+                                <i class="bi bi-geo-alt-fill text-danger me-1"></i>
+                                <span th:text="${booking.trip.toLocation}">To</span>
+                            </div>
+                            <div class="small text-muted mt-1">
+                                <i class="bi bi-person me-1"></i>
+                                <span th:text="${booking.trip.driver.fullName}">Driver</span>
+                            </div>
+                        </td>
+
+                        <!-- Departure -->
+                        <td>
+                            <div class="text-light small"
+                                 th:text="${#temporals.format(booking.trip.departureTime, 'dd MMM yyyy')}">Date</div>
+                            <div class="small text-warning"
+                                 th:text="${#temporals.format(booking.trip.departureTime, 'h:mm a')}">Time</div>
+                        </td>
+
+                        <!-- Seat -->
+                        <td>
+                            <span class="badge rounded-pill"
+                                  style="background: rgba(59,130,246,0.2); color: #3b82f6; border: 1px solid #3b82f6;"
+                                  th:text="'Seat ' + ${booking.seatNumber}">Seat</span>
+                        </td>
+
+                        <!-- Amount -->
+                        <td>
+                            <span class="text-success fw-bold">
                                 GHC <span th:text="${booking.totalAmount}">0.00</span>
-                            </td>
-                            <td>
-                                <span th:if="${booking.status.name() == 'CONFIRMED'}" class="badge badge-approved rounded-pill">CONFIRMED</span>
-                                <span th:if="${booking.status.name() == 'CANCELLED'}" class="badge badge-rejected rounded-pill">CANCELLED</span>
-                            </td>
-                            <td>
-                                <a th:href="@{/booking/receipt/{id}(id=${booking.id})}" class="btn btn-sm btn-outline-primary">
-                                    <i class="bi bi-receipt"></i> Receipt
+                            </span>
+                        </td>
+
+                        <!-- Booked At -->
+                        <td class="small text-muted"
+                            th:text="${booking.bookingDate != null ?
+                                #temporals.format(booking.bookingDate, 'dd MMM, h:mm a') :
+                                'N/A'}">Date</td>
+
+                        <!-- Status -->
+                        <td>
+                            <span th:if="${booking.status.name() == 'CONFIRMED'}"
+                                  class="badge rounded-pill"
+                                  style="background: rgba(0,200,83,0.2); color: #00c853; border: 1px solid #00c853;">
+                                <i class="bi bi-check me-1"></i>CONFIRMED
+                            </span>
+                            <span th:if="${booking.status.name() == 'CANCELLED'}"
+                                  class="badge rounded-pill"
+                                  style="background: rgba(206,17,38,0.2); color: #ff5252; border: 1px solid #ff5252;">
+                                <i class="bi bi-x me-1"></i>CANCELLED
+                            </span>
+                        </td>
+
+                        <!-- Actions -->
+                        <td>
+                            <div class="d-flex gap-1 flex-wrap">
+
+                                <!-- Receipt Button -->
+                                <a th:href="@{/booking/receipt/{id}(id=${booking.id})}"
+                                   class="btn btn-sm btn-outline-primary"
+                                   title="View Receipt">
+                                    <i class="bi bi-receipt"></i>
                                 </a>
-                            </td>
-                        </tr>
+
+                                <!-- Cancel Button (only within 2 minutes and CONFIRMED) -->
+                                <div th:if="${booking.status.name() == 'CONFIRMED'}">
+                                    <!-- Check if booking is within 2 minute window -->
+                                    <div th:with="canCancel=${booking.bookingDate != null AND #temporals.createNow().isBefore(booking.bookingDate.plusMinutes(2))}">
+
+                                        <button th:if="${canCancel}"
+                                                type="button"
+                                                class="btn btn-sm btn-danger"
+                                                title="Cancel Booking (within 2 min window)"
+                                                th:data-id="${booking.id}"
+                                                th:data-ref="${booking.bookingReference}"
+                                                onclick="confirmCancelBooking(this)">
+                                            <i class="bi bi-x-circle"></i>
+                                        </button>
+
+                                        <span th:if="${!canCancel}"
+                                              class="badge rounded-pill small"
+                                              style="background: rgba(255,255,255,0.05); color: #64748b; border: 1px solid #334155;"
+                                              title="Cancellation window expired">
+                                            <i class="bi bi-lock me-1"></i>Locked
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- Hidden Cancel Form -->
+                                <form th:id="'cancelForm-' + ${booking.id}"
+                                      th:action="@{/booking/{id}/cancel(id=${booking.id})}"
+                                      method="post"
+                                      style="display:none;">
+                                </form>
+
+                            </div>
+                        </td>
+
+                    </tr>
                     </tbody>
                 </table>
             </div>
         </div>
-    </main>
+
+        <!-- Footer -->
+        <div class="card-footer border-top px-4 py-3"
+             style="background: rgba(0,0,0,0.3); border-color: rgba(255,255,255,0.05) !important;">
+            <span class="text-muted small">Total bookings: </span>
+            <span class="text-light fw-bold" th:text="${#lists.size(bookings)}">0</span>
+            <span class="text-muted small ms-3">
+                <i class="bi bi-info-circle me-1"></i>
+                Bookings can only be cancelled within 2 minutes of booking.
+            </span>
+        </div>
+    </div>
+
+    <!-- Cancel Booking Modal -->
+    <div class="modal fade" id="cancelBookingModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0"
+                 style="background: #1a1a2e; border: 1px solid rgba(206,17,38,0.3) !important;">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title text-danger">
+                        <i class="bi bi-exclamation-triangle me-2"></i>Cancel Booking
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-light">Are you sure you want to cancel this booking?</p>
+                    <div class="p-3 rounded mb-3"
+                         style="background: rgba(206,17,38,0.1); border: 1px solid rgba(206,17,38,0.2);">
+                        <small class="text-muted">Booking Reference</small>
+                        <div class="text-warning fw-bold" id="cancelBookingRef">REF</div>
+                    </div>
+                    <p class="text-muted small mb-0">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Your seat will be released back to the trip.
+                    </p>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x me-1"></i>Keep Booking
+                    </button>
+                    <button type="button" class="btn btn-danger" id="confirmCancelBtn">
+                        <i class="bi bi-x-circle me-1"></i>Yes, Cancel Booking
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let bookingIdToCancel = null;
+
+        function confirmCancelBooking(btn) {
+            bookingIdToCancel = btn.getAttribute('data-id');
+            document.getElementById('cancelBookingRef').textContent = btn.getAttribute('data-ref');
+            new bootstrap.Modal(document.getElementById('cancelBookingModal')).show();
+        }
+
+        document.getElementById('confirmCancelBtn').addEventListener('click', function () {
+            if (bookingIdToCancel) {
+                document.getElementById('cancelForm-' + bookingIdToCancel).submit();
+            }
+        });
+    </script>
+
+</main>
 </body>
 </html>

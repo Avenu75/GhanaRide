@@ -5,19 +5,46 @@
 </head>
 <body>
 <main th:fragment="main">
+
+    <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2 class="text-light mb-1">Driver Dashboard</h2>
-            <p class="text-muted mb-0">Welcome back, <span th:text="${currentUser.fullName}">Driver</span></p>
+            <p class="text-muted mb-0">Welcome back, <span class="text-warning" th:text="${currentUser.fullName}">Driver</span></p>
         </div>
-        <a th:href="@{/driver/add-trip}" class="btn btn-primary">
-            <i class="bi bi-plus-circle"></i> Add New Trip
-        </a>
+        <!-- Block Add Trip if driver has active trip -->
+        <div>
+            <span th:if="${hasActiveTrip}"
+                  class="btn btn-secondary disabled"
+                  title="You already have an active trip">
+                <i class="bi bi-plus-circle"></i> Add New Trip
+            </span>
+            <a th:if="${!hasActiveTrip}"
+               th:href="@{/driver/add-trip}"
+               class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Add New Trip
+            </a>
+        </div>
     </div>
 
-    <div th:if="${success}" class="alert alert-success" th:text="${success}">Success message</div>
+    <!-- Active Trip Warning -->
+    <div th:if="${hasActiveTrip}" class="alert alert-warning d-flex align-items-center gap-2 mb-4">
+        <i class="bi bi-info-circle-fill"></i>
+        You have an active trip. Delete or complete it before adding a new one.
+    </div>
 
-    <div class="row mb-5 g-4">
+    <!-- Flash Messages -->
+    <div th:if="${success}" class="alert alert-success d-flex align-items-center gap-2 mb-4">
+        <i class="bi bi-check-circle-fill"></i>
+        <span th:text="${success}"></span>
+    </div>
+    <div th:if="${error}" class="alert alert-danger d-flex align-items-center gap-2 mb-4">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span th:text="${error}"></span>
+    </div>
+
+    <!-- Stats -->
+    <div class="row mb-4 g-4">
         <div class="col-md-4">
             <div class="stat-card border-secondary">
                 <i class="bi bi-signpost-2 stat-icon text-muted"></i>
@@ -43,76 +70,190 @@
         </div>
     </div>
 
+    <!-- Trips Table -->
     <h3 class="mb-3 text-light">My Trips</h3>
 
     <div th:if="${#lists.isEmpty(trips)}" class="alert alert-info">
         You haven't added any trips yet. Click "Add New Trip" to get started.
     </div>
 
-    <div th:if="${not #lists.isEmpty(trips)}" class="card bg-transparent border-0">
-        <div class="table-responsive">
-            <table class="table table-dark table-hover align-middle border border-secondary rounded">
-                <thead class="table-dark text-warning">
-                <tr>
-                    <th>Route</th>
-                    <th>Car</th>
-                    <th>Departure</th>
-                    <th>Price / Seats</th>
-                    <th>Status</th>
-                    <th>Bookings</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:each="trip : ${trips}">
-                    <td>
-                        <div class="fw-bold text-light">
-                            <span th:text="${trip.fromLocation}">From</span>
-                            &rarr;
-                            <span th:text="${trip.toLocation}">To</span>
-                        </div>
-                    </td>
-                    <td>
-                        <span th:text="${trip.car.carBrand}">Car</span>
-                        <div class="small text-muted" th:text="${trip.car.numberPlate}">Plate</div>
-                    </td>
-                    <td>
-                        <span th:text="${#temporals.format(trip.departureTime, 'dd MMM yyyy')}">Date</span>
-                        <div class="small text-warning"
-                             th:text="${#temporals.format(trip.departureTime, 'h:mm a')}">Time</div>
-                    </td>
-                    <td>
-                                <span class="d-block text-success">
-                                    GHC <span th:text="${trip.tripAmount}">0</span>
-                                </span>
-                        <span class="small text-muted">
-                                    <span th:text="${trip.totalSeats - trip.availableSeats}">0</span>
-                                    /
-                                    <span th:text="${trip.totalSeats}">0</span> booked
-                                </span>
-                    </td>
-                    <td>
-                                <span th:if="${trip.status.name() == 'PENDING'}"
-                                      class="badge badge-pending rounded-pill">
-                                    <i class="bi bi-hourglass"></i> Pending Approval
-                                </span>
-                        <span th:if="${trip.status.name() == 'APPROVED'}"
-                              class="badge badge-approved rounded-pill">
-                                    <i class="bi bi-check"></i> Approved
-                                </span>
-                        <span th:if="${trip.status.name() == 'REJECTED'}"
-                              class="badge badge-rejected rounded-pill">
-                                    <i class="bi bi-x"></i> Rejected
-                                </span>
-                    </td>
-                    <td>
-                                <span class="badge bg-secondary"
-                                      th:text="${#lists.size(bookingsMap.get(trip.id))}">0</span>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
+    <div th:if="${not #lists.isEmpty(trips)}" class="card border-0 shadow" style="background: #1a1a2e;">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover align-middle mb-0">
+                    <thead style="background: rgba(252,209,22,0.1); border-bottom: 2px solid rgba(252,209,22,0.3);">
+                    <tr>
+                        <th class="text-warning py-3 ps-3">Route</th>
+                        <th class="text-warning py-3">Car</th>
+                        <th class="text-warning py-3">Departure</th>
+                        <th class="text-warning py-3">Price / Seats</th>
+                        <th class="text-warning py-3">Status</th>
+                        <th class="text-warning py-3">Bookings</th>
+                        <th class="text-warning py-3">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="trip : ${trips}" style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+
+                        <!-- Route -->
+                        <td class="ps-3">
+                            <div class="fw-bold text-light">
+                                <i class="bi bi-geo-alt text-warning me-1"></i>
+                                <span th:text="${trip.fromLocation}">From</span>
+                            </div>
+                            <div class="small text-muted">
+                                <i class="bi bi-geo-alt-fill text-danger me-1"></i>
+                                <span th:text="${trip.toLocation}">To</span>
+                            </div>
+                        </td>
+
+                        <!-- Car -->
+                        <td>
+                            <div class="text-light" th:text="${trip.car.carBrand}">Car</div>
+                            <div class="small text-muted" th:text="${trip.car.numberPlate}">Plate</div>
+                        </td>
+
+                        <!-- Departure -->
+                        <td>
+                            <div class="text-light small"
+                                 th:text="${#temporals.format(trip.departureTime, 'dd MMM yyyy')}">Date</div>
+                            <div class="small text-warning"
+                                 th:text="${#temporals.format(trip.departureTime, 'h:mm a')}">Time</div>
+                        </td>
+
+                        <!-- Price / Seats -->
+                        <td>
+                            <div class="text-success fw-bold">
+                                GHC <span th:text="${trip.tripAmount}">0</span>
+                            </div>
+                            <div class="small text-muted">
+                                <span th:text="${trip.totalSeats - trip.availableSeats}">0</span>/
+                                <span th:text="${trip.totalSeats}">0</span> booked
+                            </div>
+                        </td>
+
+                        <!-- Status -->
+                        <td>
+                            <span th:if="${trip.status.name() == 'PENDING'}"
+                                  class="badge rounded-pill"
+                                  style="background: rgba(252,209,22,0.2); color: #fcd116; border: 1px solid #fcd116;">
+                                <i class="bi bi-hourglass me-1"></i>Pending
+                            </span>
+                            <span th:if="${trip.status.name() == 'APPROVED'}"
+                                  class="badge rounded-pill"
+                                  style="background: rgba(0,200,83,0.2); color: #00c853; border: 1px solid #00c853;">
+                                <i class="bi bi-check me-1"></i>Approved
+                            </span>
+                            <span th:if="${trip.status.name() == 'REJECTED'}"
+                                  class="badge rounded-pill"
+                                  style="background: rgba(206,17,38,0.2); color: #ff5252; border: 1px solid #ff5252;">
+                                <i class="bi bi-x me-1"></i>Rejected
+                            </span>
+                            <span th:if="${trip.status.name() == 'FULL'}"
+                                  class="badge rounded-pill"
+                                  style="background: rgba(255,255,255,0.1); color: #94a3b8; border: 1px solid #94a3b8;">
+                                <i class="bi bi-slash-circle me-1"></i>Full
+                            </span>
+                        </td>
+
+                        <!-- Bookings Count -->
+                        <td>
+                            <span class="badge rounded-pill"
+                                  style="background: rgba(59,130,246,0.2); color: #3b82f6; border: 1px solid #3b82f6;"
+                                  th:text="${#lists.size(bookingsMap.get(trip.id))}">0</span>
+                        </td>
+
+                        <!-- Actions -->
+                        <td>
+                            <div class="d-flex gap-1 flex-wrap">
+
+                                <!-- Mark as Full (only for APPROVED trips) -->
+                                <form th:if="${trip.status.name() == 'APPROVED'}"
+                                      th:action="@{/driver/trips/{id}/full(id=${trip.id})}"
+                                      method="post">
+                                    <button type="submit"
+                                            class="btn btn-sm btn-warning text-dark"
+                                            title="Mark as Full"
+                                            onclick="return confirm('Mark this trip as full? Users will see it as unavailable.')">
+                                        <i class="bi bi-slash-circle"></i>
+                                    </button>
+                                </form>
+
+                                <!-- Delete Trip Button -->
+                                <button type="button"
+                                        class="btn btn-sm btn-danger"
+                                        title="Delete Trip"
+                                        th:data-id="${trip.id}"
+                                        th:data-route="${trip.fromLocation + ' → ' + trip.toLocation}"
+                                        onclick="confirmDeleteTrip(this)">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+
+                                <!-- Hidden Delete Form -->
+                                <form th:id="'deleteTripForm-' + ${trip.id}"
+                                      th:action="@{/driver/trips/{id}/delete(id=${trip.id})}"
+                                      method="post"
+                                      style="display:none;">
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
+
+    <!-- Delete Trip Modal -->
+    <div class="modal fade" id="deleteTripModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0"
+                 style="background: #1a1a2e; border: 1px solid rgba(206,17,38,0.3) !important;">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title text-danger">
+                        <i class="bi bi-exclamation-triangle me-2"></i>Delete Trip
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-light">Are you sure you want to delete this trip?</p>
+                    <div class="p-3 rounded mb-3"
+                         style="background: rgba(206,17,38,0.1); border: 1px solid rgba(206,17,38,0.2);">
+                        <strong class="text-warning" id="deleteTripRoute">Route</strong>
+                    </div>
+                    <p class="text-muted small mb-0">
+                        <i class="bi bi-info-circle me-1"></i>
+                        All bookings for this trip will also be removed.
+                    </p>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x me-1"></i>Cancel
+                    </button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteTripBtn">
+                        <i class="bi bi-trash me-1"></i>Yes, Delete Trip
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let tripIdToDelete = null;
+
+        function confirmDeleteTrip(btn) {
+            tripIdToDelete = btn.getAttribute('data-id');
+            document.getElementById('deleteTripRoute').textContent = btn.getAttribute('data-route');
+            new bootstrap.Modal(document.getElementById('deleteTripModal')).show();
+        }
+
+        document.getElementById('confirmDeleteTripBtn').addEventListener('click', function () {
+            if (tripIdToDelete) {
+                document.getElementById('deleteTripForm-' + tripIdToDelete).submit();
+            }
+        });
+    </script>
+
 </main>
 </body>
 </html>

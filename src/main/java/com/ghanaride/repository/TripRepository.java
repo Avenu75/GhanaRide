@@ -1,4 +1,5 @@
 package com.ghanaride.repository;
+
 import com.ghanaride.entity.*;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.*;
@@ -9,4 +10,7 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
     List<Trip> findByDriver(User driver);
     List<Trip> findByStatusAndAvailableSeatsGreaterThan(TripStatus status, int seats);
     long countByStatus(TripStatus status);
+
+    // ===== FIND BY MULTIPLE STATUSES =====
+    List<Trip> findByStatusIn(List<TripStatus> statuses);
 }
