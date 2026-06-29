@@ -1,240 +1,434 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap');
 
+
 :root {
+
     --bg-dark: #0f0f1a;
+
     --card-bg: #1a1a2e;
+
     --ghana-green: #006B3F;
+
     --ghana-gold: #FCD116;
+
     --ghana-red: #CE1126;
+
     --text-light: #e0e0e0;
+
     --text-muted: #8888aa;
+
     --border-color: rgba(255, 255, 255, 0.1);
+
 }
+
+
 
 body {
+
     background-color: var(--bg-dark);
+
     color: var(--text-light);
+
     font-family: 'Inter', sans-serif;
+
     min-height: 100vh;
+
     display: flex;
+
     flex-direction: column;
+
 }
+
+
 
 h1, h2, h3, h4, h5, h6, .navbar-brand {
+
     font-family: 'Outfit', sans-serif;
+
     font-weight: 600;
+
 }
+
+
 
 /* Navbar */
+
 .navbar {
+
     background-color: var(--card-bg);
+
     border-bottom: 3px solid var(--ghana-gold);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+
 }
+
+
 .navbar-brand {
+
     color: var(--ghana-gold) !important;
+
     font-size: 1.5rem;
+
     letter-spacing: 1px;
+
 }
+
+
 .nav-link {
+
     color: var(--text-light) !important;
-    transition: color 0.3s ease;
+
 }
+
+
 .nav-link:hover {
+
     color: var(--ghana-gold) !important;
+
 }
+
+
 
 /* Buttons */
+
 .btn-primary {
+
     background-color: var(--ghana-green);
+
     border-color: var(--ghana-green);
-    color: white;
-}
-.btn-primary:hover {
-    background-color: #00502f;
-    border-color: #00502f;
-}
-.btn-outline-primary {
-    color: var(--ghana-green);
-    border-color: var(--ghana-green);
-}
-.btn-outline-primary:hover {
-    background-color: var(--ghana-green);
-    color: white;
-}
-.btn-warning {
-    background-color: var(--ghana-gold);
-    border-color: var(--ghana-gold);
-    color: #333;
-}
-.btn-danger {
-    background-color: var(--ghana-red);
-    border-color: var(--ghana-red);
+
+    color:white;
+
 }
 
-/* Cards & Containers */
+
+.btn-primary:hover {
+
+    background-color:#00502f;
+
+}
+
+
+.btn-warning {
+
+    background-color:var(--ghana-gold);
+
+    color:#333;
+
+}
+
+
+.btn-danger {
+
+    background-color:var(--ghana-red);
+
+}
+
+
+
+/* Cards */
+
 .card, .auth-container, .receipt-container {
-    background-color: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-    backdrop-filter: blur(10px);
+
+    background-color:var(--card-bg);
+
+    border:1px solid var(--border-color);
+
+    border-radius:12px;
+
+    box-shadow:0 8px 24px rgba(0,0,0,.2);
+
 }
+
+
+
 .auth-container {
-    max-width: 450px;
-    margin: 40px auto;
-    padding: 2rem;
-    border-top: 4px solid var(--ghana-green);
+
+    max-width:450px;
+
+    margin:40px auto;
+
+    padding:2rem;
+
 }
-.receipt-container {
-    max-width: 600px;
-    margin: 20px auto;
-    padding: 2rem;
-    position: relative;
-    overflow: hidden;
-}
-.receipt-container::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 6px;
-    background: linear-gradient(90deg, var(--ghana-green) 33%, var(--ghana-gold) 33%, var(--ghana-gold) 66%, var(--ghana-red) 66%);
-}
+
+
 
 /* Trip Cards */
+
 .trip-card {
-    background-color: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    border-left: 5px solid var(--ghana-gold);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    height: 100%;
-}
-.trip-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.4);
-    border-left-color: var(--ghana-green);
-}
-.trip-price {
-    color: var(--ghana-gold);
-    font-size: 1.25rem;
-    font-weight: 700;
+
+    background-color:var(--card-bg);
+
+    border:1px solid var(--border-color);
+
+    border-left:5px solid var(--ghana-gold);
+
+    border-radius:12px;
+
 }
 
-/* Badges */
-.badge-pending {
-    background-color: rgba(252, 209, 22, 0.2);
-    color: var(--ghana-gold);
-    border: 1px solid var(--ghana-gold);
+
+.trip-price {
+
+    color:var(--ghana-gold);
+
+    font-weight:700;
+
 }
-.badge-approved {
-    background-color: rgba(0, 107, 63, 0.2);
-    color: #4ade80;
-    border: 1px solid var(--ghana-green);
-}
-.badge-rejected {
-    background-color: rgba(206, 17, 38, 0.2);
-    color: #f87171;
-    border: 1px solid var(--ghana-red);
-}
+
+
 
 /* Forms */
-.form-control, .form-select {
-    background-color: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border-color);
-    color: var(--text-light);
+
+.form-control,
+.form-select {
+
+    background-color:rgba(255,255,255,.05);
+
+    border:1px solid var(--border-color);
+
+    color:var(--text-light);
+
 }
-.form-control:focus, .form-select:focus {
-    background-color: rgba(255, 255, 255, 0.1);
-    border-color: var(--ghana-gold);
-    box-shadow: 0 0 0 0.25rem rgba(252, 209, 22, 0.25);
-    color: white;
+
+
+.form-control:focus,
+.form-select:focus {
+
+    color:white;
+
+    background-color:rgba(255,255,255,.1);
+
 }
+
+
 .form-label {
-    color: var(--text-muted);
+
+    color:var(--text-muted);
+
 }
 
-/* Tables */
+
+
+/* ==============================
+   TABLE FIX
+   ============================== */
+
+
 .table {
-    color: var(--text-light);
-    border-color: var(--border-color);
-}
-.table > :not(caption) > * > * {
-    background-color: transparent;
-    color: var(--text-light);
-    border-bottom-color: var(--border-color);
-}
-.table-hover tbody tr:hover > * {
-    background-color: rgba(255, 255, 255, 0.05);
-}
-.table th {
-    color: var(--ghana-gold);
-    font-weight: 600;
+
+    color:var(--text-light);
+
+    border-color:var(--border-color);
+
 }
 
-/* Stat Cards */
+
+.table > :not(caption)>*>* {
+
+    background-color:transparent;
+
+    color:var(--text-light);
+
+    border-bottom-color:var(--border-color);
+
+}
+
+
+/* Fix table text visibility */
+
+.table td {
+
+    color:var(--text-light) !important;
+
+}
+
+
+.table td .text-muted {
+
+    color:var(--text-muted) !important;
+
+}
+
+
+.table small {
+
+    color:var(--text-muted);
+
+}
+
+
+
+.table-hover tbody tr:hover>* {
+
+    background-color:rgba(255,255,255,.05);
+
+}
+
+
+.table th {
+
+    color:var(--ghana-gold);
+
+    font-weight:600;
+
+}
+
+
+
+/* ==============================
+   TEXT MUTED FIX
+   ============================== */
+
+
+.text-muted {
+
+    color:var(--text-muted) !important;
+
+}
+
+
+.small.text-muted {
+
+    color:var(--text-muted) !important;
+
+}
+
+
+
+/* Badges */
+
+.badge-pending {
+
+    background-color:rgba(252,209,22,.2);
+
+    color:var(--ghana-gold);
+
+}
+
+
+.badge-approved {
+
+    background-color:rgba(0,107,63,.2);
+
+    color:#4ade80;
+
+}
+
+
+.badge-rejected {
+
+    background-color:rgba(206,17,38,.2);
+
+    color:#f87171;
+
+}
+
+
+
+/* Stats */
+
 .stat-card {
-    border-radius: 12px;
-    padding: 1.5rem;
-    position: relative;
-    overflow: hidden;
-    background: rgba(255,255,255,0.02);
-    border: 1px solid var(--border-color);
-    transition: transform 0.3s ease;
+
+    background:rgba(255,255,255,.02);
+
+    border:1px solid var(--border-color);
+
+    border-radius:12px;
+
+    padding:1.5rem;
+
 }
-.stat-card:hover {
-    transform: scale(1.02);
-}
-.stat-icon {
-    font-size: 2.5rem;
-    opacity: 0.2;
-    position: absolute;
-    right: 20px;
-    bottom: 10px;
-}
+
+
+
 .stat-value {
-    font-size: 2rem;
-    font-weight: 700;
-    font-family: 'Outfit', sans-serif;
+
+    font-size:2rem;
+
+    font-weight:700;
+
 }
+
+
 
 /* Scrollbar */
+
 ::-webkit-scrollbar {
-    width: 8px;
-}
-::-webkit-scrollbar-track {
-    background: var(--bg-dark);
-}
-::-webkit-scrollbar-thumb {
-    background: var(--card-bg);
-    border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-    background: var(--ghana-gold);
+
+    width:8px;
+
 }
 
-/* Print Styles */
+
+::-webkit-scrollbar-track {
+
+    background:var(--bg-dark);
+
+}
+
+
+::-webkit-scrollbar-thumb {
+
+    background:var(--card-bg);
+
+    border-radius:4px;
+
+}
+
+
+::-webkit-scrollbar-thumb:hover {
+
+    background:var(--ghana-gold);
+
+}
+
+
+
+/* Print */
+
 @media print {
+
+
     body {
-        background-color: white !important;
-        color: black !important;
+
+        background:white !important;
+
+        color:black !important;
+
     }
-    .navbar, .btn, footer {
-        display: none !important;
+
+
+    .navbar,
+    .btn,
+    footer {
+
+        display:none !important;
+
     }
+
+
     .receipt-container {
-        border: 2px solid #ccc;
-        box-shadow: none;
-        color: black;
+
+        color:black;
+
     }
+
+
     .text-light {
-        color: black !important;
+
+        color:black !important;
+
     }
+
+
     .text-muted {
-        color: #555 !important;
+
+        color:#555 !important;
+
     }
-    .badge-approved {
-        border-color: black;
-        color: black;
-    }
+
+
 }
