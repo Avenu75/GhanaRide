@@ -3,9 +3,11 @@ package com.ghanaride.service;
 import com.ghanaride.entity.Trip;
 import com.ghanaride.entity.TripStatus;
 import com.ghanaride.entity.User;
+import com.ghanaride.repository.BookingRepository;
 import com.ghanaride.repository.TripRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,6 +17,7 @@ import java.util.Optional;
 public class TripService {
 
     private final TripRepository tripRepository;
+    private final BookingRepository bookingRepository;
 
     public Trip saveTrip(Trip trip) {
         return tripRepository.save(trip);
@@ -45,13 +48,15 @@ public class TripService {
     }
 
     public Trip approveTrip(Long id) {
-        Trip trip = tripRepository.findById(id).orElseThrow(() -> new RuntimeException("Trip not found"));
+        Trip trip = tripRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Trip not found"));
         trip.setStatus(TripStatus.APPROVED);
         return tripRepository.save(trip);
     }
 
     public Trip rejectTrip(Long id) {
-        Trip trip = tripRepository.findById(id).orElseThrow(() -> new RuntimeException("Trip not found"));
+        Trip trip = tripRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Trip not found"));
         trip.setStatus(TripStatus.REJECTED);
         return tripRepository.save(trip);
     }
@@ -62,5 +67,19 @@ public class TripService {
 
     public long countAll() {
         return tripRepository.count();
+    }
+
+    // ===== DELETE TRIP =====
+    @Transactional
+    public void deleteTrip(Long tripId) {
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new RuntimeException("Trip not found with id: " + tripId));
+
+        // Delete all bookings for this trip first
+        // to avoid foreign key constraint errors
+        bookingRepository.deleteByTripId(tripId);
+
+        // Now delete the trip
+        tripRepository.delete(trip);
     }
 }

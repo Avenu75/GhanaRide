@@ -6,6 +6,7 @@ import com.ghanaride.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.security.Principal;
 import java.util.List;
@@ -57,5 +58,19 @@ public class UserService {
         }
         return userRepository.findByUsername(principal.getName())
                 .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+    // ===== DELETE USER =====
+    @Transactional
+    public void deleteUser(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+        userRepository.delete(user);
+    }
+
+    // ===== FIND USER BY ID =====
+    public User findById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
     }
 }

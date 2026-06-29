@@ -32,7 +32,7 @@ public class BookingService {
         booking.setTrip(trip);
         booking.setStatus(BookingStatus.CONFIRMED);
         booking.setBookingReference("GR-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
-        
+
         long currentBookings = bookingRepository.countByTripId(trip.getId());
         booking.setSeatNumber((int) currentBookings + 1);
         booking.setTotalAmount(trip.getTripAmount());
@@ -65,5 +65,44 @@ public class BookingService {
 
     public long countAll() {
         return bookingRepository.count();
+    }
+
+    // ===== DELETE BOOKING =====
+    @Transactional
+    public void deleteBooking(Long bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Booking not found with id: " + bookingId));
+
+        // Restore the seat back to the trip when booking is deleted
+        Trip trip = booking.getTrip();
+        if (trip != null) {
+            trip.setAvailableSeats(trip.getAvailableSeats() + 1);
+            tripRepository.save(trip);
+        }
+
+        bookingRepository.delete(booking);
+    }
+
+    // ===== FIND ALL BOOKINGS =====
+    public List<Booking> findAllBookings() {
+        return bookingRepository.findAll();
+    }
+
+    // ===== CANCEL BOOKING =====
+    @Transactional
+    public void cancelBooking(Long bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Booking not found with id: " + bookingId));
+
+        booking.setStatus(BookingStatus.CANCELLED);
+
+        // Restore seat back to trip
+        Trip trip = booking.getTrip();
+        if (trip != null) {
+            trip.setAvailableSeats(trip.getAvailableSeats() + 1);
+            tripRepository.save(trip);
+        }
+
+        bookingRepository.save(booking);
     }
 }
