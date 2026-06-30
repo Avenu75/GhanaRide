@@ -59,6 +59,36 @@
                         </div>
 
                         <form th:action="@{/booking/{id}(id=${trip.id})}" method="post">
+                            <div class="mb-4">
+                                <label class="form-label text-light fw-bold">Booking For:</label>
+                                <div class="d-flex gap-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="bookingType" id="typeSelf" value="self" checked onchange="toggleRelativeFields()">
+                                        <label class="form-check-label text-light" for="typeSelf">
+                                            Myself
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="bookingType" id="typeRelative" value="relative" onchange="toggleRelativeFields()">
+                                        <label class="form-check-label text-light" for="typeRelative">
+                                            Someone Else
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="relativeFields" style="display: none;" class="bg-dark border border-secondary rounded p-3 mb-4">
+                                <h6 class="text-warning mb-3">Passenger Details</h6>
+                                <div class="mb-3">
+                                    <label for="passengerName" class="form-label text-light">Passenger Name</label>
+                                    <input type="text" class="form-control" id="passengerName" name="passengerName">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="passengerPhone" class="form-label text-light">Passenger Phone</label>
+                                    <input type="text" class="form-control" id="passengerPhone" name="passengerPhone">
+                                </div>
+                            </div>
+
                             <div class="d-grid gap-3">
                                 <button type="submit" class="btn btn-warning btn-lg">Proceed to Payment <i class="bi bi-arrow-right ms-2"></i></button>
                                 <a th:href="@{/dashboard}" class="btn btn-outline-secondary">Cancel</a>
@@ -68,6 +98,25 @@
                 </div>
             </div>
         </div>
+
+        <script>
+            function toggleRelativeFields() {
+                const isRelative = document.getElementById('typeRelative').checked;
+                const relativeFields = document.getElementById('relativeFields');
+                const nameInput = document.getElementById('passengerName');
+                const phoneInput = document.getElementById('passengerPhone');
+
+                if (isRelative) {
+                    relativeFields.style.display = 'block';
+                    nameInput.required = true;
+                    phoneInput.required = true;
+                } else {
+                    relativeFields.style.display = 'none';
+                    nameInput.required = false;
+                    phoneInput.required = false;
+                }
+            }
+        </script>
     </main>
 </body>
 </html>

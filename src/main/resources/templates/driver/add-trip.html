@@ -33,7 +33,7 @@
             </div>
 
             <!-- Main Form Card -->
-            <div class="card border-0 shadow-lg" style="background: #1a1a2e;">
+            <div class="card border-0 shadow-lg" style="background: var(--card-bg);">
                 <div class="card-body p-4 p-md-5">
                     <form th:action="@{/driver/add-trip}" method="post" enctype="multipart/form-data"
                           id="addTripForm" novalidate>
@@ -343,7 +343,7 @@
             box-shadow: 0 0 0 3px rgba(252,209,22,0.15);
         }
         .form-control-dark::placeholder { color: #64748b; }
-        .form-select.form-control-dark option { background: #1a1a2e; color: #f1f5f9; }
+        .form-select.form-control-dark option { background: var(--card-bg); color: #f1f5f9; }
         .section-badge {
             width: 28px; height: 28px;
             background: linear-gradient(135deg, #fcd116, #ce1126);

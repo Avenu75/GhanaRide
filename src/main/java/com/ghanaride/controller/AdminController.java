@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.security.Principal;
@@ -60,6 +61,22 @@ public class AdminController {
                              RedirectAttributes redirectAttributes) {
         tripService.rejectTrip(tripId);
         redirectAttributes.addFlashAttribute("success", "Trip rejected successfully!");
+        return "redirect:/admin/trips";
+    }
+
+    // ===== MARK AS FAILED TO SHOW =====
+    @PostMapping("/trips/{tripId}/fail")
+    public String markTripFailed(@PathVariable Long tripId,
+                                 @RequestParam String failReason,
+                                 Principal principal,
+                                 RedirectAttributes redirectAttributes) {
+        try {
+            User currentUser = userService.getCurrentUser(principal);
+            tripService.markAsFailedToShow(tripId, failReason, currentUser);
+            redirectAttributes.addFlashAttribute("success", "Trip marked as failed to show.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error: " + e.getMessage());
+        }
         return "redirect:/admin/trips";
     }
 

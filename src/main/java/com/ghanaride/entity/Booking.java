@@ -37,18 +37,29 @@ public class Booking {
     private LocalDateTime bookingDate;
 
     @Enumerated(EnumType.STRING)
+    @Column(columnDefinition = "VARCHAR(50)")
     private BookingStatus status;
 
     @Column(name = "total_amount", precision = 10, scale = 2)
     private BigDecimal totalAmount;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "booking_type", columnDefinition = "VARCHAR(50)")
+    private BookingType bookingType;
+
+    @Column(name = "passenger_name", length = 100)
+    private String passengerName;
+
+    @Column(name = "passenger_phone", length = 20)
+    private String passengerPhone;
+
     // ===== PAYMENT FIELDS =====
     @Enumerated(EnumType.STRING)
-    @Column(name = "payment_method")
+    @Column(name = "payment_method", columnDefinition = "VARCHAR(50)")
     private PaymentMethod paymentMethod;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "payment_status")
+    @Column(name = "payment_status", columnDefinition = "VARCHAR(50)")
     private PaymentStatus paymentStatus;
 
     @Column(name = "transaction_reference", length = 100)

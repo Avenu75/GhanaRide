@@ -40,10 +40,10 @@
     </div>
 
     <!-- Bookings Table -->
-    <div th:if="${not #lists.isEmpty(bookings)}" class="card border-0 shadow-sm" style="background: #1a1a2e;">
+    <div th:if="${not #lists.isEmpty(bookings)}" class="card border-0 shadow-sm" style="background: var(--card-bg);">
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-dark table-hover align-middle mb-0">
+                <table class="table table-hover align-middle mb-0">
                     <thead style="background: rgba(13, 110, 253, 0.05); border-bottom: 2px solid rgba(13, 110, 253, 0.1);">
                     <tr>
                         <th class="text-warning py-3 ps-3">Reference</th>
@@ -112,9 +112,9 @@
                         <!-- Status -->
                         <td>
                             <div class="mb-1">
-                                <span th:if="${booking.status.name() == 'CONFIRMED'}"
+                                <span th:if="${booking.status.name() == 'ACTIVE' or booking.status.name() == 'CONFIRMED'}"
                                       class="badge badge-approved rounded-pill">
-                                    <i class="bi bi-check me-1"></i>CONFIRMED
+                                    <i class="bi bi-check me-1"></i>ACTIVE
                                 </span>
                                 <span th:if="${booking.status.name() == 'CANCELLED'}"
                                       class="badge badge-rejected rounded-pill">
@@ -124,11 +124,20 @@
                                       class="badge bg-success rounded-pill">
                                     <i class="bi bi-check-circle me-1"></i>PAID
                                 </span>
+                                <span th:if="${booking.status.name() == 'EXPIRED'}"
+                                      class="badge bg-secondary rounded-pill">
+                                    <i class="bi bi-clock-history me-1"></i>EXPIRED
+                                </span>
                             </div>
                             <div>
-                                <span th:if="${booking.paymentStatus != null and booking.paymentStatus.name() == 'PENDING'}" class="badge bg-warning text-dark rounded-pill" style="font-size: 0.65rem;">
+                                <span th:if="${booking.paymentStatus != null and booking.paymentStatus.name() == 'PENDING' and booking.status.name() != 'CANCELLED' and booking.status.name() != 'EXPIRED'}" class="badge bg-warning text-dark rounded-pill" style="font-size: 0.65rem;">
                                     <i class="bi bi-clock me-1"></i>PENDING PAY
                                 </span>
+                            </div>
+                            <div class="mt-1" th:if="${booking.status.name() == 'CANCELLED' and booking.trip.cancelReason != null}">
+                                <small class="text-danger d-block">
+                                    <i class="bi bi-info-circle me-1"></i>Reason: <span th:text="${booking.trip.cancelReason}"></span>
+                                </small>
                             </div>
                         </td>
 

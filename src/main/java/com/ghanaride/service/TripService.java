@@ -1,5 +1,7 @@
 package com.ghanaride.service;
 
+import com.ghanaride.entity.Booking;
+import com.ghanaride.entity.BookingStatus;
 import com.ghanaride.entity.Trip;
 import com.ghanaride.entity.TripStatus;
 import com.ghanaride.entity.User;
@@ -73,13 +75,38 @@ public class TripService {
         return tripRepository.count();
     }
 
-    // ===== DELETE TRIP =====
+    // ===== DELETE TRIP (HARD DELETE) =====
     @Transactional
     public void deleteTrip(Long tripId) {
         Trip trip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new RuntimeException("Trip not found with id: " + tripId));
         bookingRepository.deleteByTripId(tripId);
         tripRepository.delete(trip);
+    }
+
+    // ===== CANCEL TRIP (SOFT CANCEL WITH REASON) =====
+    @Transactional
+    public Trip cancelTrip(Long tripId, String reason, String details, User cancelledBy) {
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new RuntimeException("Trip not found"));
+
+        trip.setStatus(TripStatus.CANCELLED);
+        trip.setCancelReason(reason);
+        trip.setCancelReasonDetails(details);
+        trip.setCancelledBy(cancelledBy);
+        
+        tripRepository.save(trip);
+
+        // Update associated active bookings to CANCELLED
+        List<Booking> bookings = bookingRepository.findByTripId(trip.getId());
+        for (Booking booking : bookings) {
+            if (booking.getStatus() == BookingStatus.ACTIVE || booking.getStatus() == BookingStatus.CONFIRMED) {
+                booking.setStatus(BookingStatus.CANCELLED);
+                bookingRepository.save(booking);
+            }
+        }
+        
+        return trip;
     }
 
     // ===== MARK TRIP AS FULL =====
@@ -90,6 +117,31 @@ public class TripService {
         trip.setStatus(TripStatus.FULL);
         trip.setAvailableSeats(0);
         return tripRepository.save(trip);
+    }
+
+    // ===== MARK AS FAILED TO SHOW =====
+    @Transactional
+    public Trip markAsFailedToShow(Long tripId, String reason, User markedBy) {
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new RuntimeException("Trip not found"));
+
+        trip.setStatus(TripStatus.FAILED_TO_SHOW);
+        trip.setCancelReason("Driver Failed To Show");
+        trip.setCancelReasonDetails(reason);
+        trip.setCancelledBy(markedBy);
+        
+        tripRepository.save(trip);
+
+        // Update associated active bookings
+        List<Booking> bookings = bookingRepository.findByTripId(trip.getId());
+        for (Booking booking : bookings) {
+            if (booking.getStatus() == BookingStatus.ACTIVE || booking.getStatus() == BookingStatus.CONFIRMED) {
+                booking.setStatus(BookingStatus.CANCELLED);
+                bookingRepository.save(booking);
+            }
+        }
+        
+        return trip;
     }
 
     // ===== CHECK IF DRIVER HAS ACTIVE TRIP =====

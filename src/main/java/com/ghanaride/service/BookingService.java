@@ -2,6 +2,7 @@ package com.ghanaride.service;
 
 import com.ghanaride.entity.Booking;
 import com.ghanaride.entity.BookingStatus;
+import com.ghanaride.entity.BookingType;
 import com.ghanaride.entity.PaymentMethod;
 import com.ghanaride.entity.PaymentStatus;
 import com.ghanaride.entity.Trip;
@@ -25,15 +26,31 @@ public class BookingService {
     private final TripRepository tripRepository;
 
     @Transactional
-    public Booking createBooking(User user, Trip trip) {
+    public Booking createBooking(User user, Trip trip, BookingType type, String passengerName, String passengerPhone) {
         if (trip.getAvailableSeats() <= 0) {
             throw new RuntimeException("No seats available");
+        }
+
+        // Check restriction: User can only have ONE active self booking
+        if (type == BookingType.SELF) {
+            boolean hasActiveBooking = bookingRepository.existsByUserAndBookingTypeAndStatusIn(
+                    user, 
+                    BookingType.SELF, 
+                    List.of(BookingStatus.CONFIRMED, BookingStatus.ACTIVE, BookingStatus.PAID)
+            );
+            
+            if (hasActiveBooking) {
+                throw new RuntimeException("You have an active ride. Complete your current ride or cancel it before booking another trip.");
+            }
         }
 
         Booking booking = new Booking();
         booking.setUser(user);
         booking.setTrip(trip);
-        booking.setStatus(BookingStatus.CONFIRMED);
+        booking.setStatus(BookingStatus.ACTIVE); // Default to active (previously confirmed)
+        booking.setBookingType(type);
+        booking.setPassengerName(passengerName);
+        booking.setPassengerPhone(passengerPhone);
         booking.setBookingReference("GR-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
 
         long currentBookings = bookingRepository.countByTripId(trip.getId());

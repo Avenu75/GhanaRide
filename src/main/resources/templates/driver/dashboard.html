@@ -77,10 +77,10 @@
         You haven't added any trips yet. Click "Add New Trip" to get started.
     </div>
 
-    <div th:if="${not #lists.isEmpty(trips)}" class="card border-0 shadow" style="background: #1a1a2e;">
+    <div th:if="${not #lists.isEmpty(trips)}" class="card border-0 shadow" style="background: var(--card-bg);">
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table  table-dark table-hover align-middle mb-0">
+                <table class="table   table-hover align-middle mb-0">
                     <thead style="background: rgba(252,209,22,0.1); border-bottom: 2px solid rgba(252,209,22,0.3);">
                     <tr>
                         <th class="text-warning py-3 ps-3">Route</th>
@@ -183,22 +183,15 @@
                                     </button>
                                 </form>
 
-                                <!-- Delete Trip Button -->
+                                <!-- Cancel Trip Button -->
                                 <button type="button"
                                         class="btn btn-sm btn-danger"
-                                        title="Delete Trip"
+                                        title="Cancel Trip"
                                         th:data-id="${trip.id}"
                                         th:data-route="${trip.fromLocation + ' → ' + trip.toLocation}"
-                                        onclick="confirmDeleteTrip(this)">
-                                    <i class="bi bi-trash"></i>
+                                        onclick="confirmCancelTrip(this)">
+                                    <i class="bi bi-x-circle"></i>
                                 </button>
-
-                                <!-- Hidden Delete Form -->
-                                <form th:id="'deleteTripForm-' + ${trip.id}"
-                                      th:action="@{/driver/trips/{id}/delete(id=${trip.id})}"
-                                      method="post"
-                                      style="display:none;">
-                                </form>
                             </div>
                         </td>
                     </tr>
@@ -208,52 +201,78 @@
         </div>
     </div>
 
-    <!-- Delete Trip Modal -->
-    <div class="modal fade" id="deleteTripModal" tabindex="-1">
+    <!-- Cancel Trip Modal -->
+    <div class="modal fade" id="cancelTripModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0"
-                 style="background: #1a1a2e; border: 1px solid rgba(206,17,38,0.3) !important;">
-                <div class="modal-header border-0 pb-0">
-                    <h5 class="modal-title text-danger">
-                        <i class="bi bi-exclamation-triangle me-2"></i>Delete Trip
-                    </h5>
-                    <button type="button" class="btn-close btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <p class="text-light">Are you sure you want to delete this trip?</p>
-                    <div class="p-3 rounded mb-3"
-                         style="background: rgba(206,17,38,0.1); border: 1px solid rgba(206,17,38,0.2);">
-                        <strong class="text-warning" id="deleteTripRoute">Route</strong>
+                 style="background: var(--card-bg); border: 1px solid rgba(206,17,38,0.3) !important;">
+                <form id="cancelTripForm" method="post" action="">
+                    <div class="modal-header border-0 pb-0">
+                        <h5 class="modal-title text-danger">
+                            <i class="bi bi-exclamation-triangle me-2"></i>Cancel Trip
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
-                    <p class="text-muted small mb-0">
-                        <i class="bi bi-info-circle me-1"></i>
-                        All bookings for this trip will also be removed.
-                    </p>
-                </div>
-                <div class="modal-footer border-0 pt-0">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                        <i class="bi bi-x me-1"></i>Cancel
-                    </button>
-                    <button type="button" class="btn btn-danger" id="confirmDeleteTripBtn">
-                        <i class="bi bi-trash me-1"></i>Yes, Delete Trip
-                    </button>
-                </div>
+                    <div class="modal-body">
+                        <p class="text-light">Are you sure you want to cancel this trip?</p>
+                        <div class="p-3 rounded mb-3"
+                             style="background: rgba(206,17,38,0.1); border: 1px solid rgba(206,17,38,0.2);">
+                            <strong class="text-warning" id="cancelTripRoute">Route</strong>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="cancelReason" class="form-label text-light">Reason for Cancellation</label>
+                            <select class="form-select bg-dark text-light border-secondary" id="cancelReason" name="cancelReason" required>
+                                <option value="" selected disabled>Select a reason...</option>
+                                <option value="Vehicle engine failure">Vehicle engine failure</option>
+                                <option value="Vehicle breakdown">Vehicle breakdown</option>
+                                <option value="Driver health issue">Driver health issue</option>
+                                <option value="Bad weather conditions">Bad weather conditions</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3" id="otherReasonDiv" style="display: none;">
+                            <label for="cancelReasonDetails" class="form-label text-light">Please specify</label>
+                            <textarea class="form-control bg-dark text-light border-secondary" id="cancelReasonDetails" name="cancelReasonDetails" rows="2"></textarea>
+                        </div>
+
+                        <p class="text-muted small mb-0">
+                            <i class="bi bi-info-circle me-1"></i>
+                            If this trip has bookings and departure is less than 3 hours away, cancellation is not allowed.
+                        </p>
+                    </div>
+                    <div class="modal-footer border-0 pt-0">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                            <i class="bi bi-x me-1"></i>Close
+                        </button>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-x-circle me-1"></i>Cancel Trip
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 
     <script>
-        let tripIdToDelete = null;
-
-        function confirmDeleteTrip(btn) {
-            tripIdToDelete = btn.getAttribute('data-id');
-            document.getElementById('deleteTripRoute').textContent = btn.getAttribute('data-route');
-            new bootstrap.Modal(document.getElementById('deleteTripModal')).show();
+        function confirmCancelTrip(btn) {
+            const tripId = btn.getAttribute('data-id');
+            const route = btn.getAttribute('data-route');
+            
+            document.getElementById('cancelTripRoute').textContent = route;
+            document.getElementById('cancelTripForm').action = '/driver/trips/' + tripId + '/cancel';
+            
+            new bootstrap.Modal(document.getElementById('cancelTripModal')).show();
         }
 
-        document.getElementById('confirmDeleteTripBtn').addEventListener('click', function () {
-            if (tripIdToDelete) {
-                document.getElementById('deleteTripForm-' + tripIdToDelete).submit();
+        document.getElementById('cancelReason').addEventListener('change', function() {
+            if (this.value === 'Other') {
+                document.getElementById('otherReasonDiv').style.display = 'block';
+                document.getElementById('cancelReasonDetails').required = true;
+            } else {
+                document.getElementById('otherReasonDiv').style.display = 'none';
+                document.getElementById('cancelReasonDetails').required = false;
             }
         });
     </script>

@@ -138,9 +138,11 @@ public class DriverController {
         return "redirect:/driver/dashboard";
     }
 
-    // ===== DELETE TRIP =====
-    @PostMapping("/trips/{tripId}/delete")
-    public String deleteTrip(@PathVariable Long tripId,
+    // ===== CANCEL TRIP =====
+    @PostMapping("/trips/{tripId}/cancel")
+    public String cancelTrip(@PathVariable Long tripId,
+                             @RequestParam String cancelReason,
+                             @RequestParam(required = false) String cancelReasonDetails,
                              Principal principal,
                              RedirectAttributes redirectAttributes) {
         try {
@@ -151,11 +153,20 @@ public class DriverController {
                 redirectAttributes.addFlashAttribute("error", "Trip not found or access denied.");
                 return "redirect:/driver/dashboard";
             }
+            
+            Trip trip = tripOpt.get();
+            long bookingsCount = bookingService.findByTripId(trip.getId()).size();
+            
+            // Check 3-hour rule
+            if (bookingsCount > 0 && LocalDateTime.now().isAfter(trip.getDepartureTime().minusHours(3))) {
+                redirectAttributes.addFlashAttribute("error", "Cannot cancel trip with bookings less than 3 hours before departure. Please contact admin.");
+                return "redirect:/driver/dashboard";
+            }
 
-            tripService.deleteTrip(tripId);
-            redirectAttributes.addFlashAttribute("success", "Trip deleted successfully!");
+            tripService.cancelTrip(tripId, cancelReason, cancelReasonDetails, currentUser);
+            redirectAttributes.addFlashAttribute("success", "Trip cancelled successfully.");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Cannot delete trip: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("error", "Cannot cancel trip: " + e.getMessage());
         }
         return "redirect:/driver/dashboard";
     }

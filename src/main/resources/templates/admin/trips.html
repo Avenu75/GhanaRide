@@ -30,10 +30,10 @@
     </div>
 
     <!-- Trips Table -->
-    <div class="card border-0 shadow" style="background: #1a1a2e;">
+    <div class="card border-0 shadow" style="background: var(--card-bg);">
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table  table-dark table-hover align-middle mb-0">
+                <table class="table   table-hover align-middle mb-0">
                     <thead style="background: rgba(252,209,22,0.1); border-bottom: 2px solid rgba(252,209,22,0.3);">
                     <tr>
                         <th class="text-warning py-3 ps-3">ID</th>
@@ -98,26 +98,42 @@
 
                         <!-- Status -->
                         <td>
-                                    <span th:if="${trip.status.name() == 'PENDING'}"
-                                          class="badge rounded-pill"
-                                          style="background: rgba(252,209,22,0.2); color: #fcd116; border: 1px solid #fcd116;">
-                                        <i class="bi bi-hourglass me-1"></i>PENDING
-                                    </span>
+                            <span th:if="${trip.status.name() == 'PENDING'}"
+                                  class="badge rounded-pill"
+                                  style="background: rgba(252,209,22,0.2); color: #fcd116; border: 1px solid #fcd116;">
+                                <i class="bi bi-hourglass me-1"></i>PENDING
+                            </span>
                             <span th:if="${trip.status.name() == 'APPROVED'}"
                                   class="badge rounded-pill"
                                   style="background: rgba(0,107,63,0.2); color: #00c853; border: 1px solid #00c853;">
-                                        <i class="bi bi-check me-1"></i>APPROVED
-                                    </span>
+                                <i class="bi bi-check me-1"></i>APPROVED
+                            </span>
                             <span th:if="${trip.status.name() == 'REJECTED'}"
                                   class="badge rounded-pill"
                                   style="background: rgba(206,17,38,0.2); color: #ff5252; border: 1px solid #ff5252;">
-                                        <i class="bi bi-x me-1"></i>REJECTED
-                                    </span>
+                                <i class="bi bi-x me-1"></i>REJECTED
+                            </span>
                             <span th:if="${trip.status.name() == 'COMPLETED'}"
                                   class="badge rounded-pill"
                                   style="background: rgba(255,255,255,0.1); color: #94a3b8; border: 1px solid #94a3b8;">
-                                        <i class="bi bi-check-all me-1"></i>COMPLETED
-                                    </span>
+                                <i class="bi bi-check-all me-1"></i>COMPLETED
+                            </span>
+                            <span th:if="${trip.status.name() == 'EXPIRED'}"
+                                  class="badge bg-secondary rounded-pill">
+                                <i class="bi bi-clock-history me-1"></i>EXPIRED
+                            </span>
+                            <span th:if="${trip.status.name() == 'CANCELLED'}"
+                                  class="badge badge-rejected rounded-pill">
+                                <i class="bi bi-x-circle me-1"></i>CANCELLED
+                            </span>
+                            <span th:if="${trip.status.name() == 'FAILED_TO_SHOW'}"
+                                  class="badge rounded-pill"
+                                  style="background: rgba(206,17,38,0.2); color: #ff5252; border: 1px solid #ff5252;">
+                                <i class="bi bi-exclamation-octagon me-1"></i>FAILED TO SHOW
+                            </span>
+                            <div th:if="${trip.cancelReason != null}" class="mt-1 small text-danger" style="font-size: 0.75rem;">
+                                <i class="bi bi-info-circle me-1"></i><span th:text="${trip.cancelReason}"></span>
+                            </div>
                         </td>
 
                         <!-- Actions -->
@@ -144,6 +160,22 @@
                                             title="Reject Trip">
                                         <i class="bi bi-x"></i>
                                     </button>
+                                </form>
+
+                                <!-- Fail Trip Button (only for APPROVED) -->
+                                <button type="button" th:if="${trip.status.name() == 'APPROVED'}"
+                                        class="btn btn-sm btn-outline-warning"
+                                        title="Mark Driver Failed To Show"
+                                        th:attr="onclick='confirmFail(' + ${trip.id} + ', \'' + ${trip.fromLocation} + ' to ' + ${trip.toLocation} + '\')'">
+                                    <i class="bi bi-exclamation-octagon"></i>
+                                </button>
+                                
+                                <!-- Hidden Fail Form -->
+                                <form th:id="'failForm-' + ${trip.id}"
+                                      th:action="@{/admin/trips/{id}/fail(id=${trip.id})}"
+                                      method="post"
+                                      style="display:none;">
+                                      <input type="hidden" name="failReason" th:id="'failReasonInput-' + ${trip.id}" value="">
                                 </form>
 
                                 <!-- Delete Button (always visible) -->
@@ -177,15 +209,54 @@
         </div>
     </div>
 
+    <!-- Mark Failed To Show Modal -->
+    <div class="modal fade" id="failModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0" style="background: var(--card-bg); border: 1px solid rgba(252,209,22,0.3) !important;">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title text-warning">
+                        <i class="bi bi-exclamation-octagon me-2"></i>Mark Failed To Show
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-light">Record that the driver failed to show up for this trip.</p>
+                    <div class="p-3 rounded mb-3"
+                         style="background: rgba(252,209,22,0.1); border: 1px solid rgba(252,209,22,0.2);">
+                        <strong class="text-warning" id="failTripRoute">Route</strong>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="failReasonDetails" class="form-label text-light">Details (Optional)</label>
+                        <textarea class="form-control bg-dark text-light border-secondary" id="failReasonDetails" rows="2" placeholder="Any additional context provided by passengers..."></textarea>
+                    </div>
+
+                    <p class="text-muted small mb-0">
+                        <i class="bi bi-info-circle me-1"></i>
+                        This will cancel the trip and all associated active bookings.
+                    </p>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x me-1"></i>Cancel
+                    </button>
+                    <button type="button" class="btn btn-warning" id="confirmFailBtn">
+                        <i class="bi bi-exclamation-octagon me-1"></i>Confirm Failure
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Delete Confirmation Modal -->
     <div class="modal fade" id="deleteModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0" style="background: #1a1a2e; border: 1px solid rgba(206,17,38,0.3) !important;">
+            <div class="modal-content border-0" style="background: var(--card-bg); border: 1px solid rgba(206,17,38,0.3) !important;">
                 <div class="modal-header border-0 pb-0">
                     <h5 class="modal-title text-danger">
                         <i class="bi bi-exclamation-triangle me-2"></i>Delete Trip
                     </h5>
-                    <button type="button" class="btn-close btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <p class="text-light">Are you sure you want to delete this trip?</p>
@@ -217,6 +288,7 @@
     <!-- JavaScript -->
     <script>
         let tripIdToDelete = null;
+        let tripIdToFail = null;
 
         function confirmDelete(tripId, routeName) {
             tripIdToDelete = tripId;
@@ -227,6 +299,20 @@
         document.getElementById('confirmDeleteBtn').addEventListener('click', function () {
             if (tripIdToDelete) {
                 document.getElementById('deleteForm-' + tripIdToDelete).submit();
+            }
+        });
+
+        function confirmFail(tripId, routeName) {
+            tripIdToFail = tripId;
+            document.getElementById('failTripRoute').textContent = routeName;
+            new bootstrap.Modal(document.getElementById('failModal')).show();
+        }
+
+        document.getElementById('confirmFailBtn').addEventListener('click', function () {
+            if (tripIdToFail) {
+                const reason = document.getElementById('failReasonDetails').value;
+                document.getElementById('failReasonInput-' + tripIdToFail).value = reason;
+                document.getElementById('failForm-' + tripIdToFail).submit();
             }
         });
     </script>

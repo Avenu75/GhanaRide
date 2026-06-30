@@ -13,6 +13,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.security.Principal;
@@ -65,7 +66,12 @@ public class UserController {
     }
 
     @PostMapping("/booking/{tripId}")
-    public String createBooking(@PathVariable Long tripId, Principal principal) {
+    public String createBooking(@PathVariable Long tripId, 
+                                @RequestParam String bookingType,
+                                @RequestParam(required = false) String passengerName,
+                                @RequestParam(required = false) String passengerPhone,
+                                Principal principal,
+                                RedirectAttributes redirectAttributes) {
         Optional<Trip> tripOpt = tripService.findById(tripId);
         if (tripOpt.isEmpty()) {
             return "redirect:/dashboard?error=trip_not_found";
@@ -73,10 +79,14 @@ public class UserController {
 
         User currentUser = userService.getCurrentUser(principal);
         try {
-            Booking booking = bookingService.createBooking(currentUser, tripOpt.get());
+            com.ghanaride.entity.BookingType type = "relative".equals(bookingType) ? 
+                    com.ghanaride.entity.BookingType.RELATIVE : com.ghanaride.entity.BookingType.SELF;
+            
+            Booking booking = bookingService.createBooking(currentUser, tripOpt.get(), type, passengerName, passengerPhone);
             return "redirect:/payment/" + booking.getId();
         } catch (Exception e) {
-            return "redirect:/dashboard?error=" + e.getMessage();
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/dashboard";
         }
     }
 

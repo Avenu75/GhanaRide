@@ -56,10 +56,24 @@ public class Trip {
     private String description;
 
     @Enumerated(EnumType.STRING)
+    @Column(columnDefinition = "VARCHAR(50)")
     private TripStatus status;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @Column(name = "expired_at")
+    private LocalDateTime expiredAt;
+
+    @Column(name = "cancel_reason", length = 100)
+    private String cancelReason;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cancelled_by")
+    private User cancelledBy;
+
+    @Column(name = "cancel_reason_details", length = 500)
+    private String cancelReasonDetails;
 
     @PrePersist
     protected void onCreate() {

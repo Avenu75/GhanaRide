@@ -14,5 +14,7 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
     // ===== FIND BY MULTIPLE STATUSES =====
     List<Trip> findByStatusIn(List<TripStatus> statuses);
     
+    List<Trip> findByStatusAndDepartureTimeBefore(TripStatus status, java.time.LocalDateTime time);
+    
     List<Trip> findByCompany(Company company);
 }
