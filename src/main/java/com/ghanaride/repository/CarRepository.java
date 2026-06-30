@@ -1,6 +1,10 @@
 package com.ghanaride.repository;
+
 import com.ghanaride.entity.*;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.*;
 
 public interface CarRepository extends JpaRepository<Car, Long> {
@@ -9,4 +13,9 @@ public interface CarRepository extends JpaRepository<Car, Long> {
     List<Car> findByCompany(Company company);
     Optional<Car> findByNumberPlate(String numberPlate);
     boolean existsByNumberPlate(String numberPlate);
+
+    // ===== DELETE CARS BY DRIVER =====
+    @Modifying
+    @Transactional
+    void deleteByDriverId(Long driverId);
 }

@@ -1,7 +1,12 @@
 package com.ghanaride.service;
 
 import com.ghanaride.entity.Role;
+import com.ghanaride.entity.Trip;
 import com.ghanaride.entity.User;
+import com.ghanaride.repository.BookingRepository;
+import com.ghanaride.repository.CarRepository;
+import com.ghanaride.repository.CompanyRepository;
+import com.ghanaride.repository.TripRepository;
 import com.ghanaride.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,13 +22,18 @@ import java.util.Optional;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final com.ghanaride.repository.CompanyRepository companyRepository;
+    private final CompanyRepository companyRepository;
     private final PasswordEncoder passwordEncoder;
+    private final BookingRepository bookingRepository;
+    private final TripRepository tripRepository;
+    private final CarRepository carRepository;
 
     @Transactional
-    public User registerUser(User user, String companyName, String companyEmail, String companyPhone, String companyLocation, String companyDescription, String registrationNumber) {
+    public User registerUser(User user, String companyName, String companyEmail,
+                             String companyPhone, String companyLocation,
+                             String companyDescription, String registrationNumber) {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        
+
         if ("company".equals(user.getAccountType())) {
             user.setRole(Role.COMPANY);
         } else if ("driver".equals(user.getAccountType())) {
@@ -31,11 +41,11 @@ public class UserService {
         } else if ("passenger".equals(user.getAccountType())) {
             user.setRole(Role.USER);
         } else {
-            user.setRole(Role.USER); // safe fallback
+            user.setRole(Role.USER);
         }
-        
+
         User savedUser = userRepository.save(user);
-        
+
         if ("company".equals(user.getAccountType())) {
             com.ghanaride.entity.Company company = new com.ghanaride.entity.Company();
             company.setUser(savedUser);
@@ -47,7 +57,7 @@ public class UserService {
             company.setRegistrationNumber(registrationNumber);
             companyRepository.save(company);
         }
-        
+
         return savedUser;
     }
 
@@ -91,17 +101,35 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
-    // ===== DELETE USER =====
+    public User findById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+    }
+
+    // ===== DELETE USER WITH ALL RELATED DATA =====
     @Transactional
     public void deleteUser(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
-        userRepository.delete(user);
-    }
 
-    // ===== FIND USER BY ID =====
-    public User findById(Long userId) {
-        return userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+        // 1. Delete bookings made BY this user as a passenger
+        bookingRepository.deleteByUserId(userId);
+
+        // 2. Get all trips created by this user (if driver)
+        List<Trip> userTrips = tripRepository.findByDriverId(userId);
+
+        // 3. Delete bookings for each of those trips
+        for (Trip trip : userTrips) {
+            bookingRepository.deleteByTripId(trip.getId());
+        }
+
+        // 4. Delete trips created by this user
+        tripRepository.deleteByDriverId(userId);
+
+        // 5. Delete cars owned by this user
+        carRepository.deleteByDriverId(userId);
+
+        // 6. Finally delete the user
+        userRepository.delete(user);
     }
 }

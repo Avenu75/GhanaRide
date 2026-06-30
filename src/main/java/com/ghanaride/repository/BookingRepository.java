@@ -34,4 +34,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             "JOIN FETCH t.driver " +
             "JOIN FETCH t.car")
     List<Booking> findAllWithDetails();
+
+    @Modifying
+    @Transactional
+    void deleteByUserId(Long userId);
 }
