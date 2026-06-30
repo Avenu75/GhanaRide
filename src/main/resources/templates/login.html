@@ -4,46 +4,107 @@
     <title>Login - GhanaRide</title>
 </head>
 <body>
-    <main th:fragment="main">
-        <div class="auth-container">
-            <div class="text-center mb-4">
-                <h2 class="text-light"><i class="bi bi-bus-front text-warning"></i> GhanaRide</h2>
-                <p class="text-muted">Welcome back! Please login to your account.</p>
-            </div>
-            
-            <div th:if="${param.error}" class="alert alert-danger" role="alert">
-                Invalid username or password.
-            </div>
-            <div th:if="${param.logout}" class="alert alert-success" role="alert">
-                You have been logged out successfully.
-            </div>
-            <div th:if="${param.registered}" class="alert alert-success" role="alert">
-                Registration successful! Please login.
-            </div>
-            <div th:if="${param.resetSuccess}" class="alert alert-success" role="alert">
-                Password successfully changed. Please login with your new password.
-            </div>
+<main th:fragment="main">
+    <div class="auth-container">
+        <div class="text-center mb-4">
+            <h2 class="text-light"><i class="bi bi-bus-front text-warning"></i> GhanaRide</h2>
+            <p class="text-muted">Welcome back! Please login to your account.</p>
+        </div>
 
+        <!-- Account Locked -->
+        <div th:if="${param.locked}" class="alert alert-danger d-flex align-items-start gap-2" role="alert">
+            <i class="bi bi-lock-fill fs-5 mt-1"></i>
+            <div>
+                <strong>Account Temporarily Locked</strong>
+                <p class="mb-0 small">
+                    Too many failed login attempts. Your account is locked for
+                    <strong th:text="${param.minutes}">15</strong> minute(s).
+                    Please try again later.
+                </p>
+            </div>
+        </div>
+
+        <!-- Wrong Password with Remaining Attempts Warning -->
+        <div th:if="${param.error != null and param.remaining != null}"
+             class="alert alert-warning d-flex align-items-start gap-2" role="alert">
+            <i class="bi bi-exclamation-triangle-fill fs-5 mt-1"></i>
+            <div>
+                <strong>Invalid Credentials</strong>
+                <p class="mb-0 small">
+                    Wrong username or password.
+                    <strong th:text="${param.remaining}">2</strong> attempt(s) remaining
+                    before your account is locked for 15 minutes.
+                </p>
+            </div>
+        </div>
+
+        <!-- General Wrong Password -->
+        <div th:if="${param.error != null and param.remaining == null and param.locked == null}"
+             class="alert alert-danger" role="alert">
+            <i class="bi bi-x-circle me-2"></i>Invalid username or password.
+        </div>
+
+        <!-- Logged Out -->
+        <div th:if="${param.logout}" class="alert alert-success" role="alert">
+            <i class="bi bi-check-circle me-2"></i>You have been logged out successfully.
+        </div>
+
+        <!-- Registered -->
+        <div th:if="${param.registered}" class="alert alert-success" role="alert">
+            <i class="bi bi-check-circle me-2"></i>Registration successful! Please login.
+        </div>
+
+        <!-- Password Reset -->
+        <div th:if="${param.resetSuccess}" class="alert alert-success" role="alert">
+            <i class="bi bi-check-circle me-2"></i>Password changed successfully. Please login.
+        </div>
+
+        <!-- Login Form — hidden when locked -->
+        <div th:if="${param.locked == null}">
             <form th:action="@{/login}" method="post">
                 <div class="mb-3">
                     <label for="username" class="form-label">Username</label>
-                    <input type="text" class="form-control" id="username" name="username" required autofocus>
+                    <input type="text" class="form-control" id="username"
+                           name="username" required autofocus>
                 </div>
                 <div class="mb-4">
                     <label for="password" class="form-label">Password</label>
-                    <input type="password" class="form-control" id="password" name="password" required>
+                    <input type="password" class="form-control" id="password"
+                           name="password" required>
                     <div class="text-end mt-1">
-                        <a th:href="@{/forgot-password}" class="text-warning text-decoration-none small">Forgot Password?</a>
+                        <a th:href="@{/forgot-password}"
+                           class="text-warning text-decoration-none small">
+                            Forgot Password?
+                        </a>
                     </div>
                 </div>
                 <div class="d-grid gap-2">
-                    <button type="submit" class="btn btn-primary btn-lg">Login</button>
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>Login
+                    </button>
                 </div>
             </form>
             <div class="text-center mt-4">
-                <p class="text-muted">Don't have an account? <a th:href="@{/register}" class="text-warning text-decoration-none">Register here</a></p>
+                <p class="text-muted">Don't have an account?
+                    <a th:href="@{/register}" class="text-warning text-decoration-none">
+                        Register here
+                    </a>
+                </p>
             </div>
         </div>
-    </main>
+
+        <!-- Show when locked -->
+        <div th:if="${param.locked != null}" class="text-center mt-4">
+            <p class="text-muted small">
+                <i class="bi bi-clock me-1"></i>
+                Account will automatically unlock after the lockout period.
+            </p>
+            <a th:href="@{/}" class="btn btn-outline-secondary btn-sm mt-2">
+                <i class="bi bi-house me-1"></i>Back to Home
+            </a>
+        </div>
+
+    </div>
+</main>
 </body>
 </html>

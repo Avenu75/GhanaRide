@@ -21,34 +21,38 @@ public class SecurityConfig {
 
     private final CustomUserDetailsService userDetailsService;
     private final CustomAuthenticationSuccessHandler successHandler;
+    private final CustomAuthenticationFailureHandler failureHandler;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(AbstractHttpConfigurer::disable)
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/about", "/contact", "/payment/**", "/login", "/register", "/forgot-password", "/reset-password", "/css/**", "/js/**", "/images/**", "/uploads/**", "/error", "/webjars/**").permitAll()
-                .requestMatchers("/dashboard", "/booking/**", "/my-bookings/**").hasRole("USER")
-                .requestMatchers("/driver/**").hasRole("DRIVER")
-                .requestMatchers("/company/**").hasRole("COMPANY")
-                .requestMatchers("/admin/**").hasRole("ADMIN")
-                .anyRequest().authenticated()
-            )
-            .formLogin(form -> form
-                .loginPage("/login")
-                .loginProcessingUrl("/login")
-                .successHandler(successHandler)
-                .failureUrl("/login?error=true")
-                .permitAll()
-            )
-            .logout(logout -> logout
-                .logoutUrl("/logout")
-                .logoutSuccessUrl("/")
-                .invalidateHttpSession(true)
-                .deleteCookies("JSESSIONID")
-                .permitAll()
-            );
-            
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/", "/about", "/contact", "/payment/**",
+                                "/login", "/register", "/forgot-password", "/reset-password",
+                                "/css/**", "/js/**", "/images/**", "/uploads/**",
+                                "/error", "/webjars/**").permitAll()
+                        .requestMatchers("/dashboard", "/booking/**", "/my-bookings/**").hasRole("USER")
+                        .requestMatchers("/driver/**").hasRole("DRIVER")
+                        .requestMatchers("/company/**").hasRole("COMPANY")
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .anyRequest().authenticated()
+                )
+                .formLogin(form -> form
+                        .loginPage("/login")
+                        .loginProcessingUrl("/login")
+                        .successHandler(successHandler)
+                        .failureHandler(failureHandler)
+                        .permitAll()
+                )
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .logoutSuccessUrl("/")
+                        .invalidateHttpSession(true)
+                        .deleteCookies("JSESSIONID")
+                        .permitAll()
+                );
+
         return http.build();
     }
 
