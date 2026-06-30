@@ -19,11 +19,18 @@ public class Car {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "driver_id", nullable = false)
+    @JoinColumn(name = "driver_id")
     private User driver;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "company_id")
+    private Company company;
 
     @Column(name = "car_brand", length = 100, nullable = false)
     private String carBrand;
+    
+    @Column(name = "model", length = 100)
+    private String model;
 
     @Column(name = "number_plate", length = 20, unique = true, nullable = false)
     private String numberPlate;

@@ -18,10 +18,14 @@ public class FileStorageService {
     @Value("${app.upload.dir}")
     private String uploadDir;
 
+    @Value("${app.upload.dir.profiles:uploads/profiles/}")
+    private String profilesUploadDir;
+
     @PostConstruct
     public void init() {
         try {
             Files.createDirectories(Paths.get(uploadDir));
+            Files.createDirectories(Paths.get(profilesUploadDir));
         } catch (IOException e) {
             throw new RuntimeException("Could not create upload directory!");
         }
@@ -43,6 +47,25 @@ public class FileStorageService {
             return uploadDir + filename;
         } catch (IOException e) {
             throw new RuntimeException("Failed to store file.", e);
+        }
+    }
+
+    public String storeProfileImage(MultipartFile file) {
+        try {
+            if (file.isEmpty()) {
+                throw new RuntimeException("Failed to store empty file.");
+            }
+            String originalFilename = file.getOriginalFilename();
+            String extension = originalFilename != null ? originalFilename.substring(originalFilename.lastIndexOf(".")) : "";
+            String filename = UUID.randomUUID().toString() + extension;
+            
+            Path destinationFile = Paths.get(profilesUploadDir).resolve(Paths.get(filename))
+                    .normalize().toAbsolutePath();
+            
+            Files.copy(file.getInputStream(), destinationFile, StandardCopyOption.REPLACE_EXISTING);
+            return profilesUploadDir + filename;
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to store profile image.", e);
         }
     }
 }

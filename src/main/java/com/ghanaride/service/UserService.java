@@ -17,11 +17,38 @@ import java.util.Optional;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final com.ghanaride.repository.CompanyRepository companyRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public User registerUser(User user) {
+    @Transactional
+    public User registerUser(User user, String companyName, String companyEmail, String companyPhone, String companyLocation, String companyDescription, String registrationNumber) {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        return userRepository.save(user);
+        
+        if ("company".equals(user.getAccountType())) {
+            user.setRole(Role.COMPANY);
+        } else if ("driver".equals(user.getAccountType())) {
+            user.setRole(Role.DRIVER);
+        } else if ("passenger".equals(user.getAccountType())) {
+            user.setRole(Role.USER);
+        } else {
+            user.setRole(Role.USER); // safe fallback
+        }
+        
+        User savedUser = userRepository.save(user);
+        
+        if ("company".equals(user.getAccountType())) {
+            com.ghanaride.entity.Company company = new com.ghanaride.entity.Company();
+            company.setUser(savedUser);
+            company.setCompanyName(companyName);
+            company.setEmail(companyEmail);
+            company.setPhone(companyPhone);
+            company.setLocation(companyLocation);
+            company.setDescription(companyDescription);
+            company.setRegistrationNumber(registrationNumber);
+            companyRepository.save(company);
+        }
+        
+        return savedUser;
     }
 
     public Optional<User> findByUsername(String username) {
@@ -30,6 +57,10 @@ public class UserService {
 
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmail(email);
+    }
+
+    public Optional<User> findByUsernameOrEmail(String identifier) {
+        return userRepository.findByUsernameOrEmail(identifier, identifier);
     }
 
     public List<User> findAllUsers() {

@@ -23,6 +23,10 @@ public class CarService {
     public List<Car> findByDriver(User driver) {
         return carRepository.findByDriver(driver);
     }
+    
+    public List<Car> findByCompany(com.ghanaride.entity.Company company) {
+        return carRepository.findByCompany(company);
+    }
 
     public List<Car> findByDriverId(Long id) {
         return carRepository.findByDriverId(id);

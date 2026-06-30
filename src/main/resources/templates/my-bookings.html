@@ -40,11 +40,11 @@
     </div>
 
     <!-- Bookings Table -->
-    <div th:if="${not #lists.isEmpty(bookings)}" class="card border-0 shadow" style="background: #1a1a2e;">
+    <div th:if="${not #lists.isEmpty(bookings)}" class="card border-0 shadow-sm" style="background: #1a1a2e;">
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-dark table-hover align-middle mb-0">
-                    <thead style="background: rgba(252,209,22,0.1); border-bottom: 2px solid rgba(252,209,22,0.3);">
+                    <thead style="background: rgba(13, 110, 253, 0.05); border-bottom: 2px solid rgba(13, 110, 253, 0.1);">
                     <tr>
                         <th class="text-warning py-3 ps-3">Reference</th>
                         <th class="text-warning py-3">Route</th>
@@ -57,8 +57,7 @@
                     </tr>
                     </thead>
                     <tbody>
-                    <tr th:each="booking : ${bookings}"
-                        style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <tr th:each="booking : ${bookings}">
 
                         <!-- Reference -->
                         <td class="ps-3">
@@ -93,7 +92,7 @@
                         <!-- Seat -->
                         <td>
                             <span class="badge rounded-pill"
-                                  style="background: rgba(59,130,246,0.2); color: #3b82f6; border: 1px solid #3b82f6;"
+                                  style="background: rgba(13, 110, 253, 0.1); color: var(--primary-blue);"
                                   th:text="'Seat ' + ${booking.seatNumber}">Seat</span>
                         </td>
 
@@ -112,27 +111,41 @@
 
                         <!-- Status -->
                         <td>
-                            <span th:if="${booking.status.name() == 'CONFIRMED'}"
-                                  class="badge rounded-pill"
-                                  style="background: rgba(0,200,83,0.2); color: #00c853; border: 1px solid #00c853;">
-                                <i class="bi bi-check me-1"></i>CONFIRMED
-                            </span>
-                            <span th:if="${booking.status.name() == 'CANCELLED'}"
-                                  class="badge rounded-pill"
-                                  style="background: rgba(206,17,38,0.2); color: #ff5252; border: 1px solid #ff5252;">
-                                <i class="bi bi-x me-1"></i>CANCELLED
-                            </span>
+                            <div class="mb-1">
+                                <span th:if="${booking.status.name() == 'CONFIRMED'}"
+                                      class="badge badge-approved rounded-pill">
+                                    <i class="bi bi-check me-1"></i>CONFIRMED
+                                </span>
+                                <span th:if="${booking.status.name() == 'CANCELLED'}"
+                                      class="badge badge-rejected rounded-pill">
+                                    <i class="bi bi-x me-1"></i>CANCELLED
+                                </span>
+                                <span th:if="${booking.status.name() == 'PAID'}"
+                                      class="badge bg-success rounded-pill">
+                                    <i class="bi bi-check-circle me-1"></i>PAID
+                                </span>
+                            </div>
+                            <div>
+                                <span th:if="${booking.paymentStatus != null and booking.paymentStatus.name() == 'PENDING'}" class="badge bg-warning text-dark rounded-pill" style="font-size: 0.65rem;">
+                                    <i class="bi bi-clock me-1"></i>PENDING PAY
+                                </span>
+                            </div>
                         </td>
 
                         <!-- Actions -->
                         <td>
                             <div class="d-flex gap-1 flex-wrap">
 
-                                <!-- Receipt Button -->
-                                <a th:href="@{/booking/receipt/{id}(id=${booking.id})}"
-                                   class="btn btn-sm btn-outline-primary"
+                                <!-- Receipt / Payment Button -->
+                                <a th:if="${booking.paymentStatus != null and booking.paymentStatus.name() == 'PAID'}" th:href="@{/booking/receipt/{id}(id=${booking.id})}"
+                                   class="btn btn-sm btn-outline-success"
                                    title="View Receipt">
                                     <i class="bi bi-receipt"></i>
+                                </a>
+                                <a th:if="${booking.paymentStatus == null or booking.paymentStatus.name() == 'PENDING'}" th:href="@{/payment/{id}(id=${booking.id})}"
+                                   class="btn btn-sm btn-warning"
+                                   title="Make Payment">
+                                    <i class="bi bi-credit-card"></i> Pay
                                 </a>
 
                                 <!-- Cancel Button (only within 2 minutes and CONFIRMED) -->
@@ -152,7 +165,7 @@
 
                                         <span th:if="${!canCancel}"
                                               class="badge rounded-pill small"
-                                              style="background: rgba(255,255,255,0.05); color: #64748b; border: 1px solid #334155;"
+                                              style="background: rgba(255,255,255,0.1); color: #64748b;"
                                               title="Cancellation window expired">
                                             <i class="bi bi-lock me-1"></i>Locked
                                         </span>
@@ -176,8 +189,7 @@
         </div>
 
         <!-- Footer -->
-        <div class="card-footer border-top px-4 py-3"
-             style="background: rgba(0,0,0,0.3); border-color: rgba(255,255,255,0.05) !important;">
+        <div class="card-footer bg-light border-top px-4 py-3">
             <span class="text-muted small">Total bookings: </span>
             <span class="text-light fw-bold" th:text="${#lists.size(bookings)}">0</span>
             <span class="text-muted small ms-3">
@@ -190,18 +202,16 @@
     <!-- Cancel Booking Modal -->
     <div class="modal fade" id="cancelBookingModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0"
-                 style="background: #1a1a2e; border: 1px solid rgba(206,17,38,0.3) !important;">
+            <div class="modal-content border-0">
                 <div class="modal-header border-0 pb-0">
                     <h5 class="modal-title text-danger">
                         <i class="bi bi-exclamation-triangle me-2"></i>Cancel Booking
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <p class="text-light">Are you sure you want to cancel this booking?</p>
-                    <div class="p-3 rounded mb-3"
-                         style="background: rgba(206,17,38,0.1); border: 1px solid rgba(206,17,38,0.2);">
+                    <div class="p-3 rounded mb-3 bg-light border">
                         <small class="text-muted">Booking Reference</small>
                         <div class="text-warning fw-bold" id="cancelBookingRef">REF</div>
                     </div>

@@ -16,35 +16,82 @@
             </div>
 
             <form th:action="@{/register}" method="post" th:object="${user}">
-                <div class="mb-3">
-                    <label for="fullName" class="form-label">Full Name</label>
-                    <input type="text" class="form-control" id="fullName" th:field="*{fullName}" required>
-                </div>
-                <div class="mb-3">
-                    <label for="username" class="form-label">Username</label>
-                    <input type="text" class="form-control" id="username" th:field="*{username}" required>
-                </div>
-                <div class="mb-3">
-                    <label for="email" class="form-label">Email Address</label>
-                    <input type="email" class="form-control" id="email" th:field="*{email}" required>
-                </div>
-                <div class="mb-3">
-                    <label for="phoneNumber" class="form-label">Phone Number</label>
-                    <input type="text" class="form-control" id="phoneNumber" th:field="*{phoneNumber}">
-                </div>
-                
-                <div class="mb-3">
-                    <label class="form-label d-block">I want to register as a:</label>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="role" id="roleUser" value="USER" checked>
-                        <label class="form-check-label" for="roleUser">Passenger</label>
+
+                <!-- Account Type Selection -->
+                <div class="mb-4">
+                    <label class="form-label d-block fw-semibold text-light">Register as:</label>
+                    <div class="d-flex gap-2">
+                        <div class="account-type-card flex-fill text-center p-3 rounded border border-secondary" id="cardPassenger" onclick="selectType('passenger')" style="cursor:pointer; transition: all 0.3s ease;">
+                            <i class="bi bi-person-fill display-6 text-info mb-2 d-block"></i>
+                            <div class="fw-semibold text-light">Passenger</div>
+                            <small class="text-muted">Book rides</small>
+                        </div>
+                        <div class="account-type-card flex-fill text-center p-3 rounded border border-secondary" id="cardDriver" onclick="selectType('driver')" style="cursor:pointer; transition: all 0.3s ease;">
+                            <i class="bi bi-car-front-fill display-6 text-warning mb-2 d-block"></i>
+                            <div class="fw-semibold text-light">Driver</div>
+                            <small class="text-muted">Drive & earn</small>
+                        </div>
+                        <div class="account-type-card flex-fill text-center p-3 rounded border border-secondary" id="cardCompany" onclick="selectType('company')" style="cursor:pointer; transition: all 0.3s ease;">
+                            <i class="bi bi-building-fill display-6 text-success mb-2 d-block"></i>
+                            <div class="fw-semibold text-light">Company</div>
+                            <small class="text-muted">Manage fleet</small>
+                        </div>
                     </div>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="role" id="roleDriver" value="DRIVER">
-                        <label class="form-check-label" for="roleDriver">Driver</label>
+                    <!-- Hidden input to send accountType value -->
+                    <input type="hidden" name="accountType" id="accountTypeInput" value="passenger">
+                </div>
+
+                <!-- Personal / Admin Information (always visible) -->
+                <div id="personalSection">
+                    <h5 class="text-warning mt-4 mb-3" id="personalTitle">Personal Information</h5>
+                    <div class="mb-3">
+                        <label for="fullName" class="form-label" id="nameLabel">Full Name</label>
+                        <input type="text" class="form-control" id="fullName" th:field="*{fullName}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="username" th:field="*{username}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label" id="emailLabel">Email Address</label>
+                        <input type="email" class="form-control" id="email" th:field="*{email}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="phoneNumber" class="form-label" id="phoneLabel">Phone Number</label>
+                        <input type="text" class="form-control" id="phoneNumber" th:field="*{phoneNumber}">
                     </div>
                 </div>
 
+                <!-- Company-only Section -->
+                <div id="companySection" style="display: none; opacity: 0; transition: opacity 0.5s ease;">
+                    <h5 class="text-warning mt-4 mb-3">Company Information</h5>
+                    <div class="mb-3">
+                        <label for="companyName" class="form-label">Company Name</label>
+                        <input type="text" class="form-control" id="companyName" name="companyName">
+                    </div>
+                    <div class="mb-3">
+                        <label for="companyEmail" class="form-label">Company Email</label>
+                        <input type="email" class="form-control" id="companyEmail" name="companyEmail">
+                    </div>
+                    <div class="mb-3">
+                        <label for="companyPhone" class="form-label">Company Phone</label>
+                        <input type="text" class="form-control" id="companyPhone" name="companyPhone">
+                    </div>
+                    <div class="mb-3">
+                        <label for="companyLocation" class="form-label">Location / Address</label>
+                        <input type="text" class="form-control" id="companyLocation" name="companyLocation">
+                    </div>
+                    <div class="mb-3">
+                        <label for="registrationNumber" class="form-label">Registration Number (Optional)</label>
+                        <input type="text" class="form-control" id="registrationNumber" name="registrationNumber">
+                    </div>
+                    <div class="mb-3">
+                        <label for="companyDescription" class="form-label">Company Description</label>
+                        <textarea class="form-control" id="companyDescription" name="companyDescription" rows="3"></textarea>
+                    </div>
+                </div>
+
+                <h5 class="text-warning mt-4 mb-3">Security</h5>
                 <div class="mb-3">
                     <label for="password" class="form-label">Password</label>
                     <input type="password" class="form-control" id="password" name="password" required>
@@ -54,14 +101,81 @@
                     <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required>
                 </div>
                 
-                <div class="d-grid gap-2">
-                    <button type="submit" class="btn btn-warning btn-lg">Register Account</button>
+                <div class="d-grid gap-2 mt-4">
+                    <button type="submit" class="btn btn-warning btn-lg">Create Account</button>
                 </div>
             </form>
             <div class="text-center mt-4">
-                <p class="text-muted">Already have an account? <a th:href="@{/login}" class="text-success text-decoration-none">Login here</a></p>
+                <p class="text-muted">Already have an account? <a th:href="@{/login}" class="text-warning text-decoration-none">Login here</a></p>
             </div>
         </div>
+
+        <style>
+            .account-type-card.selected {
+                border-color: var(--bs-warning) !important;
+                background-color: rgba(255, 193, 7, 0.08);
+                transform: translateY(-2px);
+                box-shadow: 0 4px 15px rgba(255, 193, 7, 0.25);
+            }
+        </style>
+
+        <script>
+            function selectType(type) {
+                // Update hidden input
+                document.getElementById('accountTypeInput').value = type;
+
+                // Update card selection style
+                const cards = document.querySelectorAll('.account-type-card');
+                cards.forEach(c => c.classList.remove('selected'));
+                document.getElementById('card' + type.charAt(0).toUpperCase() + type.slice(1)).classList.add('selected');
+
+                const companySection = document.getElementById('companySection');
+                const personalTitle = document.getElementById('personalTitle');
+                const nameLabel = document.getElementById('nameLabel');
+                const emailLabel = document.getElementById('emailLabel');
+                const phoneLabel = document.getElementById('phoneLabel');
+
+                if (type === 'company') {
+                    // Show company section
+                    companySection.style.display = 'block';
+                    setTimeout(() => { companySection.style.opacity = '1'; }, 10);
+
+                    // Update labels for admin
+                    personalTitle.innerText = 'Admin Information';
+                    nameLabel.innerText = 'Admin Full Name';
+                    emailLabel.innerText = 'Admin Email';
+                    phoneLabel.innerText = 'Admin Phone';
+
+                    // Require company fields
+                    document.getElementById('companyName').required = true;
+                    document.getElementById('companyEmail').required = true;
+                    document.getElementById('companyPhone').required = true;
+                    document.getElementById('companyLocation').required = true;
+                } else {
+                    // Hide company section
+                    companySection.style.opacity = '0';
+                    setTimeout(() => { companySection.style.display = 'none'; }, 500);
+
+                    // Remove required on company fields
+                    document.getElementById('companyName').required = false;
+                    document.getElementById('companyEmail').required = false;
+                    document.getElementById('companyPhone').required = false;
+                    document.getElementById('companyLocation').required = false;
+
+                    // Restore labels
+                    personalTitle.innerText = 'Personal Information';
+                    nameLabel.innerText = 'Full Name';
+                    emailLabel.innerText = 'Email Address';
+                    phoneLabel.innerText = 'Phone Number';
+                }
+            }
+
+            // Auto-select Passenger on load
+            document.addEventListener('DOMContentLoaded', () => {
+                selectType('passenger');
+            });
+        </script>
     </main>
 </body>
 </html>
+

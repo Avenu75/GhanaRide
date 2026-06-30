@@ -13,15 +13,20 @@
                     <span class="text-muted">Reference: </span>
                     <span class="fs-4 text-warning fw-bold font-monospace" th:text="${booking.bookingReference}">GR-123</span>
                 </div>
+                <div class="mt-2">
+                    <span th:if="${booking.paymentStatus.name() == 'PAID'}" class="badge bg-success rounded-pill px-3 py-2"><i class="bi bi-check-circle me-1"></i> PAID</span>
+                    <span th:if="${booking.paymentStatus.name() == 'PENDING'}" class="badge bg-warning text-dark rounded-pill px-3 py-2"><i class="bi bi-clock me-1"></i> PENDING PAYMENT</span>
+                </div>
             </div>
             
-            <hr class="border-secondary mb-4">
+            <hr class="border mb-4">
             
             <div class="row g-4 mb-4">
                 <div class="col-md-6">
                     <h6 class="text-muted text-uppercase mb-2">Trip Details</h6>
                     <p class="mb-1 text-light"><strong>From:</strong> <span th:text="${booking.trip.fromLocation}">Accra</span></p>
                     <p class="mb-1 text-light"><strong>To:</strong> <span th:text="${booking.trip.toLocation}">Kumasi</span></p>
+                    <p class="mb-1 text-light" th:if="${booking.trip.pickupStation != null and !booking.trip.pickupStation.isEmpty()}"><strong>Station:</strong> <span th:text="${booking.trip.pickupStation}">Station</span></p>
                     <p class="mb-1 text-light"><strong>Date:</strong> <span th:text="${#temporals.format(booking.trip.departureTime, 'dd MMM yyyy')}">Date</span></p>
                     <p class="mb-1 text-light"><strong>Time:</strong> <span th:text="${#temporals.format(booking.trip.departureTime, 'h:mm a')}">Time</span></p>
                 </div>
@@ -34,13 +39,17 @@
                 </div>
             </div>
             
-            <div class="bg-dark rounded p-3 mb-4 border border-secondary d-flex justify-content-between align-items-center">
+            <div class="bg-dark rounded p-3 mb-4 border border d-flex justify-content-between align-items-center">
                 <div>
                     <span class="text-muted d-block">Seat Number</span>
                     <span class="fs-4 text-light fw-bold">#<span th:text="${booking.seatNumber}">1</span></span>
                 </div>
+                <div>
+                    <span class="text-muted d-block">Method</span>
+                    <span class="text-light fw-bold" th:text="${booking.paymentMethod != null ? booking.paymentMethod : 'N/A'}">CASH</span>
+                </div>
                 <div class="text-end">
-                    <span class="text-muted d-block">Total Paid</span>
+                    <span class="text-muted d-block">Total Amount</span>
                     <span class="fs-3 text-warning fw-bold">GHC <span th:text="${booking.totalAmount}">0.00</span></span>
                 </div>
             </div>
@@ -51,7 +60,7 @@
             </div>
             
             <div class="d-flex justify-content-center gap-3 d-print-none">
-                <button onclick="window.print()" class="btn btn-primary"><i class="bi bi-printer"></i> Print Receipt</button>
+                <button onclick="window.print()" class="btn btn-warning"><i class="bi bi-printer"></i> Print Receipt</button>
                 <a th:href="@{/my-bookings}" class="btn btn-outline-light"><i class="bi bi-list"></i> My Bookings</a>
                 <a th:href="@{/dashboard}" class="btn btn-outline-warning">Home</a>
             </div>

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html th:replace="~{layout :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Contact Us - GhanaRide</title>
+</head>
+<body>
+<main th:fragment="main">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="text-center mb-5">
+                <h2 class="text-light fw-bold">Get in Touch</h2>
+                <p class="text-muted">Have a question or need assistance? We're here to help.</p>
+            </div>
+            
+            <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+
+            <div class="row g-4">
+                <div class="col-md-5">
+                    <div class="card bg-dark border-secondary h-100">
+                        <div class="card-body p-4">
+                            <h4 class="text-warning mb-4">Contact Information</h4>
+                            
+                            <div class="d-flex mb-4">
+                                <div class="bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 45px; height: 45px; flex-shrink: 0;">
+                                    <i class="bi bi-geo-alt-fill fs-5"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-light mb-1">Our Office</h6>
+                                    <p class="text-muted mb-0">123 Transport Avenue<br>East Legon, Accra<br>Ghana</p>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex mb-4">
+                                <div class="bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 45px; height: 45px; flex-shrink: 0;">
+                                    <i class="bi bi-envelope-fill fs-5"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-light mb-1">Email Us</h6>
+                                    <p class="text-muted mb-0">support@ghanaride.me<br>info@ghanaride.me</p>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex">
+                                <div class="bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 45px; height: 45px; flex-shrink: 0;">
+                                    <i class="bi bi-telephone-fill fs-5"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-light mb-1">Call Us</h6>
+                                    <p class="text-muted mb-0">+233 (0) 55 123 4567<br>Mon-Fri, 8am-6pm</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-7">
+                    <div class="card bg-dark border-secondary h-100">
+                        <div class="card-body p-4 p-md-5">
+                            <h4 class="text-light mb-4">Send us a Message</h4>
+                            <form th:action="@{/contact}" method="post">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label text-light">Your Name</label>
+                                        <input type="text" class="form-control form-control-dark" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label text-light">Email Address</label>
+                                        <input type="email" class="form-control form-control-dark" required>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label text-light">Subject</label>
+                                        <input type="text" class="form-control form-control-dark" required>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label text-light">Message</label>
+                                        <textarea class="form-control form-control-dark" rows="5" required></textarea>
+                                    </div>
+                                    <div class="col-12 mt-4">
+                                        <button type="submit" class="btn btn-warning w-100 py-2 fw-bold"><i class="bi bi-send me-2"></i>Send Message</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <style>
+        .form-control-dark {
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+        .form-control-dark:focus {
+            background-color: rgba(255, 255, 255, 0.08);
+            border-color: var(--ghana-gold);
+            color: #fff;
+            box-shadow: 0 0 0 0.25rem rgba(252, 209, 22, 0.25);
+        }
+    </style>
+</main>
+</body>
+</html>

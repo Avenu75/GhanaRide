@@ -13,4 +13,6 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
 
     // ===== FIND BY MULTIPLE STATUSES =====
     List<Trip> findByStatusIn(List<TripStatus> statuses);
+    
+    List<Trip> findByCompany(Company company);
 }

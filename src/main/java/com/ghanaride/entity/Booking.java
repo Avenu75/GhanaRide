@@ -42,6 +42,21 @@ public class Booking {
     @Column(name = "total_amount", precision = 10, scale = 2)
     private BigDecimal totalAmount;
 
+    // ===== PAYMENT FIELDS =====
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_method")
+    private PaymentMethod paymentMethod;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_status")
+    private PaymentStatus paymentStatus;
+
+    @Column(name = "transaction_reference", length = 100)
+    private String transactionReference;
+
+    @Column(name = "payment_date")
+    private LocalDateTime paymentDate;
+
     @PrePersist
     protected void onCreate() {
         bookingDate = LocalDateTime.now();

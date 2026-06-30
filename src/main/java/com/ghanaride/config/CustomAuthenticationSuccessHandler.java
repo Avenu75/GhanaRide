@@ -27,6 +27,9 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
             } else if (role.equals("ROLE_DRIVER")) {
                 redirectUrl = "/driver/dashboard";
                 break;
+            } else if (role.equals("ROLE_COMPANY")) {
+                redirectUrl = "/company/dashboard";
+                break;
             } else if (role.equals("ROLE_USER")) {
                 redirectUrl = "/dashboard";
                 break;

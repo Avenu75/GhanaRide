@@ -2,6 +2,8 @@ package com.ghanaride.service;
 
 import com.ghanaride.entity.Booking;
 import com.ghanaride.entity.BookingStatus;
+import com.ghanaride.entity.PaymentMethod;
+import com.ghanaride.entity.PaymentStatus;
 import com.ghanaride.entity.Trip;
 import com.ghanaride.entity.User;
 import com.ghanaride.repository.BookingRepository;
@@ -38,6 +40,8 @@ public class BookingService {
         booking.setSeatNumber((int) currentBookings + 1);
         booking.setTotalAmount(trip.getTripAmount());
 
+        booking.setPaymentStatus(PaymentStatus.PENDING); // Default until payment is made
+        
         trip.setAvailableSeats(trip.getAvailableSeats() - 1);
         tripRepository.save(trip);
 

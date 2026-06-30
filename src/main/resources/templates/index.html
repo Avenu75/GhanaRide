@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html th:replace="~{layout :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>GhanaRide - The Smartest Way to Get Around</title>
+</head>
+<body>
+<main th:fragment="main">
+    <!-- Hero Section -->
+    <div class="row align-items-center mt-2 mb-5">
+        <div class="col-lg-6 mb-4 mb-lg-0">
+            <h1 class="display-4 text-warning fw-bold mb-3">Your Journey Starts Here</h1>
+            <p class="lead text-light mb-4">Book intercity buses and campus tro-tros from the comfort of your phone. Fast, reliable, and secure.</p>
+            <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+                <a th:href="@{/register}" class="btn btn-warning btn-lg px-4 me-md-2">Get Started</a>
+                <a th:href="@{/login}" class="btn btn-outline-light btn-lg px-4">Login</a>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card bg-transparent border-0">
+                <img src="/images/hero.jpg" class="img-fluid rounded-3 shadow-lg" alt="Parked Minibuses" style="border: 2px solid var(--border-color);">
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="row g-4 py-5 row-cols-1 row-cols-lg-3 border-top border-bottom border-secondary" style="border-color: rgba(255,255,255,0.1) !important;">
+        <div class="col d-flex align-items-start">
+            <div class="icon-square bg-warning text-dark d-inline-flex align-items-center justify-content-center fs-4 flex-shrink-0 me-3 rounded-3" style="width: 3rem; height: 3rem;">
+                <i class="bi bi-clock-history"></i>
+            </div>
+            <div>
+                <h3 class="fs-4 text-light">Save Time</h3>
+                <p class="text-muted">No more waiting in long lines at the station. Book your seat in advance and show up right before departure.</p>
+            </div>
+        </div>
+        <div class="col d-flex align-items-start">
+            <div class="icon-square bg-warning text-dark d-inline-flex align-items-center justify-content-center fs-4 flex-shrink-0 me-3 rounded-3" style="width: 3rem; height: 3rem;">
+                <i class="bi bi-shield-check"></i>
+            </div>
+            <div>
+                <h3 class="fs-4 text-light">Safe & Secure</h3>
+                <p class="text-muted">All our drivers and vehicles are verified. Enjoy peace of mind knowing exactly who is driving you.</p>
+            </div>
+        </div>
+        <div class="col d-flex align-items-start">
+            <div class="icon-square bg-warning text-dark d-inline-flex align-items-center justify-content-center fs-4 flex-shrink-0 me-3 rounded-3" style="width: 3rem; height: 3rem;">
+                <i class="bi bi-wallet2"></i>
+            </div>
+            <div>
+                <h3 class="fs-4 text-light">Transparent Pricing</h3>
+                <p class="text-muted">Know the exact fare before you book. No haggling, no hidden fees. Just fair prices.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Showcase Section -->
+    <div class="row align-items-center py-5">
+        <div class="col-md-6 order-md-2 mb-4 mb-md-0 ps-md-5">
+            <h2 class="text-warning mb-3">Comfortable Rides</h2>
+            <p class="text-light lead">Experience comfortable seating and air-conditioned vehicles for your intercity travels. We partner with top transport unions to ensure quality.</p>
+        </div>
+        <div class="col-md-6 order-md-1">
+            <img src="/images/interior.jpg" class="img-fluid rounded-3 shadow" alt="Bus Interior" style="border: 1px solid var(--border-color);">
+        </div>
+    </div>
+
+    <div class="row align-items-center py-5 mb-4">
+        <div class="col-md-6 mb-4 mb-md-0 pe-md-5">
+            <h2 class="text-warning mb-3">Friendly Drivers</h2>
+            <p class="text-light lead">Our drivers are professionals who know the routes like the back of their hands. They prioritize your safety and comfort on every journey.</p>
+            <a th:href="@{/register?role=DRIVER}" class="btn btn-outline-warning mt-2">Become a Driver</a>
+        </div>
+        <div class="col-md-6">
+            <img src="/images/driver.jpg" class="img-fluid rounded-3 shadow" alt="Friendly Driver" style="border: 1px solid var(--border-color);">
+        </div>
+    </div>
+
+</main>
+</body>
+</html>

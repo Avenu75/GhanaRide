@@ -102,7 +102,7 @@
                             </div>
                         </div>
 
-                        <hr class="border-secondary my-4">
+                        <hr class="border my-4">
 
                         <!-- ===== SECTION 2: TRIP DETAILS ===== -->
                         <div class="section-header mb-3">
@@ -207,6 +207,19 @@
                                 <input type="hidden" id="toLocationHidden" name="toLocation">
                             </div>
 
+                            <!-- PICKUP STATION -->
+                            <div class="col-12 mt-3">
+                                <label class="form-label text-light fw-semibold">
+                                    <i class="bi bi-geo me-1 text-warning"></i>Pickup Station / Specific Location
+                                    <span class="text-muted fw-normal">(Optional)</span>
+                                </label>
+                                <input type="text"
+                                       class="form-control form-control-dark"
+                                       name="pickupStation"
+                                       placeholder="e.g. VIP Station, Circle, or KNUST Campus Gate">
+                                <div class="form-text text-muted">Provide a specific station or landmark where passengers will board.</div>
+                            </div>
+
                             <!-- Route Preview -->
                             <div class="col-12" id="routePreview" style="display:none;">
                                 <div class="p-3 rounded d-flex align-items-center gap-3"
@@ -244,7 +257,7 @@
                                     <span class="text-danger">*</span>
                                 </label>
                                 <div class="input-group">
-                                        <span class="input-group-text border-secondary text-warning fw-bold"
+                                        <span class="input-group-text border text-warning fw-bold"
                                               style="background: rgba(255,255,255,0.05);">GHC</span>
                                     <input type="number"
                                            class="form-control form-control-dark"
@@ -272,12 +285,25 @@
                                        required>
                                 <div class="form-text text-muted">Number of passenger seats available</div>
                             </div>
+
+                            <!-- DESCRIPTION -->
+                            <div class="col-12 mt-3">
+                                <label class="form-label text-light fw-semibold">
+                                    <i class="bi bi-card-text me-1 text-warning"></i>Trip Description
+                                    <span class="text-muted fw-normal">(Optional)</span>
+                                </label>
+                                <textarea class="form-control form-control-dark"
+                                          name="description"
+                                          rows="2"
+                                          placeholder="e.g. AC available, strict departure time, no large luggage"></textarea>
+                                <div class="form-text text-muted">Any extra details passengers should know about this trip.</div>
+                            </div>
                         </div>
 
                         <!-- Info Notice -->
                         <div class="p-3 rounded mb-4 d-flex align-items-start gap-3"
                              style="background: rgba(13,110,253,0.08); border: 1px solid rgba(13,110,253,0.2);">
-                            <i class="bi bi-shield-check text-primary fs-5 mt-1"></i>
+                            <i class="bi bi-shield-check text-warning fs-5 mt-1"></i>
                             <div>
                                 <div class="text-light fw-semibold mb-1">Admin Review Required</div>
                                 <div class="text-muted small">Your trip will be reviewed by an admin before it becomes visible to passengers. You will see its status on your dashboard.</div>
@@ -289,7 +315,7 @@
                             <a th:href="@{/driver/dashboard}" class="btn btn-outline-secondary px-4">
                                 <i class="bi bi-arrow-left me-1"></i>Cancel
                             </a>
-                            <button type="submit" class="btn btn-warning text-dark fw-bold px-5">
+                            <button type="submit" class="btn btn-warning text-light fw-bold px-5">
                                 <i class="bi bi-send-fill me-2"></i>Submit Trip for Review
                             </button>
                         </div>

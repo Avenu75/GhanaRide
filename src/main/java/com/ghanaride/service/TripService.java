@@ -42,6 +42,10 @@ public class TripService {
     public List<Trip> findByDriver(User driver) {
         return tripRepository.findByDriver(driver);
     }
+    
+    public List<Trip> findByCompany(com.ghanaride.entity.Company company) {
+        return tripRepository.findByCompany(company);
+    }
 
     public Optional<Trip> findById(Long id) {
         return tripRepository.findById(id);

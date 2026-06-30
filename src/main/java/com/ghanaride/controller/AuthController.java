@@ -18,10 +18,6 @@ public class AuthController {
 
     private final UserService userService;
 
-    @GetMapping("/")
-    public String index() {
-        return "redirect:/login";
-    }
 
     @GetMapping("/login")
     public String loginPage() {
@@ -36,7 +32,13 @@ public class AuthController {
 
     @PostMapping("/register")
     public String registerUser(@ModelAttribute User user, 
-                               @RequestParam String confirmPassword, 
+                               @RequestParam String confirmPassword,
+                               @RequestParam(required = false) String companyName,
+                               @RequestParam(required = false) String companyEmail,
+                               @RequestParam(required = false) String companyPhone,
+                               @RequestParam(required = false) String companyLocation,
+                               @RequestParam(required = false) String companyDescription,
+                               @RequestParam(required = false) String registrationNumber,
                                RedirectAttributes redirectAttributes, 
                                Model model) {
         if (!user.getPassword().equals(confirmPassword)) {
@@ -52,12 +54,9 @@ public class AuthController {
             return "register";
         }
 
-        // Assuming role is already set from form binding
-        if (user.getRole() == null) {
-             user.setRole(Role.USER); // fallback
-        }
+        // The role will be set in userService based on accountType
         
-        userService.registerUser(user);
+        userService.registerUser(user, companyName, companyEmail, companyPhone, companyLocation, companyDescription, registrationNumber);
         redirectAttributes.addAttribute("registered", "true");
         return "redirect:/login";
     }

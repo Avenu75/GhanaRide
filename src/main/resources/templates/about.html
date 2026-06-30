@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html th:replace="~{layout :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>About Us - GhanaRide</title>
+</head>
+<body>
+<main th:fragment="main">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Hero section for About -->
+            <div class="text-center mb-5 py-5 rounded-4" style="background: linear-gradient(rgba(11, 11, 18, 0.8), rgba(11, 11, 18, 0.8)), url('https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=1920&q=80') center/cover; position: relative;">
+                <h1 class="display-4 fw-bold text-white position-relative z-1">About GhanaRide</h1>
+                <p class="lead text-light position-relative z-1 mb-0">Connecting Ghana through safe and reliable transport</p>
+            </div>
+
+            <div class="row g-5">
+                <div class="col-md-6">
+                    <h3 class="text-warning fw-bold mb-3">Our Mission</h3>
+                    <p class="text-light" style="line-height: 1.8;">
+                        At GhanaRide, our mission is to simplify intercity and campus transportation across Ghana. We believe that traveling from Accra to Kumasi, or from your hostel to campus, should be a seamless, safe, and affordable experience for everyone.
+                    </p>
+                    <p class="text-light" style="line-height: 1.8;">
+                        By connecting passengers with verified and trusted drivers, we are building a community based on trust, reliability, and convenience.
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <div class="card bg-dark border-secondary h-100">
+                        <div class="card-body p-4">
+                            <h4 class="text-light mb-4">Why Choose Us?</h4>
+                            <ul class="list-unstyled text-light mb-0">
+                                <li class="mb-3 d-flex"><i class="bi bi-shield-check text-warning fs-5 me-3"></i> <div><strong>Verified Drivers:</strong> Every driver and vehicle undergoes a strict verification process.</div></li>
+                                <li class="mb-3 d-flex"><i class="bi bi-wallet2 text-success fs-5 me-3"></i> <div><strong>Affordable Fares:</strong> Transparent pricing with no hidden charges.</div></li>
+                                <li class="mb-3 d-flex"><i class="bi bi-clock-history text-info fs-5 me-3"></i> <div><strong>Punctuality:</strong> Say goodbye to long waits at the station. Book your seat in advance.</div></li>
+                                <li class="d-flex"><i class="bi bi-credit-card text-primary fs-5 me-3"></i> <div><strong>Flexible Payments:</strong> Pay online via Paystack or with cash at pickup.</div></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-5 text-center">
+                <hr class="border-secondary mb-5">
+                <h3 class="text-light mb-4">Join the GhanaRide Community</h3>
+                <div class="d-flex gap-3 justify-content-center">
+                    <a th:href="@{/register}" class="btn btn-warning btn-lg px-4">Register as Passenger</a>
+                    <a th:href="@{/register}" class="btn btn-outline-light btn-lg px-4">Become a Driver</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>

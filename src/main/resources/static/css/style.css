@@ -1,434 +1,305 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap');
 
-
 :root {
-
-    --bg-dark: #0f0f1a;
-
+    --bg-color: #0f0f1a;
     --card-bg: #1a1a2e;
-
-    --ghana-green: #006B3F;
-
-    --ghana-gold: #FCD116;
-
-    --ghana-red: #CE1126;
-
-    --text-light: #e0e0e0;
-
+    --text-color: #e0e0e0;
     --text-muted: #8888aa;
-
     --border-color: rgba(255, 255, 255, 0.1);
-
+    
+    --ghana-green: #006B3F;
+    --ghana-gold: #FCD116;
+    --ghana-red: #CE1126;
 }
 
-
+body.light-mode {
+    --bg-color: #f4f5f9;
+    --card-bg: #ffffff;
+    --text-color: #1a1d20;
+    --text-muted: #6c757d;
+    --border-color: rgba(0, 0, 0, 0.08);
+}
 
 body {
-
-    background-color: var(--bg-dark);
-
-    color: var(--text-light);
-
+    background-color: var(--bg-color);
+    color: var(--text-color);
     font-family: 'Inter', sans-serif;
-
     min-height: 100vh;
-
     display: flex;
-
     flex-direction: column;
-
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
-
-
 
 h1, h2, h3, h4, h5, h6, .navbar-brand {
-
     font-family: 'Outfit', sans-serif;
-
     font-weight: 600;
-
 }
-
-
 
 /* Navbar */
-
 .navbar {
-
-    background-color: var(--card-bg);
-
+    background-color: var(--card-bg) !important;
     border-bottom: 3px solid var(--ghana-gold);
-
     box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-
+    transition: background-color 0.3s ease;
 }
-
 
 .navbar-brand {
-
     color: var(--ghana-gold) !important;
-
     font-size: 1.5rem;
-
     letter-spacing: 1px;
-
 }
-
 
 .nav-link {
-
-    color: var(--text-light) !important;
-
+    color: var(--text-color) !important;
 }
-
 
 .nav-link:hover {
-
     color: var(--ghana-gold) !important;
-
 }
-
-
 
 /* Buttons */
-
 .btn-primary {
-
-    background-color: var(--ghana-green);
-
-    border-color: var(--ghana-green);
-
-    color:white;
-
+    background-color: var(--ghana-green) !important;
+    border-color: var(--ghana-green) !important;
+    color: white !important;
 }
-
 
 .btn-primary:hover {
-
-    background-color:#00502f;
-
+    background-color: #00502f !important;
+    border-color: #00502f !important;
 }
-
 
 .btn-warning {
-
-    background-color:var(--ghana-gold);
-
-    color:#333;
-
+    background-color: var(--ghana-gold) !important;
+    border-color: var(--ghana-gold) !important;
+    color: #333 !important;
 }
 
+.btn-warning:hover {
+    background-color: #e5bd10 !important;
+    border-color: #e5bd10 !important;
+}
 
 .btn-danger {
-
-    background-color:var(--ghana-red);
-
+    background-color: var(--ghana-red) !important;
+    border-color: var(--ghana-red) !important;
+    color: white !important;
 }
 
+.btn-danger:hover {
+    background-color: #b30e20 !important;
+    border-color: #b30e20 !important;
+}
 
+.btn-outline-warning {
+    color: var(--ghana-gold) !important;
+    border-color: var(--ghana-gold) !important;
+    background: transparent !important;
+}
+
+.btn-outline-warning:hover {
+    background-color: var(--ghana-gold) !important;
+    color: #333 !important;
+}
 
 /* Cards */
-
 .card, .auth-container, .receipt-container {
-
-    background-color:var(--card-bg);
-
-    border:1px solid var(--border-color);
-
-    border-radius:12px;
-
-    box-shadow:0 8px 24px rgba(0,0,0,.2);
-
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
 }
-
-
 
 .auth-container {
-
-    max-width:450px;
-
-    margin:40px auto;
-
-    padding:2rem;
-
+    max-width: 450px;
+    margin: 40px auto;
+    padding: 2rem;
 }
-
-
 
 /* Trip Cards */
-
 .trip-card {
-
-    background-color:var(--card-bg);
-
-    border:1px solid var(--border-color);
-
-    border-left:5px solid var(--ghana-gold);
-
-    border-radius:12px;
-
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-left: 5px solid var(--ghana-gold);
+    border-radius: 12px;
 }
-
 
 .trip-price {
-
-    color:var(--ghana-gold);
-
-    font-weight:700;
-
+    color: var(--ghana-gold);
+    font-weight: 700;
 }
-
-
 
 /* Forms */
-
 .form-control,
 .form-select {
-
-    background-color:rgba(255,255,255,.05);
-
-    border:1px solid var(--border-color);
-
-    color:var(--text-light);
-
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
 }
 
+body.light-mode .form-control,
+body.light-mode .form-select {
+    background-color: rgba(0, 0, 0, 0.03);
+}
 
 .form-control:focus,
 .form-select:focus {
-
-    color:white;
-
-    background-color:rgba(255,255,255,.1);
-
+    color: var(--text-color);
+    background-color: rgba(255, 255, 255, 0.1);
 }
 
+body.light-mode .form-control:focus,
+body.light-mode .form-select:focus {
+    background-color: #fff;
+    color: #000;
+}
 
 .form-label {
-
-    color:var(--text-muted);
-
+    color: var(--text-muted);
 }
-
-
 
 /* ==============================
-   TABLE FIX
-   ============================== */
-
-
+   TABLE
+   ============================= */
 .table {
-
-    color:var(--text-light);
-
-    border-color:var(--border-color);
-
+    color: var(--text-color);
+    border-color: var(--border-color);
 }
-
 
 .table > :not(caption)>*>* {
-
-    background-color:transparent;
-
-    color:var(--text-light);
-
-    border-bottom-color:var(--border-color);
-
+    background-color: transparent;
+    color: var(--text-color);
+    border-bottom-color: var(--border-color);
 }
-
-
-/* Fix table text visibility */
 
 .table td {
-
-    color:var(--text-light) !important;
-
+    color: var(--text-color) !important;
 }
-
 
 .table td .text-muted {
-
-    color:var(--text-muted) !important;
-
+    color: var(--text-muted) !important;
 }
-
 
 .table small {
-
-    color:var(--text-muted);
-
+    color: var(--text-muted);
 }
-
-
 
 .table-hover tbody tr:hover>* {
-
-    background-color:rgba(255,255,255,.05);
-
+    background-color: rgba(255, 255, 255, 0.05);
 }
 
+body.light-mode .table-hover tbody tr:hover>* {
+    background-color: rgba(0, 0, 0, 0.02);
+}
 
 .table th {
-
-    color:var(--ghana-gold);
-
-    font-weight:600;
-
+    color: var(--ghana-gold);
+    font-weight: 600;
 }
-
-
 
 /* ==============================
-   TEXT MUTED FIX
-   ============================== */
-
-
+   TEXT MUTED
+   ============================= */
 .text-muted {
-
-    color:var(--text-muted) !important;
-
+    color: var(--text-muted) !important;
 }
-
 
 .small.text-muted {
-
-    color:var(--text-muted) !important;
-
+    color: var(--text-muted) !important;
 }
 
+/* ==============================
+   BOOTSTRAP OVERRIDES FOR THEME
+   ============================= */
+.text-light {
+    color: var(--text-color) !important;
+}
+
+.bg-dark {
+    background-color: var(--card-bg) !important;
+}
 
 
 /* Badges */
-
 .badge-pending {
-
-    background-color:rgba(252,209,22,.2);
-
-    color:var(--ghana-gold);
-
+    background-color: rgba(252, 209, 22, 0.2);
+    color: var(--ghana-gold);
 }
-
 
 .badge-approved {
-
-    background-color:rgba(0,107,63,.2);
-
-    color:#4ade80;
-
+    background-color: rgba(0, 107, 63, 0.2);
+    color: #4ade80;
 }
 
+body.light-mode .badge-approved {
+    color: #006B3F;
+    background-color: rgba(0, 107, 63, 0.1);
+}
 
 .badge-rejected {
-
-    background-color:rgba(206,17,38,.2);
-
-    color:#f87171;
-
+    background-color: rgba(206, 17, 38, 0.2);
+    color: #f87171;
 }
 
-
+body.light-mode .badge-rejected {
+    color: var(--ghana-red);
+    background-color: rgba(206, 17, 38, 0.1);
+}
 
 /* Stats */
-
 .stat-card {
-
-    background:rgba(255,255,255,.02);
-
-    border:1px solid var(--border-color);
-
-    border-radius:12px;
-
-    padding:1.5rem;
-
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
 }
 
-
+body.light-mode .stat-card {
+    background: rgba(0, 0, 0, 0.01);
+}
 
 .stat-value {
-
-    font-size:2rem;
-
-    font-weight:700;
-
+    font-size: 2rem;
+    font-weight: 700;
 }
-
-
 
 /* Scrollbar */
-
 ::-webkit-scrollbar {
-
-    width:8px;
-
+    width: 8px;
 }
-
 
 ::-webkit-scrollbar-track {
-
-    background:var(--bg-dark);
-
+    background: var(--bg-color);
 }
-
 
 ::-webkit-scrollbar-thumb {
-
-    background:var(--card-bg);
-
-    border-radius:4px;
-
+    background: var(--card-bg);
+    border-radius: 4px;
 }
-
 
 ::-webkit-scrollbar-thumb:hover {
-
-    background:var(--ghana-gold);
-
+    background: var(--ghana-gold);
 }
 
-
-
 /* Print */
-
 @media print {
-
-
     body {
-
-        background:white !important;
-
-        color:black !important;
-
+        background: white !important;
+        color: black !important;
     }
-
-
     .navbar,
     .btn,
     footer {
-
-        display:none !important;
-
+        display: none !important;
     }
-
-
     .receipt-container {
-
-        color:black;
-
+        color: black;
     }
-
-
     .text-light {
-
-        color:black !important;
-
+        color: black !important;
     }
-
-
     .text-muted {
-
-        color:#555 !important;
-
+        color: #555 !important;
     }
-
-
 }

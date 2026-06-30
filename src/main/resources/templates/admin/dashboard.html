@@ -14,7 +14,7 @@
             <a th:href="@{/admin/trips}" class="btn btn-outline-warning me-2">
                 <i class="bi bi-signpost-2"></i> Manage Trips
             </a>
-            <a th:href="@{/admin/users}" class="btn btn-outline-primary me-2">
+            <a th:href="@{/admin/users}" class="btn btn-outline-warning me-2">
                 <i class="bi bi-people"></i> Manage Users
             </a>
             <a th:href="@{/admin/bookings}" class="btn btn-outline-info">
@@ -55,7 +55,7 @@
     <h4 class="text-light mb-3 mt-4">Trip Statistics</h4>
     <div class="row g-4">
         <div class="col-md-4">
-            <div class="stat-card bg-dark border-secondary">
+            <div class="stat-card bg-dark border">
                 <h6 class="text-muted text-uppercase mb-2">All Trips</h6>
                 <div class="stat-value text-light" th:text="${totalTrips}">0</div>
             </div>

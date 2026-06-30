@@ -21,7 +21,7 @@
             </span>
             <a th:if="${!hasActiveTrip}"
                th:href="@{/driver/add-trip}"
-               class="btn btn-primary">
+               class="btn btn-warning">
                 <i class="bi bi-plus-circle"></i> Add New Trip
             </a>
         </div>
@@ -46,7 +46,7 @@
     <!-- Stats -->
     <div class="row mb-4 g-4">
         <div class="col-md-4">
-            <div class="stat-card border-secondary">
+            <div class="stat-card border">
                 <i class="bi bi-signpost-2 stat-icon text-muted"></i>
                 <h6 class="text-muted text-uppercase mb-2">Total Trips</h6>
                 <div class="stat-value text-light" th:text="${#lists.size(trips)}">0</div>
@@ -80,7 +80,7 @@
     <div th:if="${not #lists.isEmpty(trips)}" class="card border-0 shadow" style="background: #1a1a2e;">
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-dark table-hover align-middle mb-0">
+                <table class="table  table-dark table-hover align-middle mb-0">
                     <thead style="background: rgba(252,209,22,0.1); border-bottom: 2px solid rgba(252,209,22,0.3);">
                     <tr>
                         <th class="text-warning py-3 ps-3">Route</th>
@@ -104,6 +104,10 @@
                             <div class="small text-muted">
                                 <i class="bi bi-geo-alt-fill text-danger me-1"></i>
                                 <span th:text="${trip.toLocation}">To</span>
+                            </div>
+                            <div class="small text-muted mt-1" th:if="${trip.pickupStation != null and !trip.pickupStation.isEmpty()}">
+                                <i class="bi bi-geo me-1"></i>
+                                <span th:text="${trip.pickupStation}">Station</span>
                             </div>
                         </td>
 
@@ -172,7 +176,7 @@
                                       th:action="@{/driver/trips/{id}/full(id=${trip.id})}"
                                       method="post">
                                     <button type="submit"
-                                            class="btn btn-sm btn-warning text-dark"
+                                            class="btn btn-sm btn-warning text-light"
                                             title="Mark as Full"
                                             onclick="return confirm('Mark this trip as full? Users will see it as unavailable.')">
                                         <i class="bi bi-slash-circle"></i>
@@ -213,7 +217,7 @@
                     <h5 class="modal-title text-danger">
                         <i class="bi bi-exclamation-triangle me-2"></i>Delete Trip
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <p class="text-light">Are you sure you want to delete this trip?</p>

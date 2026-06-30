@@ -24,8 +24,15 @@ public class Trip {
     private Car car;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "driver_id", nullable = false)
+    @JoinColumn(name = "driver_id")
     private User driver;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "company_id")
+    private Company company;
+
+    @Column(name = "pickup_station", length = 150)
+    private String pickupStation;
 
     @Column(name = "from_location", length = 100, nullable = false)
     private String fromLocation;
@@ -44,6 +51,9 @@ public class Trip {
 
     @Column(name = "total_seats", nullable = false)
     private Integer totalSeats;
+
+    @Column(name = "description", length = 500)
+    private String description;
 
     @Enumerated(EnumType.STRING)
     private TripStatus status;

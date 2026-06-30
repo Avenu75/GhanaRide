@@ -13,7 +13,7 @@
 </head>
 <body>
     <!-- Navigation Bar -->
-    <nav class="navbar navbar-expand-lg navbar-dark" sec:authorize="isAuthenticated()">
+    <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
             <a class="navbar-brand" th:href="@{/}"><i class="bi bi-bus-front"></i> GhanaRide</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -35,6 +35,16 @@
                     <li class="nav-item" sec:authorize="hasRole('DRIVER')">
                         <a class="nav-link" th:href="@{/driver/add-trip}"><i class="bi bi-plus-circle"></i> Add Trip</a>
                     </li>
+                    <!-- COMPANY links -->
+                    <li class="nav-item" sec:authorize="hasRole('COMPANY')">
+                        <a class="nav-link" th:href="@{/company/dashboard}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasRole('COMPANY')">
+                        <a class="nav-link" th:href="@{/company/vehicles}"><i class="bi bi-car-front"></i> Fleet</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasRole('COMPANY')">
+                        <a class="nav-link" th:href="@{/company/trips/add}"><i class="bi bi-plus-circle"></i> Add Trip</a>
+                    </li>
                     <!-- ADMIN links -->
                     <li class="nav-item" sec:authorize="hasRole('ADMIN')">
                         <a class="nav-link" th:href="@{/admin/dashboard}"><i class="bi bi-speedometer2"></i> Dashboard</a>
@@ -46,16 +56,39 @@
                         <a class="nav-link" th:href="@{/admin/users}"><i class="bi bi-people"></i> Manage Users</a>
                     </li>
                 </ul>
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <span class="nav-link" sec:authentication="name"></span>
-                    </li>
-                    <li class="nav-item">
-                        <form th:action="@{/logout}" method="post" class="d-inline">
-                            <button type="submit" class="btn btn-outline-danger btn-sm mt-1 ms-2"><i class="bi bi-box-arrow-right"></i> Logout</button>
-                        </form>
-                    </li>
-                </ul>
+                
+                <div class="d-flex align-items-center gap-2">
+                    <button class="btn btn-outline-secondary btn-sm me-2" id="themeToggleBtn" aria-label="Toggle Theme">
+                        <i class="bi bi-moon-fill" id="themeIcon"></i>
+                    </button>
+                    
+                    <!-- Guest links -->
+                    <ul class="navbar-nav" sec:authorize="!isAuthenticated()">
+                        <li class="nav-item">
+                            <a class="nav-link" th:href="@{/login}"><i class="bi bi-box-arrow-in-right"></i> Login</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" th:href="@{/register}"><i class="bi bi-person-plus"></i> Register</a>
+                        </li>
+                    </ul>
+
+                    <!-- Authenticated User links -->
+                    <ul class="navbar-nav" sec:authorize="isAuthenticated()">
+                        <li class="nav-item me-2">
+                            <a th:href="@{/profile}" class="nav-link">
+                                <i class="bi bi-person-circle fs-5"></i>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <span class="nav-link" sec:authentication="name"></span>
+                        </li>
+                        <li class="nav-item">
+                            <form th:action="@{/logout}" method="post" class="d-inline">
+                                <button type="submit" class="btn btn-outline-danger btn-sm ms-2 mt-1"><i class="bi bi-box-arrow-right"></i> Logout</button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
     </nav>
@@ -66,10 +99,43 @@
     </div>
 
     <!-- Footer -->
-    <footer class="text-center py-3 mt-auto" sec:authorize="isAuthenticated()">
-        <p class="text-muted mb-0">&copy; 2026 GhanaRide — Campus & Intercity Transport</p>
+    <footer class="text-center py-4 mt-auto border-top border-secondary" style="border-color: var(--border-color) !important; background-color: var(--card-bg);">
+        <div class="container d-flex flex-column flex-md-row justify-content-between align-items-center">
+            <p class="text-muted mb-0 small">&copy; 2026 GhanaRide — Campus & Intercity Transport</p>
+            <div class="d-flex gap-3 mt-3 mt-md-0">
+                <a th:href="@{/about}" class="text-decoration-none small text-muted">About</a>
+                <a th:href="@{/contact}" class="text-decoration-none small text-muted">Contact</a>
+            </div>
+        </div>
     </footer>
 
     <script th:src="@{/webjars/bootstrap/5.3.2/js/bootstrap.bundle.min.js}"></script>
+    
+    <!-- Theme Switcher Script -->
+    <script>
+        const themeToggleBtn = document.getElementById('themeToggleBtn');
+        const themeIcon = document.getElementById('themeIcon');
+        const body = document.body;
+
+        // Apply theme immediately on load
+        if (localStorage.getItem('theme') === 'light') {
+            body.classList.add('light-mode');
+            if (themeIcon) themeIcon.classList.replace('bi-moon-fill', 'bi-sun-fill');
+        }
+
+        if (themeToggleBtn) {
+            themeToggleBtn.addEventListener('click', () => {
+                if (body.classList.contains('light-mode')) {
+                    body.classList.remove('light-mode');
+                    localStorage.setItem('theme', 'dark');
+                    if (themeIcon) themeIcon.classList.replace('bi-sun-fill', 'bi-moon-fill');
+                } else {
+                    body.classList.add('light-mode');
+                    localStorage.setItem('theme', 'light');
+                    if (themeIcon) themeIcon.classList.replace('bi-moon-fill', 'bi-sun-fill');
+                }
+            });
+        }
+    </script>
 </body>
 </html>

@@ -76,9 +76,11 @@ public class DriverController {
                           @RequestParam(required = false) MultipartFile carImage,
                           @RequestParam String fromLocation,
                           @RequestParam String toLocation,
+                          @RequestParam(required = false) String pickupStation,
                           @RequestParam String departureTime,
                           @RequestParam BigDecimal tripAmount,
                           @RequestParam Integer totalSeats,
+                          @RequestParam(required = false) String description,
                           Principal principal,
                           RedirectAttributes redirectAttributes) {
 
@@ -121,10 +123,12 @@ public class DriverController {
         trip.setDriver(currentUser);
         trip.setFromLocation(fromLocation);
         trip.setToLocation(toLocation);
+        trip.setPickupStation(pickupStation);
         trip.setDepartureTime(LocalDateTime.parse(departureTime));
         trip.setTripAmount(tripAmount);
         trip.setTotalSeats(totalSeats);
         trip.setAvailableSeats(totalSeats);
+        trip.setDescription(description);
         trip.setStatus(TripStatus.PENDING);
 
         tripService.saveTrip(trip);

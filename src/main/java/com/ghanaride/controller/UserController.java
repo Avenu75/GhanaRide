@@ -33,6 +33,11 @@ public class UserController {
             "Sunyani", "Ho", "Koforidua", "Tema", "Winneba"
     );
 
+    @GetMapping("/")
+    public String landing() {
+        return "landing";
+    }
+
     @GetMapping("/dashboard")
     public String dashboard(Principal principal, Model model) {
         User currentUser = userService.getCurrentUser(principal);
@@ -69,7 +74,7 @@ public class UserController {
         User currentUser = userService.getCurrentUser(principal);
         try {
             Booking booking = bookingService.createBooking(currentUser, tripOpt.get());
-            return "redirect:/booking/receipt/" + booking.getId();
+            return "redirect:/payment/" + booking.getId();
         } catch (Exception e) {
             return "redirect:/dashboard?error=" + e.getMessage();
         }
