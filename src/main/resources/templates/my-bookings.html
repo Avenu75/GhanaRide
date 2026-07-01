@@ -157,8 +157,8 @@
                                     <i class="bi bi-credit-card"></i> Pay
                                 </a>
 
-                                <!-- Cancel Button (only within 3 minutes and CONFIRMED) -->
-                                <div th:if="${booking.status.name() == 'CONFIRMED'}">
+                                <!-- Cancel Button (only within 3 minutes) -->
+                                <div th:if="${booking.status.name() != 'CANCELLED' and booking.status.name() != 'EXPIRED'}">
                                     <div th:with="canCancel=${booking.bookingDate != null and #temporals.createNow().isBefore(booking.bookingDate.plusMinutes(3))}">
 
                                         <button th:if="${canCancel}"
