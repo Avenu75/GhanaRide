@@ -28,10 +28,13 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/about", "/contact", "/payment/**",
+                        .requestMatchers(
+                                "/", "/about", "/contact", "/payment/**",
                                 "/login", "/register", "/forgot-password", "/reset-password",
+                                "/verify-email", "/resend-verification",
                                 "/css/**", "/js/**", "/images/**", "/uploads/**",
-                                "/error", "/webjars/**").permitAll()
+                                "/error", "/webjars/**"
+                        ).permitAll()
                         .requestMatchers("/dashboard", "/booking/**", "/my-bookings/**").hasRole("USER")
                         .requestMatchers("/driver/**").hasRole("DRIVER")
                         .requestMatchers("/company/**").hasRole("COMPANY")

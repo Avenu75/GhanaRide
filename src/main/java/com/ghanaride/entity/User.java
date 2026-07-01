@@ -60,4 +60,7 @@ public class User {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
     }
+
+    @Column(name = "email_verified")
+    private boolean emailVerified = false;
 }

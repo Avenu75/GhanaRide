@@ -35,6 +35,12 @@ public class CustomAuthenticationFailureHandler implements AuthenticationFailure
                 return;
             }
 
+            // Check if account is unverified
+            if (exception instanceof org.springframework.security.authentication.DisabledException) {
+                response.sendRedirect("/login?unverified=true");
+                return;
+            }
+
             // Show remaining attempts warning
             int remaining = loginAttemptService.getRemainingAttempts(username);
             if (remaining <= 2) {
