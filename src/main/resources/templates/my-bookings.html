@@ -243,6 +243,9 @@
 
     <script>
         let bookingIdToCancel = null;
+        
+        // Move modal to body to avoid z-index/transform issues from animations
+        document.body.appendChild(document.getElementById('cancelBookingModal'));
 
         function confirmCancelBooking(btn) {
             bookingIdToCancel = btn.getAttribute('data-id');
