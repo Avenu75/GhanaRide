@@ -9,13 +9,19 @@
     <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.2/css/bootstrap.min.css}">
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap-icons/1.11.1/font/bootstrap-icons.css}">
+    
+    <!-- PWA Setup -->
+    <link rel="manifest" th:href="@{/manifest.json}">
+    <meta name="theme-color" content="#0F9D58">
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}">
+    <link rel="apple-touch-icon" th:href="@{/images/apple-touch-icon.svg}">
 </head>
 <body>
     <!-- Navigation Bar -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
-            <a class="navbar-brand" th:href="@{/}"><i class="bi bi-bus-front"></i> GhanaRide</a>
+            <a class="navbar-brand" th:href="@{/}"><img th:src="@{/images/logo.svg}" alt="G"> GhanaRide</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -60,6 +66,10 @@
                 <div class="d-flex align-items-center gap-2">
                     <button class="btn btn-outline-secondary btn-sm me-2" id="themeToggleBtn" aria-label="Toggle Theme">
                         <i class="bi bi-moon-fill" id="themeIcon"></i>
+                    </button>
+                    
+                    <button id="pwa-install-btn" class="me-2" aria-label="Install App">
+                        <i class="bi bi-download"></i> Install App
                     </button>
                     
                     <!-- Guest links -->
@@ -136,6 +146,60 @@
                 }
             });
         }
+    </script>
+    
+    <!-- PWA Registration & Install Script -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                    })
+                    .catch(err => {
+                        console.log('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
+
+        let deferredPrompt;
+        const installBtn = document.getElementById('pwa-install-btn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Prevent Chrome 67 and earlier from automatically showing the prompt
+            e.preventDefault();
+            // Stash the event so it can be triggered later.
+            deferredPrompt = e;
+            // Update UI to notify the user they can add to home screen
+            if (installBtn) {
+                installBtn.classList.add('visible');
+            }
+        });
+
+        if (installBtn) {
+            installBtn.addEventListener('click', (e) => {
+                // hide our user interface that shows our A2HS button
+                installBtn.classList.remove('visible');
+                // Show the prompt
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    // Wait for the user to respond to the prompt
+                    deferredPrompt.userChoice.then((choiceResult) => {
+                        if (choiceResult.outcome === 'accepted') {
+                            console.log('User accepted the A2HS prompt');
+                        } else {
+                            console.log('User dismissed the A2HS prompt');
+                        }
+                        deferredPrompt = null;
+                    });
+                }
+            });
+        }
+
+        window.addEventListener('appinstalled', (evt) => {
+            // Log install to analytics
+            console.log('INSTALL: Success');
+        });
     </script>
 </body>
 </html>

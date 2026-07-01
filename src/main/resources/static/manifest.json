@@ -1,0 +1,43 @@
+{
+  "name": "Ghanaride",
+  "short_name": "Ghanaride",
+  "description": "Book rides across Ghana — campus and intercity transport at your fingertips",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#0F9D58",
+  "background_color": "#0f0f1a",
+  "lang": "en",
+  "categories": ["travel", "transportation"],
+  "icons": [
+    {
+      "src": "/images/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/images/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/images/apple-touch-icon.svg",
+      "sizes": "180x180",
+      "type": "image/svg+xml"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Book a Ride",
+      "url": "/dashboard",
+      "description": "Browse available trips"
+    },
+    {
+      "name": "My Bookings",
+      "url": "/my-bookings",
+      "description": "View your bookings"
+    }
+  ]
+}

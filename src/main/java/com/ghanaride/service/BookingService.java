@@ -89,13 +89,23 @@ public class BookingService {
         return bookingRepository.count();
     }
 
-    // ===== CAN USER CANCEL? (within 2 minutes of booking) =====
+    // ===== CAN USER CANCEL? (within 3 minutes of booking) =====
     public boolean canCancelBooking(Booking booking) {
         if (booking.getStatus() == BookingStatus.CANCELLED) return false;
         if (booking.getBookingDate() == null) return false;
         return LocalDateTime.now().isBefore(
-                booking.getBookingDate().plusMinutes(2)
+                booking.getBookingDate().plusMinutes(3)
         );
+    }
+
+    /**
+     * Returns seconds remaining in the cancellation window, or 0 if expired.
+     */
+    public long secondsUntilCancelDeadline(Booking booking) {
+        if (booking.getBookingDate() == null) return 0;
+        java.time.LocalDateTime deadline = booking.getBookingDate().plusMinutes(3);
+        long secs = java.time.Duration.between(LocalDateTime.now(), deadline).getSeconds();
+        return Math.max(0, secs);
     }
 
     // ===== CANCEL BOOKING =====
@@ -106,7 +116,7 @@ public class BookingService {
 
         if (!canCancelBooking(booking)) {
             throw new RuntimeException(
-                    "Cancellation window has expired. You can only cancel within 2 minutes of booking.");
+                    "Cancellation window has expired. You can only cancel within 3 minutes of booking.");
         }
 
         booking.setStatus(BookingStatus.CANCELLED);

@@ -32,13 +32,19 @@ public class UserService {
     public User registerUser(User user, String companyName, String companyEmail,
                              String companyPhone, String companyLocation,
                              String companyDescription, String registrationNumber) {
+
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
-        if ("company".equals(user.getAccountType())) {
+        // Email verification is disabled — all users can log in immediately.
+        user.setEmailVerified(true);
+
+        String accountType = user.getAccountType();
+
+        if ("company".equalsIgnoreCase(accountType)) {
             user.setRole(Role.COMPANY);
-        } else if ("driver".equals(user.getAccountType())) {
+        } else if ("driver".equalsIgnoreCase(accountType)) {
             user.setRole(Role.DRIVER);
-        } else if ("passenger".equals(user.getAccountType())) {
+        } else if ("passenger".equalsIgnoreCase(accountType)) {
             user.setRole(Role.USER);
         } else {
             user.setRole(Role.USER);
@@ -46,7 +52,7 @@ public class UserService {
 
         User savedUser = userRepository.save(user);
 
-        if ("company".equals(user.getAccountType())) {
+        if ("company".equalsIgnoreCase(accountType)) {
             com.ghanaride.entity.Company company = new com.ghanaride.entity.Company();
             company.setUser(savedUser);
             company.setCompanyName(companyName);
@@ -59,6 +65,31 @@ public class UserService {
         }
 
         return savedUser;
+    }
+
+    /**
+     * Used by OAuth2 flow — registers a user who authenticated via Google.
+     * Their email is already verified by Google, so we set emailVerified=true.
+     */
+    @Transactional
+    public User registerOAuthUser(String email, String fullName, String googleId) {
+        User user = new User();
+        user.setEmail(email);
+        user.setFullName(fullName);
+        // Use email prefix as username, ensure uniqueness
+        String baseUsername = email.split("@")[0].replaceAll("[^a-zA-Z0-9_]", "");
+        String username = baseUsername;
+        int suffix = 1;
+        while (userRepository.existsByUsername(username)) {
+            username = baseUsername + suffix++;
+        }
+        user.setUsername(username);
+        // Random secure password — OAuth users log in via Google, not password
+        user.setPassword(passwordEncoder.encode(java.util.UUID.randomUUID().toString()));
+        user.setEmailVerified(true); // Google already verified
+        user.setRole(Role.USER);
+        user.setAccountType("passenger");
+        return userRepository.save(user);
     }
 
     public Optional<User> findByUsername(String username) {
@@ -97,7 +128,8 @@ public class UserService {
         if (principal == null) {
             throw new RuntimeException("No authenticated user");
         }
-        return userRepository.findByUsername(principal.getName())
+
+        return userRepository.findByUsernameOrEmail(principal.getName(), principal.getName())
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
@@ -115,7 +147,7 @@ public class UserService {
         // 1. Delete bookings made BY this user as a passenger
         bookingRepository.deleteByUserId(userId);
 
-        // 2. Get all trips created by this user (if driver)
+        // 2. Get all trips created by this user if driver
         List<Trip> userTrips = tripRepository.findByDriverId(userId);
 
         // 3. Delete bookings for each of those trips

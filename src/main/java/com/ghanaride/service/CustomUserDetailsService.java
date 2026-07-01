@@ -20,17 +20,14 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByUsername(username)
+
+        User user = userRepository.findByUsernameOrEmail(username, username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
 
-        // Block unverified users from logging in
-        if (!user.isEmailVerified()) {
-            throw new DisabledException("Email not verified. Please check your inbox.");
-        }
-
-        return new org.springframework.security.core.userdetails.User(
+        return new com.ghanaride.security.CustomUserDetails(
                 user.getUsername(),
                 user.getPassword(),
+                user.isEmailVerified(),
                 Collections.singletonList(
                         new SimpleGrantedAuthority("ROLE_" + user.getRole().name())
                 )

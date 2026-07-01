@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline - GhanaRide</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0f0f1a;
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2rem;
+        }
+        .container { max-width: 400px; }
+        .logo { margin-bottom: 2rem; }
+        .icon {
+            width: 80px; height: 80px;
+            background: #0F9D58;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 2rem;
+        }
+        h1 { font-size: 1.75rem; margin-bottom: 0.75rem; color: #fff; }
+        p { color: #8888aa; line-height: 1.6; margin-bottom: 1.5rem; }
+        .btn {
+            display: inline-block;
+            background: #0F9D58;
+            color: white;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            border: none; cursor: pointer; font-size: 1rem;
+        }
+        .btn:hover { background: #0d8a4d; }
+        .badge {
+            display: inline-block;
+            background: rgba(252, 209, 22, 0.15);
+            color: #FCD116;
+            border: 1px solid rgba(252, 209, 22, 0.3);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-bottom: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">🚌</div>
+        <span class="badge">No Connection</span>
+        <h1>You're Offline</h1>
+        <p>GhanaRide needs an internet connection to show available trips. Please check your connection and try again.</p>
+        <button class="btn" onclick="window.location.reload()">Try Again</button>
+    </div>
+</body>
+</html>

@@ -171,6 +171,13 @@
                         <td>
                             <div class="d-flex gap-1 flex-wrap">
 
+                                <!-- View Passengers -->
+                                <a th:href="@{/driver/trips/{id}/passengers(id=${trip.id})}"
+                                   class="btn btn-sm btn-info text-light"
+                                   title="View Passengers">
+                                    <i class="bi bi-people-fill"></i>
+                                </a>
+
                                 <!-- Mark as Full (only for APPROVED trips) -->
                                 <form th:if="${trip.status.name() == 'APPROVED'}"
                                       th:action="@{/driver/trips/{id}/full(id=${trip.id})}"

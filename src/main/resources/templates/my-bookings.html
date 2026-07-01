@@ -92,7 +92,7 @@
                         <!-- Seat -->
                         <td>
                             <span class="badge rounded-pill"
-                                  style="background: rgba(13, 110, 253, 0.1); color: var(--primary-blue);"
+                                  style=""
                                   th:text="'Seat ' + ${booking.seatNumber}">Seat</span>
                         </td>
 
@@ -157,19 +157,19 @@
                                     <i class="bi bi-credit-card"></i> Pay
                                 </a>
 
-                                <!-- Cancel Button (only within 2 minutes and CONFIRMED) -->
+                                <!-- Cancel Button (only within 3 minutes and CONFIRMED) -->
                                 <div th:if="${booking.status.name() == 'CONFIRMED'}">
-                                    <!-- Check if booking is within 2 minute window -->
-                                    <div th:with="canCancel=${booking.bookingDate != null AND #temporals.createNow().isBefore(booking.bookingDate.plusMinutes(2))}">
+                                    <div th:with="canCancel=${booking.bookingDate != null and #temporals.createNow().isBefore(booking.bookingDate.plusMinutes(3))}">
 
                                         <button th:if="${canCancel}"
                                                 type="button"
-                                                class="btn btn-sm btn-danger"
-                                                title="Cancel Booking (within 2 min window)"
+                                                class="btn btn-sm btn-danger cancel-timer-btn"
+                                                title="Cancel Booking"
                                                 th:data-id="${booking.id}"
                                                 th:data-ref="${booking.bookingReference}"
+                                                th:data-expiry="${booking.bookingDate.plusMinutes(3)}"
                                                 onclick="confirmCancelBooking(this)">
-                                            <i class="bi bi-x-circle"></i>
+                                            <i class="bi bi-x-circle"></i> <span class="cancel-timer-text">Cancel</span>
                                         </button>
 
                                         <span th:if="${!canCancel}"
@@ -203,7 +203,7 @@
             <span class="text-light fw-bold" th:text="${#lists.size(bookings)}">0</span>
             <span class="text-muted small ms-3">
                 <i class="bi bi-info-circle me-1"></i>
-                Bookings can only be cancelled within 2 minutes of booking.
+                Bookings can only be cancelled within 3 minutes of booking.
             </span>
         </div>
     </div>
@@ -255,6 +255,36 @@
                 document.getElementById('cancelForm-' + bookingIdToCancel).submit();
             }
         });
+
+        // Countdown timer for cancel buttons
+        function updateCancelTimers() {
+            const buttons = document.querySelectorAll('.cancel-timer-btn');
+            buttons.forEach(btn => {
+                const expiryStr = btn.getAttribute('data-expiry');
+                if (!expiryStr) return;
+                
+                // Ensure date string is parsed correctly across browsers
+                const expiryDate = new Date(expiryStr.replace('T', ' '));
+                const now = new Date();
+                const diffMs = expiryDate - now;
+                
+                const textSpan = btn.querySelector('.cancel-timer-text');
+                
+                if (diffMs <= 0) {
+                    btn.disabled = true;
+                    if (textSpan) textSpan.textContent = "Locked";
+                    btn.classList.remove('btn-danger');
+                    btn.classList.add('btn-secondary');
+                } else {
+                    const mins = Math.floor(diffMs / 60000);
+                    const secs = Math.floor((diffMs % 60000) / 1000);
+                    if (textSpan) textSpan.textContent = `Cancel (${mins}:${secs.toString().padStart(2, '0')})`;
+                }
+            });
+        }
+        
+        setInterval(updateCancelTimers, 1000);
+        updateCancelTimers();
     </script>
 
 </main>

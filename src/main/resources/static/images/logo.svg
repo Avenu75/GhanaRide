@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="95" fill="#0F9D58"/>
+  <!-- G letter shape -->
+  <path d="M140 88 H104 V108 H124 C120 124 110 134 96 134 C76 134 60 118 60 98 C60 78 76 62 96 62 C106 62 115 66 121 73 L137 57 C127 48 112 42 96 42 C64 42 38 68 38 100 C38 132 64 158 96 158 C128 158 154 132 154 100 C154 96 153 92 152 88 Z" fill="white"/>
+  <!-- Location pin dot -->
+  <circle cx="148" cy="62" r="16" fill="#FCD116"/>
+  <path d="M148 82 L138 62 L158 62 Z" fill="#FCD116"/>
+</svg>

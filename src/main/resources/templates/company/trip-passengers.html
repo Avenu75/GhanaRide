@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html th:replace="~{layout :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Trip Passengers - GhanaRide</title>
+</head>
+<body>
+<main th:fragment="main">
+
+    <!-- Back Button + Header -->
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <a th:href="@{/company/dashboard}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i>Back
+        </a>
+        <div>
+            <h2 class="text-light fw-bold mb-1">
+                <i class="bi bi-people-fill text-warning me-2"></i>Passengers
+            </h2>
+            <p class="text-muted mb-0">
+                <i class="bi bi-geo-alt text-warning me-1"></i>
+                <span th:text="${trip.fromLocation}">From</span>
+                <i class="bi bi-arrow-right mx-1 text-muted"></i>
+                <span th:text="${trip.toLocation}">To</span>
+                &nbsp;&bull;&nbsp;
+                <span th:text="${#temporals.format(trip.departureTime, 'dd MMM yyyy, h:mm a')}">Date</span>
+            </p>
+        </div>
+    </div>
+
+    <!-- Trip Summary Card -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card border" style="border-left: 3px solid #3b82f6 !important;">
+                <i class="bi bi-people stat-icon text-info"></i>
+                <h6 class="text-muted text-uppercase mb-2">Total Booked</h6>
+                <div class="stat-value text-light" th:text="${#lists.size(bookings)}">0</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card border" style="border-left: 3px solid #00c853 !important;">
+                <i class="bi bi-check-circle stat-icon text-success"></i>
+                <h6 class="text-muted text-uppercase mb-2">Confirmed</h6>
+                <div class="stat-value text-success"
+                     th:text="${#lists.size(bookings.?[status.name() == 'CONFIRMED' or status.name() == 'ACTIVE' or status.name() == 'PAID'])}">0</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card border" style="border-left: 3px solid #fcd116 !important;">
+                <i class="bi bi-clock stat-icon text-warning"></i>
+                <h6 class="text-muted text-uppercase mb-2">Pending Pay</h6>
+                <div class="stat-value text-warning"
+                     th:text="${#lists.size(bookings.?[paymentStatus != null and paymentStatus.name() == 'PENDING'])}">0</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card border" style="border-left: 3px solid #ce1126 !important;">
+                <i class="bi bi-x-circle stat-icon text-danger"></i>
+                <h6 class="text-muted text-uppercase mb-2">Cancelled</h6>
+                <div class="stat-value text-danger"
+                     th:text="${#lists.size(bookings.?[status.name() == 'CANCELLED'])}">0</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Empty State -->
+    <div th:if="${#lists.isEmpty(bookings)}" class="text-center py-5">
+        <i class="bi bi-people display-3 text-muted d-block mb-3"></i>
+        <h4 class="text-muted">No Passengers Yet</h4>
+        <p class="text-muted">No one has booked this trip yet.</p>
+        <a th:href="@{/company/dashboard}" class="btn btn-outline-warning mt-2">Back to Dashboard</a>
+    </div>
+
+    <!-- Passengers Table -->
+    <div th:if="${not #lists.isEmpty(bookings)}" class="card border-0 shadow" style="background: var(--card-bg);">
+        <div class="card-header border-0 px-4 py-3" style="background: rgba(252,209,22,0.08);">
+            <h5 class="text-warning mb-0">
+                <i class="bi bi-list-ul me-2"></i>Passenger List
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead style="background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <tr>
+                        <th class="text-warning py-3 ps-4">#</th>
+                        <th class="text-warning py-3">Passenger</th>
+                        <th class="text-warning py-3">Contact</th>
+                        <th class="text-warning py-3">Booking For</th>
+                        <th class="text-warning py-3">Seat</th>
+                        <th class="text-warning py-3">Booking Status</th>
+                        <th class="text-warning py-3">Payment</th>
+                        <th class="text-warning py-3">Booked At</th>
+                        <th class="text-warning py-3">Reference</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="booking, stat : ${bookings}"
+                        style="border-bottom: 1px solid rgba(255,255,255,0.05);"
+                        th:classappend="${booking.status.name() == 'CANCELLED'} ? 'opacity-50' : ''">
+
+                        <!-- # -->
+                        <td class="ps-4 text-muted small" th:text="${stat.count}">1</td>
+
+                        <!-- Passenger Name -->
+                        <td>
+                            <div th:if="${booking.bookingType != null and booking.bookingType.name() == 'RELATIVE'}">
+                                <div class="text-light fw-bold" th:text="${booking.passengerName}">Name</div>
+                                <div class="small text-info">
+                                    <i class="bi bi-person-plus me-1"></i>Booked by <span th:text="${booking.user.fullName}">Booker</span>
+                                </div>
+                            </div>
+                            <div th:if="${booking.bookingType == null or booking.bookingType.name() != 'RELATIVE'}">
+                                <div class="text-light fw-bold" th:text="${booking.user.fullName}">Name</div>
+                                <div class="small text-muted">
+                                    <i class="bi bi-person-check me-1"></i>Travelling themselves
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Contact -->
+                        <td>
+                            <div th:if="${booking.bookingType != null and booking.bookingType.name() == 'RELATIVE'}">
+                                <div class="small text-light" th:text="${booking.passengerPhone}">Phone</div>
+                                <div class="small text-muted">
+                                    <i class="bi bi-envelope me-1"></i><span th:text="${booking.user.email}">email</span>
+                                </div>
+                            </div>
+                            <div th:if="${booking.bookingType == null or booking.bookingType.name() != 'RELATIVE'}">
+                                <div class="small text-light" th:text="${booking.user.phoneNumber != null ? booking.user.phoneNumber : '—'}">Phone</div>
+                                <div class="small text-muted">
+                                    <i class="bi bi-envelope me-1"></i><span th:text="${booking.user.email}">email</span>
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Booking For -->
+                        <td>
+                            <span th:if="${booking.bookingType != null and booking.bookingType.name() == 'RELATIVE'}"
+                                  class="badge rounded-pill"
+                                  style="background: rgba(59,130,246,0.2); color: #60a5fa; border: 1px solid #3b82f6;">
+                                <i class="bi bi-person-plus me-1"></i>Someone Else
+                            </span>
+                            <span th:if="${booking.bookingType == null or booking.bookingType.name() != 'RELATIVE'}"
+                                  class="badge rounded-pill"
+                                  style="background: rgba(100,116,139,0.2); color: #94a3b8; border: 1px solid #475569;">
+                                <i class="bi bi-person me-1"></i>Themselves
+                            </span>
+                        </td>
+
+                        <!-- Seat -->
+                        <td>
+                            <span class="badge bg-dark border border-secondary text-warning fw-bold px-2">
+                                #<span th:text="${booking.seatNumber}">1</span>
+                            </span>
+                        </td>
+
+                        <!-- Booking Status -->
+                        <td>
+                            <span th:if="${booking.status.name() == 'ACTIVE' or booking.status.name() == 'CONFIRMED'}"
+                                  class="badge rounded-pill"
+                                  style="background: rgba(59,130,246,0.2); color: #60a5fa; border: 1px solid #3b82f6;">
+                                <i class="bi bi-check me-1"></i>Confirmed
+                            </span>
+                            <span th:if="${booking.status.name() == 'PAID'}"
+                                  class="badge rounded-pill"
+                                  style="background: rgba(0,200,83,0.2); color: #00c853; border: 1px solid #00c853;">
+                                <i class="bi bi-check-circle me-1"></i>Paid
+                            </span>
+                            <span th:if="${booking.status.name() == 'CANCELLED'}"
+                                  class="badge rounded-pill"
+                                  style="background: rgba(206,17,38,0.2); color: #ff5252; border: 1px solid #ce1126;">
+                                <i class="bi bi-x me-1"></i>Cancelled
+                            </span>
+                            <span th:if="${booking.status.name() == 'EXPIRED'}"
+                                  class="badge rounded-pill bg-secondary">
+                                <i class="bi bi-clock-history me-1"></i>Expired
+                            </span>
+                        </td>
+
+                        <!-- Payment Status -->
+                        <td>
+                            <span th:if="${booking.paymentStatus == null or booking.paymentStatus.name() == 'PENDING'}"
+                                  class="badge rounded-pill"
+                                  style="background: rgba(252,209,22,0.15); color: #fcd116; border: 1px solid #fcd116; font-size: 0.7rem;">
+                                <i class="bi bi-clock me-1"></i>Pay at pickup
+                            </span>
+                            <span th:if="${booking.paymentStatus != null and booking.paymentStatus.name() == 'PAID'}"
+                                  class="badge rounded-pill bg-success">
+                                <i class="bi bi-check-circle me-1"></i>Paid
+                            </span>
+                        </td>
+
+                        <!-- Booked At -->
+                        <td class="small text-muted"
+                            th:text="${booking.bookingDate != null ? #temporals.format(booking.bookingDate, 'dd MMM, h:mm a') : '—'}">
+                        </td>
+
+                        <!-- Reference -->
+                        <td>
+                            <span class="font-monospace text-warning small"
+                                  th:text="${booking.bookingReference}">REF</span>
+                        </td>
+
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer border-0 px-4 py-3" style="background: rgba(255,255,255,0.02);">
+            <span class="text-muted small">
+                <i class="bi bi-info-circle me-1"></i>
+                Showing <strong class="text-light" th:text="${#lists.size(bookings)}">0</strong> bookings
+                for this trip. Seat numbers are assigned in booking order.
+            </span>
+        </div>
+    </div>
+
+</main>
+</body>
+</html>

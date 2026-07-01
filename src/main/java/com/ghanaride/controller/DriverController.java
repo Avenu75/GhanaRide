@@ -193,4 +193,25 @@ public class DriverController {
         }
         return "redirect:/driver/dashboard";
     }
+
+    // ===== VIEW PASSENGERS WHO BOOKED A TRIP =====
+    @GetMapping("/trips/{tripId}/passengers")
+    public String viewPassengers(@PathVariable Long tripId,
+                                 Principal principal,
+                                 Model model) {
+        User currentUser = userService.getCurrentUser(principal);
+        Optional<Trip> tripOpt = tripService.findById(tripId);
+
+        if (tripOpt.isEmpty() || !tripOpt.get().getDriver().getId().equals(currentUser.getId())) {
+            return "redirect:/driver/dashboard?error=not_found";
+        }
+
+        Trip trip = tripOpt.get();
+        List<Booking> bookings = bookingService.findByTripId(tripId);
+
+        model.addAttribute("currentUser", currentUser);
+        model.addAttribute("trip", trip);
+        model.addAttribute("bookings", bookings);
+        return "driver/trip-passengers";
+    }
 }

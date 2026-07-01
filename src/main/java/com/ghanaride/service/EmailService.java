@@ -1,6 +1,8 @@
 package com.ghanaride.service;
 
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -13,6 +15,8 @@ import jakarta.mail.internet.MimeMessage;
 @RequiredArgsConstructor
 public class EmailService {
 
+    private static final Logger log = LoggerFactory.getLogger(EmailService.class);
+
     private final JavaMailSender mailSender;
 
     @Value("${app.base-url}")
@@ -21,7 +25,14 @@ public class EmailService {
     @Value("${spring.mail.username}")
     private String fromEmail;
 
-    public void sendVerificationEmail(String toEmail, String fullName, String token) {
+    /**
+     * Sends the email verification link.
+     * Catches all exceptions internally and logs them — never throws —
+     * so a mail failure never rolls back the user/token transaction.
+     *
+     * @return true if sent successfully, false on failure
+     */
+    public boolean sendVerificationEmail(String toEmail, String fullName, String token) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
@@ -66,7 +77,7 @@ public class EmailService {
                                 <a href="%s" class="btn">✅ Verify My Email</a>
                             </div>
                             <div class="note">
-                                <p>⏰ This link expires in <strong>24 hours</strong>.</p>
+                                <p>⏰ This link expires in <strong>24 hours</strong>. If it expires, you can request a new one from the login page.</p>
                             </div>
                             <p>If you didn't create a GhanaRide account, you can safely ignore this email.</p>
                             <p>If the button doesn't work, copy and paste this link into your browser:</p>
@@ -83,9 +94,16 @@ public class EmailService {
 
             helper.setText(html, true);
             mailSender.send(message);
+            log.info("Verification email sent successfully to {}", toEmail);
+            return true;
 
         } catch (MessagingException e) {
-            throw new RuntimeException("Failed to send verification email: " + e.getMessage());
+            // Log clearly but do NOT throw — email failure must not roll back user/token data
+            log.error("MAIL FAILURE: Could not send verification email to {}. Cause: {}", toEmail, e.getMessage());
+            return false;
+        } catch (Exception e) {
+            log.error("MAIL FAILURE: Unexpected error sending verification email to {}. Cause: {}", toEmail, e.getMessage());
+            return false;
         }
     }
 
@@ -137,9 +155,9 @@ public class EmailService {
             helper.setText(html, true);
             mailSender.send(message);
 
-        } catch (MessagingException e) {
-            // Don't throw — welcome email is not critical
-            System.err.println("Failed to send welcome email: " + e.getMessage());
+        } catch (Exception e) {
+            // Welcome email is not critical — log and continue
+            log.warn("Could not send welcome email to {}: {}", toEmail, e.getMessage());
         }
     }
 }

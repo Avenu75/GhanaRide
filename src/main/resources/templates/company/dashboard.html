@@ -83,6 +83,7 @@
                                 <th>Vehicle</th>
                                 <th>Seats</th>
                                 <th>Status</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -107,9 +108,16 @@
                                     <span th:if="${trip.status.name() == 'COMPLETED'}" class="badge bg-secondary">Completed</span>
                                     <span th:if="${trip.status.name() == 'FULL'}" class="badge bg-info text-dark">Full</span>
                                 </td>
+                                <td>
+                                    <a th:href="@{/company/trips/{id}/passengers(id=${trip.id})}"
+                                       class="btn btn-sm btn-info text-light"
+                                       title="View Passengers">
+                                        <i class="bi bi-people-fill"></i>
+                                    </a>
+                                </td>
                             </tr>
                             <tr th:if="${#lists.isEmpty(recentTrips)}">
-                                <td colspan="5" class="text-center py-4 text-muted">No trips found. Create your first trip!</td>
+                                <td colspan="6" class="text-center py-4 text-muted">No trips found. Create your first trip!</td>
                             </tr>
                         </tbody>
                     </table>

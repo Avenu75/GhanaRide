@@ -134,4 +134,27 @@ public class CompanyController {
         redirectAttributes.addFlashAttribute("success", "Trip created successfully and is pending approval.");
         return "redirect:/company/dashboard";
     }
+
+    // ===== VIEW PASSENGERS WHO BOOKED A COMPANY TRIP =====
+    @GetMapping("/trips/{tripId}/passengers")
+    public String viewPassengers(@PathVariable Long tripId,
+                                 Principal principal,
+                                 Model model) {
+        Company company = getCompanyForCurrentUser(principal);
+
+        java.util.Optional<Trip> tripOpt = tripService.findById(tripId);
+        if (tripOpt.isEmpty() ||
+                (tripOpt.get().getCompany() == null ||
+                 !tripOpt.get().getCompany().getId().equals(company.getId()))) {
+            return "redirect:/company/dashboard?error=not_found";
+        }
+
+        Trip trip = tripOpt.get();
+        java.util.List<com.ghanaride.entity.Booking> bookings = bookingService.findByTripId(tripId);
+
+        model.addAttribute("company", company);
+        model.addAttribute("trip", trip);
+        model.addAttribute("bookings", bookings);
+        return "company/trip-passengers";
+    }
 }
