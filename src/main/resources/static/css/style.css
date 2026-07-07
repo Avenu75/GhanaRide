@@ -2,8 +2,10 @@
 
 /* ===================================================
    CSS CUSTOM PROPERTIES (Design Tokens)
+   Dark Mode (Default)
    =================================================== */
-:root {
+:root,
+[data-bs-theme="dark"] {
     --bg-color: #0c0c18;
     --bg-secondary: #111124;
     --card-bg: #16162a;
@@ -50,12 +52,17 @@
     --transition-fast: 0.15s ease;
     --transition-base: 0.25s ease;
     --transition-slow: 0.4s ease;
+
+    /* Navbar */
+    --navbar-bg: rgba(16, 16, 36, 0.97);
+    --navbar-border: rgba(255, 255, 255, 0.06);
 }
 
 /* ===================================================
    LIGHT MODE
    =================================================== */
-body.light-mode {
+[data-bs-theme="light"],
+.light-mode {
     --bg-color: #f0f4f8;
     --bg-secondary: #e8edf5;
     --card-bg: #ffffff;
@@ -68,13 +75,16 @@ body.light-mode {
     --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
     --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
     --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.12);
+
+    /* Navbar */
+    --navbar-bg: rgba(255, 255, 255, 0.97);
+    --navbar-border: rgba(0, 0, 0, 0.07);
 }
 
 /* ===================================================
    BASE RESET & TYPOGRAPHY
    =================================================== */
 *, *::before, *::after { box-sizing: border-box; }
-
 html { scroll-behavior: smooth; }
 
 body {
@@ -99,22 +109,15 @@ a { transition: color var(--transition-fast); }
 /* ===================================================
    NAVBAR
    =================================================== */
-.navbar {
-    background-color: rgba(22, 22, 42, 0.95) !important;
+#mainNavbar {
+    background-color: var(--navbar-bg) !important;
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border-bottom: 1px solid var(--border-color);
-    box-shadow: 0 1px 0 var(--border-color), 0 4px 20px rgba(0,0,0,0.3);
+    border-bottom: 1px solid var(--navbar-border);
+    box-shadow: 0 1px 0 var(--navbar-border), 0 4px 20px rgba(0,0,0,0.2);
     padding: 0.6rem 0;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    transition: background-color var(--transition-base);
-}
-
-body.light-mode .navbar {
-    background-color: rgba(255, 255, 255, 0.96) !important;
-    box-shadow: 0 1px 0 var(--border-color), 0 4px 20px rgba(0,0,0,0.06);
+    z-index: 1030;
+    transition: background-color var(--transition-base), border-color var(--transition-base);
 }
 
 .navbar-brand {
@@ -130,6 +133,14 @@ body.light-mode .navbar {
 .navbar-brand:hover { transform: scale(1.02); }
 .navbar-brand img { width: 32px; height: 32px; }
 
+.navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255, 255, 255, 0.75)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+[data-bs-theme="light"] .navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(0,0,0,0.65)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
 .nav-link {
     color: var(--text-muted) !important;
     font-weight: 500;
@@ -138,15 +149,47 @@ body.light-mode .navbar {
     transition: all var(--transition-fast);
     font-size: 0.9rem;
 }
-.nav-link:hover {
+.nav-link:hover, .nav-link.active {
     color: var(--text-color) !important;
-    background: rgba(255,255,255,0.06);
+    background: rgba(255,255,255,0.07);
 }
-body.light-mode .nav-link:hover { background: rgba(0,0,0,0.04); }
-
+[data-bs-theme="light"] .nav-link:hover,
+[data-bs-theme="light"] .nav-link.active {
+    color: var(--text-color) !important;
+    background: rgba(0,0,0,0.05);
+}
 .nav-link.active {
     color: var(--ghana-green) !important;
-    background: var(--ghana-green-glow);
+    background: var(--ghana-green-glow) !important;
+}
+
+/* ===================================================
+   THEME TOGGLE BUTTON
+   =================================================== */
+#themeToggleBtn {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+    padding: 0.35rem 0.65rem;
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    line-height: 1;
+}
+#themeToggleBtn:hover {
+    background: rgba(255,255,255,0.12);
+    color: var(--ghana-gold);
+    border-color: var(--ghana-gold);
+    transform: rotate(15deg);
+}
+[data-bs-theme="light"] #themeToggleBtn {
+    background: rgba(0,0,0,0.05);
+    color: var(--text-muted);
+}
+[data-bs-theme="light"] #themeToggleBtn:hover {
+    background: rgba(252, 209, 22, 0.15);
+    color: var(--ghana-gold-dark);
+    border-color: var(--ghana-gold);
 }
 
 /* ===================================================
@@ -172,8 +215,6 @@ body.light-mode .nav-link:hover { background: rgba(0,0,0,0.04); }
 #pwa-install-btn:hover {
     transform: translateY(-1px);
     box-shadow: 0 8px 24px var(--ghana-green-glow);
-    background: linear-gradient(135deg, var(--ghana-green-light), var(--ghana-green));
-    color: white !important;
 }
 #pwa-install-btn.visible { display: flex; }
 
@@ -186,9 +227,9 @@ body.light-mode .nav-link:hover { background: rgba(0,0,0,0.04); }
    CARDS
    =================================================== */
 .card {
-    background-color: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
+    background-color: var(--card-bg) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: var(--radius-lg) !important;
     box-shadow: var(--shadow-md);
     transition: transform var(--transition-base), box-shadow var(--transition-base),
                 background-color var(--transition-base), border-color var(--transition-base);
@@ -196,7 +237,11 @@ body.light-mode .nav-link:hover { background: rgba(0,0,0,0.04); }
 .card:hover {
     transform: translateY(-3px);
     box-shadow: var(--shadow-lg);
-    border-color: var(--border-hover);
+    border-color: var(--border-hover) !important;
+}
+.card-header, .card-footer {
+    background-color: transparent !important;
+    border-color: var(--border-color) !important;
 }
 
 /* ===================================================
@@ -224,7 +269,6 @@ body.light-mode .nav-link:hover { background: rgba(0,0,0,0.04); }
     border-color: rgba(252, 209, 22, 0.2);
 }
 .trip-card .card-body { padding: 1.25rem 1.25rem 1.25rem 1.5rem; }
-
 .trip-price {
     color: var(--ghana-gold);
     font-weight: 800;
@@ -349,12 +393,12 @@ body.light-mode .nav-link:hover { background: rgba(0,0,0,0.04); }
     background: rgba(255,255,255,0.1) !important;
     transform: translateY(-1px);
 }
-body.light-mode .btn-outline-light {
+[data-bs-theme="light"] .btn-outline-light {
     color: var(--text-color) !important;
     border-color: var(--border-color) !important;
     background: rgba(0,0,0,0.03) !important;
 }
-body.light-mode .btn-outline-light:hover {
+[data-bs-theme="light"] .btn-outline-light:hover {
     background: rgba(0,0,0,0.07) !important;
 }
 
@@ -379,14 +423,14 @@ body.light-mode .btn-outline-light:hover {
     box-shadow: 0 0 0 3px rgba(15, 157, 88, 0.15);
 }
 
-body.light-mode .form-control,
-body.light-mode .form-select {
+[data-bs-theme="light"] .form-control,
+[data-bs-theme="light"] .form-select {
     background-color: #ffffff;
     border-color: #d1d5db;
     color: var(--text-color);
 }
-body.light-mode .form-control:focus,
-body.light-mode .form-select:focus {
+[data-bs-theme="light"] .form-control:focus,
+[data-bs-theme="light"] .form-select:focus {
     background-color: #ffffff;
     border-color: var(--ghana-green);
     color: var(--text-color);
@@ -398,7 +442,6 @@ body.light-mode .form-select:focus {
     font-weight: 500;
     margin-bottom: 0.35rem;
 }
-
 .form-control::placeholder { color: var(--text-dim); }
 
 /* ===================================================
@@ -427,14 +470,11 @@ body.light-mode .form-select:focus {
     padding: 1rem 0.75rem;
     border-bottom: 2px solid var(--border-color) !important;
 }
-.table-hover tbody tr {
-    transition: background-color var(--transition-fast);
-    cursor: pointer;
-}
+.table-hover tbody tr { transition: background-color var(--transition-fast); }
 .table-hover tbody tr:hover > * {
     background-color: rgba(255, 255, 255, 0.04) !important;
 }
-body.light-mode .table-hover tbody tr:hover > * {
+[data-bs-theme="light"] .table-hover tbody tr:hover > * {
     background-color: rgba(0, 0, 0, 0.02) !important;
 }
 
@@ -447,18 +487,17 @@ body.light-mode .table-hover tbody tr:hover > * {
     padding: 0.35em 0.75em;
     border-radius: var(--radius-pill);
 }
-
-.badge-pending, .badge.bg-warning {
+.badge.bg-warning {
     background-color: rgba(252, 209, 22, 0.15) !important;
     color: var(--ghana-gold) !important;
     border: 1px solid rgba(252, 209, 22, 0.3);
 }
-.badge-approved, .badge.bg-success {
+.badge.bg-success {
     background-color: rgba(15, 157, 88, 0.15) !important;
     color: var(--ghana-green) !important;
     border: 1px solid rgba(15, 157, 88, 0.3);
 }
-.badge-rejected, .badge.bg-danger {
+.badge.bg-danger {
     background-color: rgba(239, 68, 68, 0.15) !important;
     color: #f87171 !important;
     border: 1px solid rgba(239, 68, 68, 0.3);
@@ -473,13 +512,14 @@ body.light-mode .table-hover tbody tr:hover > * {
     color: var(--text-muted) !important;
     border: 1px solid var(--border-color);
 }
-
-body.light-mode .badge-approved, body.light-mode .badge.bg-success {
-    color: var(--ghana-green-dark) !important;
-}
-body.light-mode .badge-rejected, body.light-mode .badge.bg-danger {
+[data-bs-theme="light"] .badge.bg-success { color: var(--ghana-green-dark) !important; }
+[data-bs-theme="light"] .badge.bg-danger {
     color: #dc2626 !important;
     background-color: rgba(239, 68, 68, 0.1) !important;
+}
+[data-bs-theme="light"] .badge.bg-secondary {
+    background-color: rgba(0,0,0,0.06) !important;
+    color: var(--text-muted) !important;
 }
 
 /* ===================================================
@@ -495,7 +535,7 @@ body.light-mode .badge-rejected, body.light-mode .badge.bg-danger {
     border-color: rgba(15, 157, 88, 0.25);
     color: #4ade80;
 }
-body.light-mode .alert-success {
+[data-bs-theme="light"] .alert-success {
     background: rgba(15, 157, 88, 0.08);
     color: #065f46;
 }
@@ -504,7 +544,7 @@ body.light-mode .alert-success {
     border-color: rgba(239, 68, 68, 0.25);
     color: #f87171;
 }
-body.light-mode .alert-danger {
+[data-bs-theme="light"] .alert-danger {
     background: rgba(239, 68, 68, 0.08);
     color: #991b1b;
 }
@@ -513,7 +553,7 @@ body.light-mode .alert-danger {
     border-color: rgba(252, 209, 22, 0.25);
     color: var(--ghana-gold);
 }
-body.light-mode .alert-warning {
+[data-bs-theme="light"] .alert-warning {
     background: rgba(252, 209, 22, 0.08);
     color: #92400e;
 }
@@ -522,7 +562,7 @@ body.light-mode .alert-warning {
     border-color: rgba(59, 130, 246, 0.25);
     color: #60a5fa;
 }
-body.light-mode .alert-info {
+[data-bs-theme="light"] .alert-info {
     background: rgba(59, 130, 246, 0.07);
     color: #1e40af;
 }
@@ -559,6 +599,7 @@ body.light-mode .alert-info {
     font-weight: 800;
     font-family: 'Outfit', sans-serif;
     line-height: 1;
+    color: var(--text-color);
 }
 .stat-label {
     font-size: 0.8rem;
@@ -578,6 +619,9 @@ body.light-mode .alert-info {
 .text-warning { color: var(--ghana-gold) !important; }
 .text-success { color: var(--ghana-green) !important; }
 .bg-dark { background-color: var(--card-bg) !important; }
+.bg-body { background-color: var(--bg-color) !important; }
+.bg-card { background-color: var(--card-bg) !important; }
+.text-body { color: var(--text-color) !important; }
 
 /* ===================================================
    LOADING SKELETONS
@@ -599,11 +643,7 @@ body.light-mode .alert-info {
 }
 .skeleton-text { height: 14px; margin-bottom: 8px; }
 .skeleton-title { height: 22px; margin-bottom: 12px; width: 60%; }
-.skeleton-card {
-    height: 200px;
-    border-radius: var(--radius-lg);
-    margin-bottom: 1rem;
-}
+.skeleton-card { height: 200px; border-radius: var(--radius-lg); margin-bottom: 1rem; }
 
 /* ===================================================
    TOAST NOTIFICATIONS
@@ -631,16 +671,12 @@ body.light-mode .alert-info {
     from { opacity: 0; transform: translateY(16px); }
     to { opacity: 1; transform: translateY(0); }
 }
-main, .container > * {
-    animation: fadeInUp 0.35s ease both;
-}
+main { animation: fadeInUp 0.35s ease both; }
 
 /* ===================================================
    HERO SECTION
    =================================================== */
-.hero-section {
-    padding: 0.5rem 0 1rem;
-}
+.hero-section { padding: 0.5rem 0 1rem; }
 .hero-section h2 {
     font-size: clamp(1.5rem, 4vw, 2.25rem);
     font-weight: 800;
@@ -690,12 +726,8 @@ main, .container > * {
     transform: translateY(-2px);
     box-shadow: 0 4px 16px var(--ghana-gold-glow);
 }
-body.light-mode .account-type-card {
-    background: rgba(0,0,0,0.02);
-}
-body.light-mode .account-type-card:hover {
-    background: rgba(0,0,0,0.04);
-}
+[data-bs-theme="light"] .account-type-card { background: rgba(0,0,0,0.02); }
+[data-bs-theme="light"] .account-type-card:hover { background: rgba(0,0,0,0.04); }
 
 /* ===================================================
    RECEIPT / DETAILS CARD
@@ -717,28 +749,39 @@ footer {
     background: var(--card-bg) !important;
     border-top: 1px solid var(--border-color) !important;
     margin-top: auto;
+    color: var(--text-muted);
+}
+footer .text-white { color: var(--text-color) !important; }
+footer .text-muted { color: var(--text-muted) !important; }
+[data-bs-theme="light"] footer {
+    background: #ffffff !important;
+    border-top: 1px solid var(--border-color) !important;
 }
 
 /* ===================================================
-   THEME TOGGLE
+   DROPDOWN
    =================================================== */
-#themeToggleBtn {
-    background: rgba(255,255,255,0.06);
+.dropdown-menu {
+    background: var(--card-bg);
     border: 1px solid var(--border-color);
-    color: var(--text-muted);
-    border-radius: var(--radius-pill);
-    padding: 0.35rem 0.6rem;
-    transition: all var(--transition-fast);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    padding: 0.5rem;
 }
-#themeToggleBtn:hover {
-    background: rgba(255,255,255,0.12);
-    color: var(--ghana-gold);
-    border-color: var(--ghana-gold);
+.dropdown-item {
+    color: var(--text-color);
+    font-size: 0.9rem;
+    border-radius: var(--radius-sm);
+    padding: 0.5rem 0.75rem;
 }
-body.light-mode #themeToggleBtn {
-    background: rgba(0,0,0,0.04);
-    border-color: var(--border-color);
+.dropdown-item:hover {
+    background-color: rgba(255,255,255,0.07);
+    color: var(--text-color);
 }
+[data-bs-theme="light"] .dropdown-item:hover {
+    background-color: rgba(0,0,0,0.05);
+}
+.dropdown-divider { border-color: var(--border-color); }
 
 /* ===================================================
    SCROLLBAR
@@ -752,6 +795,47 @@ body.light-mode #themeToggleBtn {
 ::-webkit-scrollbar-thumb:hover { background: var(--ghana-gold); }
 
 /* ===================================================
+   LEGAL / CONTENT PAGES
+   =================================================== */
+.legal-page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+.legal-page h2 {
+    font-size: 1.1rem;
+    color: var(--ghana-green);
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+}
+.legal-page h2:first-of-type { border-top: none; padding-top: 0; }
+.legal-page ul { color: var(--text-muted); }
+.legal-page p { color: var(--text-muted); }
+
+/* ===================================================
+   ERROR PAGES
+   =================================================== */
+.error-page {
+    min-height: 60vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+.error-code {
+    font-size: clamp(5rem, 15vw, 10rem);
+    font-weight: 800;
+    font-family: 'Outfit', sans-serif;
+    line-height: 1;
+    background: linear-gradient(135deg, var(--ghana-gold), var(--ghana-green));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* ===================================================
    RESPONSIVE OVERRIDES
    =================================================== */
 @media (max-width: 768px) {
@@ -760,6 +844,8 @@ body.light-mode #themeToggleBtn {
     .stat-value { font-size: 1.75rem; }
     .trip-card .card-body { padding: 1rem; }
     .receipt-container { padding: 1.25rem; }
+    .navbar-collapse { padding: 1rem 0; }
+    .navbar-collapse .d-flex { flex-wrap: wrap; gap: 0.5rem; }
 }
 
 /* ===================================================
@@ -769,36 +855,13 @@ body.light-mode #themeToggleBtn {
     body { background: white !important; color: black !important; }
     .navbar, .btn, footer, #pwa-install-btn { display: none !important; }
     .receipt-container { color: black; box-shadow: none; border: 1px solid #ddd; }
-    .text-light { color: black !important; }
-    .text-muted { color: #555 !important; }
 }
 
 /* ===================================================
    MISC HELPERS
    =================================================== */
 .cursor-pointer { cursor: pointer; }
-.gap-xs { gap: 0.25rem; }
 .rounded-lg { border-radius: var(--radius-lg) !important; }
 .shadow-green { box-shadow: var(--shadow-green) !important; }
 .shadow-gold { box-shadow: var(--shadow-gold) !important; }
-
-/* Horizontal rule */
 hr { border-color: var(--border-color); opacity: 1; }
-
-/* Dropdown */
-.dropdown-menu {
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-lg);
-}
-.dropdown-item {
-    color: var(--text-color);
-    font-size: 0.9rem;
-    border-radius: var(--radius-sm);
-}
-.dropdown-item:hover {
-    background: rgba(255,255,255,0.06);
-    color: var(--text-color);
-}
-.dropdown-divider { border-color: var(--border-color); }

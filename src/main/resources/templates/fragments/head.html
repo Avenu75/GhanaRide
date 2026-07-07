@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title th:text="${title}">GhanaRide</title>
+
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#0F9D58">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="GhanaRide">
+    <link rel="manifest" th:href="@{/manifest.json}">
+
+    <!-- PWA Icons -->
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}">
+    <link rel="apple-touch-icon" th:href="@{/images/apple-touch-icon.svg}">
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="GhanaRide - Ghana's trusted intercity transport booking platform. Book bus and car rides easily.">
+    <meta name="keywords" content="Ghana transport, book bus Ghana, intercity travel, GhanaRide">
+
+    <!-- Google Fonts: Outfit (Headings) and Inter (Body) for a premium modern look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&amp;family=Outfit:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+
+    <!-- Bootstrap CSS -->
+    <link th:href="@{/webjars/bootstrap/5.3.2/css/bootstrap.min.css}" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link th:href="@{/webjars/bootstrap-icons/1.11.1/font/bootstrap-icons.css}" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+
+    <!--
+        CRITICAL: Set data-bs-theme early to avoid flash of wrong theme.
+        This inline script runs synchronously before any CSS is applied,
+        which prevents the "flash of wrong colour mode" on page load.
+    -->
+    <script>
+        (function () {
+            var stored = localStorage.getItem('ghanaride-theme');
+            var theme = stored || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-bs-theme', theme);
+            if (theme === 'light') {
+                document.documentElement.classList.add('light-mode');
+            } else {
+                document.documentElement.classList.add('dark-mode');
+            }
+        })();
+    </script>
+</head>
+</html>

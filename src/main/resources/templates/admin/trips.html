@@ -64,16 +64,20 @@
                             </div>
                         </td>
 
-                        <!-- Driver -->
+                        <!-- Driver (nullable FK: company-owned trips have no driver) -->
                         <td>
-                            <div class="text-light" th:text="${trip.driver.fullName}">Driver</div>
-                            <div class="small text-muted" th:text="${trip.driver.phoneNumber}">Phone</div>
+                            <div class="text-light" th:if="${trip.driver != null}" th:text="${trip.driver.fullName}">Driver</div>
+                            <div class="small text-muted" th:if="${trip.driver != null}" th:text="${trip.driver.phoneNumber}">Phone</div>
+                            <div class="text-muted small" th:if="${trip.driver == null}">
+                                <i class="bi bi-building me-1"></i>Company trip
+                            </div>
                         </td>
 
                         <!-- Car -->
                         <td>
-                            <div class="text-light" th:text="${trip.car.carBrand}">Car</div>
-                            <div class="small text-muted" th:text="${trip.car.numberPlate}">Plate</div>
+                            <div class="text-light" th:if="${trip.car != null}" th:text="${trip.car.carBrand}">Car</div>
+                            <div class="small text-muted" th:if="${trip.car != null}" th:text="${trip.car.numberPlate}">Plate</div>
+                            <div class="text-muted small" th:if="${trip.car == null}">—</div>
                         </td>
 
                         <!-- Date / Price -->
@@ -169,13 +173,13 @@
                                         th:attr="onclick='confirmFail(' + ${trip.id} + ', \'' + ${trip.fromLocation} + ' to ' + ${trip.toLocation} + '\')'">
                                     <i class="bi bi-exclamation-octagon"></i>
                                 </button>
-                                
+
                                 <!-- Hidden Fail Form -->
                                 <form th:id="'failForm-' + ${trip.id}"
                                       th:action="@{/admin/trips/{id}/fail(id=${trip.id})}"
                                       method="post"
                                       style="display:none;">
-                                      <input type="hidden" name="failReason" th:id="'failReasonInput-' + ${trip.id}" value="">
+                                    <input type="hidden" name="failReason" th:id="'failReasonInput-' + ${trip.id}" value="">
                                 </form>
 
                                 <!-- Delete Button (always visible) -->
@@ -225,7 +229,7 @@
                          style="background: rgba(252,209,22,0.1); border: 1px solid rgba(252,209,22,0.2);">
                         <strong class="text-warning" id="failTripRoute">Route</strong>
                     </div>
-                    
+
                     <div class="mb-3">
                         <label for="failReasonDetails" class="form-label text-light">Details (Optional)</label>
                         <textarea class="form-control bg-dark text-light border-secondary" id="failReasonDetails" rows="2" placeholder="Any additional context provided by passengers..."></textarea>

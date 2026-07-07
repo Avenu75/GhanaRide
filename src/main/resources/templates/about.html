@@ -5,48 +5,93 @@
 </head>
 <body>
 <main th:fragment="main">
-    <div class="row justify-content-center">
-        <div class="col-lg-10">
-            <!-- Hero section for About -->
-            <div class="text-center mb-5 py-5 rounded-4" style="background: linear-gradient(rgba(11, 11, 18, 0.8), rgba(11, 11, 18, 0.8)), url('https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=1920&q=80') center/cover; position: relative;">
-                <h1 class="display-4 fw-bold text-white position-relative z-1">About GhanaRide</h1>
-                <p class="lead text-light position-relative z-1 mb-0">Connecting Ghana through safe and reliable transport</p>
+    <div class="container py-4">
+        <!-- Hero section for About -->
+        <div class="text-center mb-5 py-5 rounded-4 shadow-sm position-relative overflow-hidden" style="background: linear-gradient(rgba(11, 11, 18, 0.7), rgba(11, 11, 18, 0.7)), url('https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=1920&q=80') center/cover;">
+            <div class="position-relative z-1 py-4">
+                <h1 class="display-4 fw-bold text-white mb-3" style="font-family: 'Outfit', sans-serif;">About GhanaRide</h1>
+                <p class="lead text-white-50 mb-0 max-w-2xl mx-auto">Connecting Ghana through safe, reliable, and premium transport.</p>
             </div>
+        </div>
 
-            <div class="row g-5">
-                <div class="col-md-6">
-                    <h3 class="text-warning fw-bold mb-3">Our Mission</h3>
-                    <p class="text-light" style="line-height: 1.8;">
+        <div class="row g-5 align-items-center mb-5">
+            <div class="col-lg-6">
+                <div class="pe-lg-4">
+                    <h2 class="display-6 fw-bold mb-4" style="color: var(--ghana-gold, #FCD116);">Our Mission</h2>
+                    <p class="fs-5 text-muted mb-4" style="line-height: 1.8;">
                         At GhanaRide, our mission is to simplify intercity and campus transportation across Ghana. We believe that traveling from Accra to Kumasi, or from your hostel to campus, should be a seamless, safe, and affordable experience for everyone.
                     </p>
-                    <p class="text-light" style="line-height: 1.8;">
-                        By connecting passengers with verified and trusted drivers, we are building a community based on trust, reliability, and convenience.
+                    <p class="fs-5 text-muted mb-0" style="line-height: 1.8;">
+                        By connecting passengers with verified and trusted drivers, we are building a community based on trust, reliability, and unparalleled convenience.
                     </p>
                 </div>
-                <div class="col-md-6">
-                    <div class="card bg-dark border-secondary h-100">
-                        <div class="card-body p-4">
-                            <h4 class="text-light mb-4">Why Choose Us?</h4>
-                            <ul class="list-unstyled text-light mb-0">
-                                <li class="mb-3 d-flex"><i class="bi bi-shield-check text-warning fs-5 me-3"></i> <div><strong>Verified Drivers:</strong> Every driver and vehicle undergoes a strict verification process.</div></li>
-                                <li class="mb-3 d-flex"><i class="bi bi-wallet2 text-success fs-5 me-3"></i> <div><strong>Affordable Fares:</strong> Transparent pricing with no hidden charges.</div></li>
-                                <li class="mb-3 d-flex"><i class="bi bi-clock-history text-info fs-5 me-3"></i> <div><strong>Punctuality:</strong> Say goodbye to long waits at the station. Book your seat in advance.</div></li>
-                                <li class="d-flex"><i class="bi bi-credit-card text-primary fs-5 me-3"></i> <div><strong>Flexible Payments:</strong> Pay online via Paystack or with cash at pickup.</div></li>
-                            </ul>
-                        </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="position-relative">
+                    <img src="https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&q=80&w=800" alt="Travel" class="img-fluid rounded-4 shadow-lg">
+                    <div class="position-absolute bottom-0 start-0 translate-middle-x mb-5 ms-5 bg-body p-4 rounded-4 shadow-lg border d-none d-md-block" style="max-width: 250px;">
+                        <h3 class="fw-bold text-success mb-1">500+</h3>
+                        <p class="text-muted mb-0 fw-medium">Active Drivers</p>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <div class="mt-5 text-center">
-                <hr class="border-secondary mb-5">
-                <h3 class="text-light mb-4">Join the GhanaRide Community</h3>
-                <div class="d-flex gap-3 justify-content-center">
-                    <a th:href="@{/register}" class="btn btn-warning btn-lg px-4">Register as Passenger</a>
-                    <a th:href="@{/register}" class="btn btn-outline-light btn-lg px-4">Become a Driver</a>
+        <div class="row g-4 mb-5">
+            <div class="col-12 text-center mb-4">
+                <h2 class="display-6 fw-bold">Why Choose Us?</h2>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 border-0 shadow-sm rounded-4 p-4 text-center bg-card hover-lift">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 70px; height: 70px; background-color: rgba(252,209,22,0.15); color: #e5bd10;">
+                        <i class="bi bi-shield-check fs-2"></i>
+                    </div>
+                    <h4 class="fw-bold mb-3">Verified Drivers</h4>
+                    <p class="text-muted mb-0">Every driver and vehicle undergoes a strict background verification process.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 border-0 shadow-sm rounded-4 p-4 text-center bg-card hover-lift">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 70px; height: 70px; background-color: rgba(15,157,88,0.15); color: #0F9D58;">
+                        <i class="bi bi-wallet2 fs-2"></i>
+                    </div>
+                    <h4 class="fw-bold mb-3">Affordable Fares</h4>
+                    <p class="text-muted mb-0">Enjoy standard, transparent pricing with absolutely no hidden charges.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 border-0 shadow-sm rounded-4 p-4 text-center bg-card hover-lift">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 70px; height: 70px; background-color: rgba(13,202,240,0.15); color: #0dcaf0;">
+                        <i class="bi bi-clock-history fs-2"></i>
+                    </div>
+                    <h4 class="fw-bold mb-3">Punctuality</h4>
+                    <p class="text-muted mb-0">Say goodbye to long waits at the station. Book your seat in advance.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 border-0 shadow-sm rounded-4 p-4 text-center bg-card hover-lift">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 70px; height: 70px; background-color: rgba(13,110,253,0.15); color: #0d6efd;">
+                        <i class="bi bi-credit-card fs-2"></i>
+                    </div>
+                    <h4 class="fw-bold mb-3">Flexible Payments</h4>
+                    <p class="text-muted mb-0">Pay online securely via Paystack or with cash at pickup.</p>
                 </div>
             </div>
         </div>
+
+        <div class="mt-5 text-center bg-card p-5 rounded-4 shadow-sm border">
+            <h3 class="fw-bold mb-4">Join the GhanaRide Community</h3>
+            <p class="text-muted mb-4 fs-5 max-w-2xl mx-auto">Ready to experience a better way to travel? Sign up today and get moving.</p>
+            <div class="d-flex gap-3 justify-content-center flex-wrap">
+                <a th:href="@{/register}" class="btn btn-warning btn-lg px-4 fw-bold shadow-sm" style="background-color: #FCD116; border: none;">Register as Passenger</a>
+                <a th:href="@{/register}" class="btn btn-outline-primary btn-lg px-4 fw-bold">Become a Driver</a>
+            </div>
+        </div>
+        
+        <style>
+            .hover-lift { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+            .hover-lift:hover { transform: translateY(-8px); box-shadow: 0 1rem 3rem rgba(0,0,0,.175)!important; }
+        </style>
     </div>
 </main>
 </body>

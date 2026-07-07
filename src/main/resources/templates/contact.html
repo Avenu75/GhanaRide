@@ -5,82 +5,98 @@
 </head>
 <body>
 <main th:fragment="main">
-    <div class="row justify-content-center">
-        <div class="col-lg-10">
-            <div class="text-center mb-5">
-                <h2 class="text-light fw-bold">Get in Touch</h2>
-                <p class="text-muted">Have a question or need assistance? We're here to help.</p>
+    <div class="container py-4">
+        <!-- Hero section for Contact -->
+        <div class="text-center mb-5 py-5 rounded-4 shadow-sm position-relative overflow-hidden" style="background: linear-gradient(rgba(15, 157, 88, 0.8), rgba(15, 157, 88, 0.8)), url('https://images.unsplash.com/photo-1516321497487-e288fb19713f?w=1920&q=80') center/cover;">
+            <div class="position-relative z-1 py-4">
+                <h1 class="display-4 fw-bold text-white mb-3" style="font-family: 'Outfit', sans-serif;">Get in Touch</h1>
+                <p class="lead text-white-50 mb-0 max-w-2xl mx-auto">Have a question or need assistance? We're here to help.</p>
             </div>
-            
-            <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+        </div>
+        
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show rounded-4 shadow-sm" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i><span th:text="${success}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show rounded-4 shadow-sm" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i><span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
 
-            <div class="row g-4">
-                <div class="col-md-5">
-                    <div class="card bg-dark border-secondary h-100">
-                        <div class="card-body p-4">
-                            <h4 class="text-warning mb-4">Contact Information</h4>
-                            
-                            <div class="d-flex mb-4">
-                                <div class="bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 45px; height: 45px; flex-shrink: 0;">
-                                    <i class="bi bi-geo-alt-fill fs-5"></i>
-                                </div>
-                                <div>
-                                    <h6 class="text-light mb-1">Our Office</h6>
-                                    <p class="text-muted mb-0">123 Transport Avenue<br>East Legon, Accra<br>Ghana</p>
-                                </div>
+        <div class="row g-4 align-items-stretch">
+            <div class="col-md-5">
+                <div class="card h-100 border-0 shadow-sm rounded-4 bg-card">
+                    <div class="card-body p-4 p-lg-5">
+                        <h4 class="fw-bold mb-5" style="color: var(--ghana-gold, #FCD116);">Contact Information</h4>
+                        
+                        <div class="d-flex mb-4 align-items-center">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center me-4 shadow-sm" style="width: 50px; height: 50px; background-color: rgba(252,209,22,0.15); color: #e5bd10; flex-shrink: 0;">
+                                <i class="bi bi-geo-alt-fill fs-4"></i>
                             </div>
-                            
-                            <div class="d-flex mb-4">
-                                <div class="bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 45px; height: 45px; flex-shrink: 0;">
-                                    <i class="bi bi-envelope-fill fs-5"></i>
-                                </div>
-                                <div>
-                                    <h6 class="text-light mb-1">Email Us</h6>
-                                    <p class="text-muted mb-0">support@ghanaride.me<br>info@ghanaride.me</p>
-                                </div>
+                            <div>
+                                <h6 class="fw-bold mb-1">Our Office</h6>
+                                <p class="text-muted mb-0">123 Transport Avenue<br>East Legon, Accra<br>Ghana</p>
                             </div>
-                            
-                            <div class="d-flex">
-                                <div class="bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 45px; height: 45px; flex-shrink: 0;">
-                                    <i class="bi bi-telephone-fill fs-5"></i>
-                                </div>
-                                <div>
-                                    <h6 class="text-light mb-1">Call Us</h6>
-                                    <p class="text-muted mb-0">+233 (0) 55 773 4624<br>Mon-Fri, 8am-6pm</p>
-                                </div>
+                        </div>
+                        
+                        <div class="d-flex mb-4 align-items-center">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center me-4 shadow-sm" style="width: 50px; height: 50px; background-color: rgba(15,157,88,0.15); color: #0F9D58; flex-shrink: 0;">
+                                <i class="bi bi-envelope-fill fs-4"></i>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-1">Email Us</h6>
+                                <a href="mailto:support@ghanaride.me" class="text-muted text-decoration-none d-block">support@ghanaride.me</a>
+                                <a href="mailto:info@ghanaride.me" class="text-muted text-decoration-none">info@ghanaride.me</a>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center me-4 shadow-sm" style="width: 50px; height: 50px; background-color: rgba(206,17,38,0.15); color: #CE1126; flex-shrink: 0;">
+                                <i class="bi bi-telephone-fill fs-4"></i>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-1">Call Us</h6>
+                                <a href="tel:+233557734624" class="text-muted text-decoration-none d-block">+233 (0) 55 773 4624</a>
+                                <p class="text-muted mb-0 small">Mon-Fri, 8am-6pm</p>
                             </div>
                         </div>
                     </div>
                 </div>
-                
-                <div class="col-md-7">
-                    <div class="card bg-dark border-secondary h-100">
-                        <div class="card-body p-4 p-md-5">
-                            <h4 class="text-light mb-4">Send us a Message</h4>
-                            <form th:action="@{/contact}" method="post">
-                                <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label text-light">Your Name</label>
-                                        <input type="text" class="form-control form-control-dark" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label text-light">Email Address</label>
-                                        <input type="email" class="form-control form-control-dark" required>
-                                    </div>
-                                    <div class="col-12">
-                                        <label class="form-label text-light">Subject</label>
-                                        <input type="text" class="form-control form-control-dark" required>
-                                    </div>
-                                    <div class="col-12">
-                                        <label class="form-label text-light">Message</label>
-                                        <textarea class="form-control form-control-dark" rows="5" required></textarea>
-                                    </div>
-                                    <div class="col-12 mt-4">
-                                        <button type="submit" class="btn btn-warning w-100 py-2 fw-bold"><i class="bi bi-send me-2"></i>Send Message</button>
-                                    </div>
+            </div>
+            
+            <div class="col-md-7">
+                <div class="card h-100 border-0 shadow-sm rounded-4 bg-card">
+                    <div class="card-body p-4 p-lg-5">
+                        <h4 class="fw-bold mb-4">Send us a Message</h4>
+                        <form th:action="@{/contact}" method="post">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-medium text-muted">Your Name</label>
+                                    <input type="text" name="name" class="form-control form-control-lg bg-body border-0 shadow-sm custom-input" placeholder="John Doe" required>
                                 </div>
-                            </form>
-                        </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-medium text-muted">Email Address</label>
+                                    <input type="email" name="email" class="form-control form-control-lg bg-body border-0 shadow-sm custom-input" placeholder="john@example.com" required>
+                                </div>
+                                <div class="col-md-12">
+                                    <label class="form-label fw-medium text-muted">Phone Number</label>
+                                    <input type="tel" name="phone" class="form-control form-control-lg bg-body border-0 shadow-sm custom-input" placeholder="024XXXXXXX">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label fw-medium text-muted">Subject</label>
+                                    <input type="text" name="subject" class="form-control form-control-lg bg-body border-0 shadow-sm custom-input" placeholder="How can we help?" required>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label fw-medium text-muted">Message</label>
+                                    <textarea name="message" class="form-control form-control-lg bg-body border-0 shadow-sm custom-input" rows="5" placeholder="Write your message here..." required></textarea>
+                                </div>
+                                <div class="col-12 mt-4">
+                                    <button type="submit" class="btn btn-warning w-100 py-3 fw-bold fs-5 shadow-sm" style="background-color: #FCD116; border: none;">
+                                        <i class="bi bi-send-fill me-2"></i>Send Message
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -88,16 +104,12 @@
     </div>
     
     <style>
-        .form-control-dark {
-            background-color: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: #fff;
+        .custom-input {
+            transition: all 0.2s ease-in-out;
         }
-        .form-control-dark:focus {
-            background-color: rgba(255, 255, 255, 0.08);
-            border-color: var(--ghana-gold);
-            color: #fff;
-            box-shadow: 0 0 0 0.25rem rgba(252, 209, 22, 0.25);
+        .custom-input:focus {
+            box-shadow: 0 0 0 0.25rem rgba(15, 157, 88, 0.25) !important;
+            border: 1px solid #0F9D58 !important;
         }
     </style>
 </main>

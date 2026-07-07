@@ -4,129 +4,200 @@
     <title>Dashboard - GhanaRide</title>
 </head>
 <body>
-<main th:fragment="main">
-
-    <div class="hero-section mb-4">
-        <h2 class="text-light">Welcome back,
-            <span class="text-warning" th:text="${currentUser.fullName}">User</span>!
-        </h2>
-        <p class="text-muted">Find your next ride across Ghana.</p>
-    </div>
-
-    <!-- Error Message -->
-    <div th:if="${param.error}" class="alert alert-danger mb-4">
-        <i class="bi bi-exclamation-triangle me-2"></i>
-        <span th:text="${param.error}">An error occurred.</span>
-    </div>
-
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h3 class="text-light mb-0">Available Trips</h3>
-        <a th:href="@{/my-bookings}" class="btn btn-outline-warning btn-sm">
-            <i class="bi bi-ticket-perforated me-1"></i>My Bookings
-        </a>
-    </div>
-
-    <!-- No Trips -->
-    <div th:if="${#lists.isEmpty(trips)}" class="alert alert-info">
-        <i class="bi bi-info-circle me-2"></i>
-        No available trips at the moment. Please check back later!
-    </div>
-
-    <!-- Trips Grid -->
-    <div class="row g-4" th:if="${not #lists.isEmpty(trips)}">
-        <div class="col-md-6 col-lg-4" th:each="trip : ${trips}">
-
-            <!-- FULL Trip Card -->
-            <div th:if="${trip.status.name() == 'FULL'}" class="card trip-card"
-                 style="opacity: 0.6; border: 1px solid rgba(255,255,255,0.1);">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <span class="badge rounded-pill"
-                              style="background: rgba(255,255,255,0.1); color: #94a3b8; border: 1px solid #94a3b8;">
-                            <i class="bi bi-slash-circle me-1"></i>Unavailable — Full
-                        </span>
-                        <span class="trip-price text-muted">
-                            GHC <span th:text="${trip.tripAmount}">0.00</span>
-                        </span>
+<main th:fragment="main" class="py-4">
+    <div class="container">
+        <!-- Hero Banner -->
+        <div class="card border-0 rounded-4 shadow-sm mb-5 position-relative overflow-hidden bg-card text-white" style="background: linear-gradient(135deg, rgba(15, 157, 88, 0.95) 0%, rgba(0, 77, 45, 0.95) 100%);">
+            <div class="position-absolute top-0 end-0 h-100 w-50 d-none d-md-block" style="background: url('https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800&q=80') center/cover; opacity: 0.2; mix-blend-mode: overlay;"></div>
+            <div class="card-body p-4 p-md-5 position-relative z-1">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h2 class="fw-bold mb-2 text-white">Welcome back,
+                            <span style="color: #FCD116;" th:text="${currentUser.fullName}">User</span>!
+                        </h2>
+                        <p class="fs-5 mb-0 text-white-50">Find and book your next comfortable ride across Ghana.</p>
                     </div>
-                    <h4 class="card-title text-muted mb-1">
-                        <span th:text="${trip.fromLocation}">From</span>
-                        <i class="bi bi-arrow-right text-muted mx-2"></i>
-                        <span th:text="${trip.toLocation}">To</span>
-                    </h4>
-                    <hr class="border-secondary my-3">
-                    <div class="mb-2 text-muted small">
-                        <i class="bi bi-calendar3 me-2"></i>
-                        <span th:text="${#temporals.format(trip.departureTime, 'dd MMM yyyy, h:mm a')}">Date</span>
+                    <div class="col-md-4 text-md-end mt-4 mt-md-0">
+                        <a th:href="@{/my-bookings}" class="btn btn-warning btn-lg fw-bold shadow-sm rounded-pill px-4" style="background-color: #FCD116; border: none;">
+                            <i class="bi bi-ticket-perforated-fill me-2"></i>My Bookings
+                        </a>
                     </div>
-                    <div class="mb-2 text-muted small">
-                        <i class="bi bi-person me-2"></i>
-                        <span th:text="${trip.driver.fullName}">Driver</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Message -->
+        <div th:if="${param.error}" class="alert alert-danger alert-dismissible fade show rounded-3 shadow-sm d-flex align-items-center mb-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill fs-5 me-3"></i>
+            <span th:text="${param.error}">An error occurred.</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <!-- Section Title & Search Form -->
+        <div class="card border-0 rounded-4 shadow-sm mb-4 bg-card">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h3 class="fw-bold text-body mb-1" th:text="${isSearchResult ? 'Search Results' : 'Available Trips'}">Available Trips</h3>
+                        <p class="text-muted small mb-0">Browse and book from our verified drivers</p>
                     </div>
-                    <div class="d-flex justify-content-between align-items-center mt-4">
-                        <div class="text-muted small">
-                            <i class="bi bi-people me-1"></i>0/<span th:text="${trip.totalSeats}">0</span> seats
-                        </div>
-                        <button class="btn btn-secondary btn-sm px-4" disabled>
-                            <i class="bi bi-slash-circle me-1"></i>Full
+                    <a th:if="${isSearchResult}" th:href="@{/dashboard}" class="btn btn-outline-secondary btn-sm rounded-pill">
+                        <i class="bi bi-x-circle me-1"></i>Clear Search
+                    </a>
+                </div>
+
+                <form th:action="@{/dashboard}" method="get" class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label fw-medium text-muted small">From</label>
+                        <select class="form-select bg-body border-secondary-subtle shadow-sm" name="from">
+                            <option value="">Any Location</option>
+                            <option th:each="loc : ${locations}" th:value="${loc}" th:text="${loc}" th:selected="${loc == searchFrom}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-medium text-muted small">To</label>
+                        <select class="form-select bg-body border-secondary-subtle shadow-sm" name="to">
+                            <option value="">Any Location</option>
+                            <option th:each="loc : ${locations}" th:value="${loc}" th:text="${loc}" th:selected="${loc == searchTo}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-medium text-muted small">Date</label>
+                        <input type="date" class="form-control bg-body border-secondary-subtle shadow-sm text-muted" name="date" th:value="${searchDate}">
+                    </div>
+                    <div class="col-md-1 d-flex align-items-end">
+                        <button type="submit" class="btn btn-warning w-100 shadow-sm fw-bold" style="background-color: #FCD116; border: none;">
+                            <i class="bi bi-search"></i>
                         </button>
                     </div>
-                </div>
+                </form>
             </div>
+        </div>
 
-            <!-- Available Trip Card -->
-            <div th:if="${trip.status.name() == 'APPROVED'}" class="card trip-card">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <span class="badge badge-approved rounded-pill">
-                            <i class="bi bi-check-circle me-1"></i>Available
-                        </span>
-                        <span class="trip-price">
-                            GHC <span th:text="${trip.tripAmount}">0.00</span>
-                        </span>
-                    </div>
-                    <h4 class="card-title text-light mb-1">
-                        <span th:text="${trip.fromLocation}">From</span>
-                        <i class="bi bi-arrow-right text-muted mx-2"></i>
-                        <span th:text="${trip.toLocation}">To</span>
-                    </h4>
-                    <hr class="border-secondary my-3">
-                    <div class="mb-2 text-muted">
-                        <i class="bi bi-calendar3 me-2 text-warning"></i>
-                        <span th:text="${#temporals.format(trip.departureTime, 'dd MMM yyyy, h:mm a')}">Date</span>
-                    </div>
-                    <div class="mb-2 text-muted" th:if="${trip.pickupStation != null and !trip.pickupStation.isEmpty()}">
-                        <i class="bi bi-geo-alt-fill me-2 text-danger"></i>
-                        <span class="text-light" th:text="${trip.pickupStation}">Station</span>
-                    </div>
-                    <div class="mb-2 text-muted">
-                        <i class="bi bi-person me-2"></i>Driver:
-                        <span class="text-light" th:text="${trip.driver.fullName}">Driver Name</span>
-                    </div>
-                    <div class="mb-3 text-muted">
-                        <i class="bi bi-car-front me-2"></i>
-                        <span th:text="${trip.car.carBrand}">Car</span>
-                        <small class="text-muted ms-1">(<span th:text="${trip.car.numberPlate}">Plate</span>)</small>
-                    </div>
-                    <div class="mb-3 text-muted small" th:if="${trip.description != null and !trip.description.isEmpty()}">
-                        <i class="bi bi-info-circle me-2"></i>
-                        <span th:text="${trip.description}">Notes</span>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center mt-4">
-                        <div class="text-muted small">
-                            <i class="bi bi-people me-1"></i>
-                            <span th:text="${trip.availableSeats}">0</span>/
-                            <span th:text="${trip.totalSeats}">0</span> seats
+        <!-- No Trips -->
+        <div th:if="${#lists.isEmpty(trips)}" class="text-center py-5 bg-card rounded-4 shadow-sm border border-secondary-subtle">
+            <div class="rounded-circle bg-body d-inline-flex align-items-center justify-content-center mb-3 shadow-sm" style="width: 80px; height: 80px; color: #0F9D58;">
+                <i class="bi bi-bus-front fs-1"></i>
+            </div>
+            <h4 class="fw-bold">No trips found</h4>
+            <p class="text-muted">There are currently no available trips matching your criteria. Please check back later.</p>
+        </div>
+
+        <!-- Trips Grid -->
+        <div class="row g-4" th:if="${not #lists.isEmpty(trips)}">
+            <div class="col-md-6 col-lg-4" th:each="trip : ${trips}">
+
+                <!-- FULL Trip Card -->
+                <div th:if="${trip.status.name() == 'FULL'}" class="card h-100 border-0 rounded-4 shadow-sm bg-card hover-lift" style="opacity: 0.75; filter: grayscale(50%);">
+                    <div class="card-body p-4 d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <span class="badge rounded-pill bg-body text-muted border border-secondary-subtle px-3 py-2 shadow-sm">
+                                <i class="bi bi-slash-circle-fill me-1 text-danger"></i>Full
+                            </span>
+                            <span class="fw-bold fs-5 text-muted">
+                                GH₵ <span th:text="${trip.tripAmount}">0.00</span>
+                            </span>
                         </div>
-                        <a th:href="@{/booking/{id}(id=${trip.id})}"
-                           class="btn btn-warning btn-sm px-4">Book Now</a>
+                        
+                        <div class="d-flex align-items-center justify-content-between mb-4">
+                            <div class="text-center">
+                                <h5 class="fw-bold text-muted mb-0" th:text="${trip.fromLocation}">From</h5>
+                            </div>
+                            <div class="flex-grow-1 px-3 position-relative text-center text-muted">
+                                <hr class="border-secondary-subtle my-0 position-absolute w-100 top-50 start-0 translate-middle-y">
+                                <i class="bi bi-arrow-right position-relative bg-card px-2"></i>
+                            </div>
+                            <div class="text-center">
+                                <h5 class="fw-bold text-muted mb-0" th:text="${trip.toLocation}">To</h5>
+                            </div>
+                        </div>
+
+                        <div class="bg-body rounded-3 p-3 mb-4 flex-grow-1 border border-secondary-subtle">
+                            <div class="d-flex align-items-center mb-2 text-muted small">
+                                <i class="bi bi-calendar-event me-2"></i>
+                                <span th:text="${#temporals.format(trip.departureTime, 'dd MMM yyyy, h:mm a')}">Date</span>
+                            </div>
+                            <div class="d-flex align-items-center text-muted small">
+                                <i class="bi bi-person me-2"></i>
+                                <span th:text="${trip.driver.fullName}">Driver</span>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mt-auto pt-3 border-top border-secondary-subtle">
+                            <div class="text-muted small fw-medium">
+                                <i class="bi bi-people-fill me-1"></i>0 / <span th:text="${trip.totalSeats}">0</span> seats
+                            </div>
+                            <button class="btn btn-secondary rounded-pill px-4 fw-bold" disabled>
+                                Unavailable
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
 
+                <!-- Available Trip Card -->
+                <div th:if="${trip.status.name() == 'APPROVED'}" class="card h-100 border-0 rounded-4 shadow-sm bg-card hover-lift">
+                    <div class="card-body p-4 d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <span class="badge rounded-pill px-3 py-2 shadow-sm" style="background-color: rgba(15,157,88,0.15); color: #0F9D58; border: 1px solid rgba(15,157,88,0.3);">
+                                <i class="bi bi-check-circle-fill me-1"></i>Available
+                            </span>
+                            <span class="fw-bold fs-5 text-success">
+                                GH₵ <span th:text="${trip.tripAmount}">0.00</span>
+                            </span>
+                        </div>
+                        
+                        <div class="d-flex align-items-center justify-content-between mb-4">
+                            <div class="text-center" style="flex: 1;">
+                                <h5 class="fw-bold text-body mb-0 text-truncate" th:text="${trip.fromLocation}" th:title="${trip.fromLocation}">From</h5>
+                            </div>
+                            <div class="px-2 position-relative text-center text-muted" style="flex: 0 0 auto;">
+                                <hr class="border-secondary-subtle my-0 position-absolute w-100 top-50 start-0 translate-middle-y">
+                                <i class="bi bi-bus-front position-relative bg-card px-1" style="color: #FCD116;"></i>
+                            </div>
+                            <div class="text-center" style="flex: 1;">
+                                <h5 class="fw-bold text-body mb-0 text-truncate" th:text="${trip.toLocation}" th:title="${trip.toLocation}">To</h5>
+                            </div>
+                        </div>
+
+                        <div class="bg-body rounded-3 p-3 mb-4 flex-grow-1 border border-secondary-subtle">
+                            <div class="d-flex align-items-center mb-2 text-muted small">
+                                <i class="bi bi-calendar-event-fill me-2" style="color: #FCD116;"></i>
+                                <span class="fw-medium text-body" th:text="${#temporals.format(trip.departureTime, 'dd MMM yyyy, h:mm a')}">Date</span>
+                            </div>
+                            <div class="d-flex align-items-center mb-2 text-muted small" th:if="${trip.pickupStation != null and !trip.pickupStation.isEmpty()}">
+                                <i class="bi bi-geo-alt-fill me-2 text-danger"></i>
+                                <span class="text-truncate" th:text="${trip.pickupStation}" th:title="${trip.pickupStation}">Station</span>
+                            </div>
+                            <div class="d-flex align-items-center mb-2 text-muted small">
+                                <i class="bi bi-person-badge-fill me-2 text-primary"></i>
+                                <span class="text-truncate" th:text="${trip.driver.fullName}">Driver Name</span>
+                            </div>
+                            <div class="d-flex align-items-center text-muted small">
+                                <i class="bi bi-car-front-fill me-2 text-info"></i>
+                                <span class="text-truncate" th:text="${trip.car.carBrand} + ' (' + ${trip.car.numberPlate} + ')'">Car</span>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mt-auto pt-3 border-top border-secondary-subtle">
+                            <div class="small fw-medium" style="color: #0F9D58;">
+                                <i class="bi bi-people-fill me-1"></i>
+                                <span th:text="${trip.availableSeats}">0</span> / <span th:text="${trip.totalSeats}">0</span> left
+                            </div>
+                            <a th:href="@{/booking/{id}(id=${trip.id})}" class="btn btn-warning rounded-pill px-4 fw-bold shadow-sm" style="background-color: #FCD116; border: none;">
+                                Book Now
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
         </div>
     </div>
-
+    
+    <style>
+        .hover-lift { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .hover-lift:hover { transform: translateY(-5px); box-shadow: 0 1rem 3rem rgba(0,0,0,.175)!important; }
+    </style>
 </main>
 </body>
 </html>

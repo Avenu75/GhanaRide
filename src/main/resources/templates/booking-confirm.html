@@ -4,119 +4,193 @@
     <title>Confirm Booking - GhanaRide</title>
 </head>
 <body>
-    <main th:fragment="main">
-        <div class="row justify-content-center">
-            <div class="col-md-8 col-lg-6">
-                <div class="card trip-card">
-                    <div class="card-body p-4">
-                        <div class="text-center mb-4">
-                            <h3 class="text-light">Confirm Your Booking</h3>
-                            <p class="text-muted">Please review the details before confirming.</p>
+    <main th:fragment="main" class="py-5">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-8 col-lg-7">
+                    <div class="text-center mb-4">
+                        <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3 shadow-sm" style="width: 60px; height: 60px; background-color: rgba(15,157,88,0.15); color: #0F9D58;">
+                            <i class="bi bi-check2-circle fs-2"></i>
                         </div>
-                        
-                        <div class="bg-light rounded p-3 mb-4 border">
-                            <div class="row mb-2">
-                                <div class="col-5 text-muted">Route</div>
-                                <div class="col-7 text-light fw-bold">
-                                    <span th:text="${trip.fromLocation}">From</span> &rarr; <span th:text="${trip.toLocation}">To</span>
-                                </div>
-                            </div>
-                            <div class="row mb-2">
-                                <div class="col-5 text-muted">Departure</div>
-                                <div class="col-7 text-light">
-                                    <span th:text="${#temporals.format(trip.departureTime, 'dd MMM yyyy, h:mm a')}">Date</span>
-                                </div>
-                            </div>
-                            <div class="row mb-2" th:if="${trip.pickupStation != null and !trip.pickupStation.isEmpty()}">
-                                <div class="col-5 text-muted">Pickup Station</div>
-                                <div class="col-7 text-light">
-                                    <span th:text="${trip.pickupStation}">Station</span>
-                                </div>
-                            </div>
-                            <div class="row mb-2">
-                                <div class="col-5 text-muted">Driver</div>
-                                <div class="col-7 text-light" th:text="${trip.driver.fullName}">Driver Name</div>
-                            </div>
-                            <div class="row mb-2">
-                                <div class="col-5 text-muted">Vehicle</div>
-                                <div class="col-7 text-light">
-                                    <span th:text="${trip.car.carBrand}">Car</span> (<span th:text="${trip.car.numberPlate}">Plate</span>)
-                                </div>
-                            </div>
-                            <div class="row mb-2" th:if="${trip.description != null and !trip.description.isEmpty()}">
-                                <div class="col-5 text-muted">Notes</div>
-                                <div class="col-7 text-light fst-italic">
-                                    <small th:text="${trip.description}">Description</small>
-                                </div>
-                            </div>
-                            <hr class="border-secondary">
-                            <div class="row align-items-center">
-                                <div class="col-5 text-muted">Total Amount</div>
-                                <div class="col-7 text-warning fs-4 fw-bold">
-                                    GHC <span th:text="${trip.tripAmount}">0.00</span>
-                                </div>
-                            </div>
-                        </div>
+                        <h2 class="fw-bold mb-1">Confirm Your Booking</h2>
+                        <p class="text-muted">Please review the trip details before proceeding to payment.</p>
+                    </div>
 
-                        <form th:action="@{/booking/{id}(id=${trip.id})}" method="post">
-                            <div class="mb-4">
-                                <label class="form-label text-light fw-bold">Booking For:</label>
-                                <div class="d-flex gap-3">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="bookingType" id="typeSelf" value="self" checked onchange="toggleRelativeFields()">
-                                        <label class="form-check-label text-light" for="typeSelf">
-                                            Myself
-                                        </label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="bookingType" id="typeRelative" value="relative" onchange="toggleRelativeFields()">
-                                        <label class="form-check-label text-light" for="typeRelative">
-                                            Someone Else
-                                        </label>
+                    <div class="card border-0 rounded-4 shadow-sm bg-card mb-4 overflow-hidden">
+                        <div class="card-header bg-body border-bottom border-secondary-subtle py-3 px-4">
+                            <h5 class="fw-bold mb-0 text-body"><i class="bi bi-info-circle me-2" style="color: #FCD116;"></i>Trip Summary</h5>
+                        </div>
+                        <div class="card-body p-4 p-md-5">
+                            
+                            <!-- Route Details -->
+                            <div class="d-flex align-items-center justify-content-between mb-4">
+                                <div class="text-center" style="flex: 1;">
+                                    <h4 class="fw-bold text-body mb-0" th:text="${trip.fromLocation}">From</h4>
+                                    <small class="text-muted text-uppercase fw-semibold" style="letter-spacing: 1px;">Origin</small>
+                                </div>
+                                <div class="px-3 position-relative text-center text-muted" style="flex: 0 0 auto;">
+                                    <i class="bi bi-bus-front position-relative bg-card px-2 fs-3" style="color: #FCD116; z-index: 1;"></i>
+                                    <div class="position-absolute top-50 start-0 w-100 border-top border-2 border-dashed border-secondary-subtle" style="z-index: 0; transform: translateY(-50%);"></div>
+                                </div>
+                                <div class="text-center" style="flex: 1;">
+                                    <h4 class="fw-bold text-body mb-0" th:text="${trip.toLocation}">To</h4>
+                                    <small class="text-muted text-uppercase fw-semibold" style="letter-spacing: 1px;">Destination</small>
+                                </div>
+                            </div>
+
+                            <hr class="border-secondary-subtle my-4">
+
+                            <!-- Detailed List -->
+                            <div class="row g-4 mb-4">
+                                <div class="col-sm-6">
+                                    <div class="d-flex align-items-start">
+                                        <i class="bi bi-calendar-event fs-4 me-3 text-muted"></i>
+                                        <div>
+                                            <p class="text-muted small mb-0 fw-medium">Departure</p>
+                                            <p class="fw-bold text-body mb-0" th:text="${#temporals.format(trip.departureTime, 'dd MMM yyyy, h:mm a')}">Date</p>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-
-                            <div id="relativeFields" style="display: none;" class="bg-dark border border-secondary rounded p-3 mb-4">
-                                <h6 class="text-warning mb-3">Passenger Details</h6>
-                                <div class="mb-3">
-                                    <label for="passengerName" class="form-label text-light">Passenger Name</label>
-                                    <input type="text" class="form-control" id="passengerName" name="passengerName">
+                                <div class="col-sm-6" th:if="${trip.pickupStation != null and !trip.pickupStation.isEmpty()}">
+                                    <div class="d-flex align-items-start">
+                                        <i class="bi bi-geo-alt fs-4 me-3 text-danger"></i>
+                                        <div>
+                                            <p class="text-muted small mb-0 fw-medium">Pickup Station</p>
+                                            <p class="fw-bold text-body mb-0" th:text="${trip.pickupStation}">Station</p>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="mb-3">
-                                    <label for="passengerPhone" class="form-label text-light">Passenger Phone</label>
-                                    <input type="text" class="form-control" id="passengerPhone" name="passengerPhone">
+                                <div class="col-sm-6">
+                                    <div class="d-flex align-items-start">
+                                        <i class="bi bi-person-badge fs-4 me-3 text-primary"></i>
+                                        <div>
+                                            <p class="text-muted small mb-0 fw-medium">Driver</p>
+                                            <p class="fw-bold text-body mb-0" th:text="${trip.driver.fullName}">Driver Name</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="d-flex align-items-start">
+                                        <i class="bi bi-car-front fs-4 me-3 text-info"></i>
+                                        <div>
+                                            <p class="text-muted small mb-0 fw-medium">Vehicle</p>
+                                            <p class="fw-bold text-body mb-0"><span th:text="${trip.car.carBrand}">Car</span> <span class="text-muted fw-normal ms-1" th:text="'(' + ${trip.car.numberPlate} + ')'">Plate</span></p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12" th:if="${trip.description != null and !trip.description.isEmpty()}">
+                                    <div class="bg-body rounded-3 p-3 border border-secondary-subtle">
+                                        <p class="text-muted small mb-1 fw-medium"><i class="bi bi-journal-text me-2"></i>Trip Notes</p>
+                                        <p class="text-body mb-0 fst-italic" th:text="${trip.description}">Description</p>
+                                    </div>
                                 </div>
                             </div>
-
-                            <div class="d-grid gap-3">
-                                <button type="submit" class="btn btn-warning btn-lg">Proceed to Payment <i class="bi bi-arrow-right ms-2"></i></button>
-                                <a th:href="@{/dashboard}" class="btn btn-outline-secondary">Cancel</a>
+                            
+                            <!-- Total Box -->
+                            <div class="bg-body rounded-4 p-4 border border-secondary-subtle d-flex justify-content-between align-items-center">
+                                <div>
+                                    <p class="text-muted fw-bold mb-0 text-uppercase" style="letter-spacing: 1px;">Total Amount</p>
+                                    <small class="text-muted">Includes all taxes and fees</small>
+                                </div>
+                                <div class="text-end">
+                                    <h2 class="fw-bold text-success mb-0">GH₵ <span th:text="${trip.tripAmount}">0.00</span></h2>
+                                </div>
                             </div>
-                        </form>
+                        </div>
+                    </div>
+
+                    <!-- Booking Form -->
+                    <div class="card border-0 rounded-4 shadow-sm bg-card">
+                        <div class="card-body p-4 p-md-5">
+                            <form th:action="@{/booking/{id}(id=${trip.id})}" method="post">
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold text-body mb-3"><i class="bi bi-person-lines-fill me-2" style="color: #FCD116;"></i>Who is travelling?</label>
+                                    <div class="row g-3">
+                                        <div class="col-sm-6">
+                                            <div class="form-check custom-radio-card p-3 rounded-3 border border-secondary-subtle h-100 bg-body position-relative" style="cursor: pointer;" onclick="document.getElementById('typeSelf').click()">
+                                                <input class="form-check-input ms-0 mt-0 position-absolute end-0 top-0 m-3" type="radio" name="bookingType" id="typeSelf" value="self" checked onchange="toggleRelativeFields()">
+                                                <label class="form-check-label w-100 stretched-link" for="typeSelf">
+                                                    <i class="bi bi-person-fill fs-4 text-info mb-2 d-block"></i>
+                                                    <span class="fw-bold d-block">Myself</span>
+                                                    <small class="text-muted">I am the passenger</small>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <div class="form-check custom-radio-card p-3 rounded-3 border border-secondary-subtle h-100 bg-body position-relative" style="cursor: pointer;" onclick="document.getElementById('typeRelative').click()">
+                                                <input class="form-check-input ms-0 mt-0 position-absolute end-0 top-0 m-3" type="radio" name="bookingType" id="typeRelative" value="relative" onchange="toggleRelativeFields()">
+                                                <label class="form-check-label w-100 stretched-link" for="typeRelative">
+                                                    <i class="bi bi-people-fill fs-4 text-warning mb-2 d-block"></i>
+                                                    <span class="fw-bold d-block">Someone Else</span>
+                                                    <small class="text-muted">Booking for a friend/family</small>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="relativeFields" style="display: none; opacity: 0; transition: opacity 0.3s ease;" class="bg-body border border-secondary-subtle rounded-4 p-4 mb-4">
+                                    <h6 class="fw-bold mb-3" style="color: #FCD116;">Passenger Details</h6>
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label for="passengerName" class="form-label fw-medium text-muted small">Passenger Name</label>
+                                            <input type="text" class="form-control bg-card custom-input" id="passengerName" name="passengerName" placeholder="Full Name">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="passengerPhone" class="form-label fw-medium text-muted small">Passenger Phone</label>
+                                            <input type="text" class="form-control bg-card custom-input" id="passengerPhone" name="passengerPhone" placeholder="e.g. 024XXXXXXX">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex gap-3 mt-5 border-top border-secondary-subtle pt-4">
+                                    <a th:href="@{/dashboard}" class="btn btn-outline-secondary px-4 py-3 fw-bold rounded-3">Cancel</a>
+                                    <button type="submit" class="btn btn-warning flex-grow-1 py-3 fw-bold fs-5 shadow-sm rounded-3" style="background-color: #FCD116; border: none;">
+                                        Proceed to Payment <i class="bi bi-arrow-right-circle-fill ms-2"></i>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <script>
-            function toggleRelativeFields() {
-                const isRelative = document.getElementById('typeRelative').checked;
-                const relativeFields = document.getElementById('relativeFields');
-                const nameInput = document.getElementById('passengerName');
-                const phoneInput = document.getElementById('passengerPhone');
-
-                if (isRelative) {
-                    relativeFields.style.display = 'block';
-                    nameInput.required = true;
-                    phoneInput.required = true;
-                } else {
-                    relativeFields.style.display = 'none';
-                    nameInput.required = false;
-                    phoneInput.required = false;
+            <style>
+                .border-dashed { border-style: dashed !important; }
+                .custom-input:focus {
+                    box-shadow: 0 0 0 0.25rem rgba(252, 209, 22, 0.25) !important;
+                    border-color: #FCD116 !important;
                 }
-            }
-        </script>
+                .custom-radio-card { transition: all 0.2s ease; }
+                .custom-radio-card:hover { border-color: #FCD116 !important; background-color: var(--bs-tertiary-bg) !important; }
+                .custom-radio-card:has(input:checked) {
+                    border-color: #FCD116 !important;
+                    background-color: rgba(252, 209, 22, 0.05) !important;
+                    box-shadow: 0 0 0 1px #FCD116 inset;
+                }
+            </style>
+
+            <script>
+                function toggleRelativeFields() {
+                    const isRelative = document.getElementById('typeRelative').checked;
+                    const relativeFields = document.getElementById('relativeFields');
+                    const nameInput = document.getElementById('passengerName');
+                    const phoneInput = document.getElementById('passengerPhone');
+
+                    if (isRelative) {
+                        relativeFields.style.display = 'block';
+                        setTimeout(() => relativeFields.style.opacity = '1', 10);
+                        nameInput.required = true;
+                        phoneInput.required = true;
+                    } else {
+                        relativeFields.style.opacity = '0';
+                        setTimeout(() => relativeFields.style.display = 'none', 300);
+                        nameInput.required = false;
+                        phoneInput.required = false;
+                    }
+                }
+            </script>
+        </div>
     </main>
 </body>
 </html>

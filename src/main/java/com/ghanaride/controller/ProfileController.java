@@ -1,38 +1,81 @@
 package com.ghanaride.controller;
 
 import com.ghanaride.entity.User;
-import com.ghanaride.repository.UserRepository;
 import com.ghanaride.service.FileStorageService;
 import com.ghanaride.service.UserService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.security.Principal;
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
+import java.util.Set;
 
+/**
+ * Handles user profile management:
+ * - View profile
+ * - Update personal info
+ * - Upload profile image
+ * - Change password
+ */
+@Slf4j
 @Controller
 @RequestMapping("/profile")
 @RequiredArgsConstructor
+@PreAuthorize("isAuthenticated()")
 public class ProfileController {
 
     private final UserService userService;
-    private final UserRepository userRepository;
     private final FileStorageService fileStorageService;
 
+    // Allowed image types for profile pictures
+    private static final Set<String> ALLOWED_IMAGE_TYPES = Set.of(
+            "image/jpeg",
+            "image/png",
+            "image/webp"
+    );
+
+    // Max profile image size: 2MB
+    // (smaller than car images since profile pics
+    //  are displayed at small sizes)
+    private static final long MAX_PROFILE_IMAGE_SIZE =
+            2 * 1024 * 1024;
+
+    // Max field lengths
+    private static final int MAX_NAME_LENGTH    = 100;
+    private static final int MAX_PHONE_LENGTH   = 20;
+    private static final int MAX_ADDRESS_LENGTH = 255;
+
+    // =========================================================
+    // VIEW PROFILE
+    // =========================================================
     @GetMapping
-    public String viewProfile(Principal principal, Model model) {
-        User currentUser = userService.getCurrentUser(principal);
+    public String viewProfile(
+            Principal principal,
+            Model model
+    ) {
+        User currentUser =
+                userService.getCurrentUser(principal);
+
         model.addAttribute("currentUser", currentUser);
+        model.addAttribute("pageTitle",
+                "My Profile — GhanaRide");
+        model.addAttribute("pageDescription",
+                "Manage your GhanaRide profile, personal " +
+                        "information, and account settings.");
+
         return "profile";
     }
 
+    // =========================================================
+    // UPDATE PROFILE INFO
+    // =========================================================
     @PostMapping("/update")
     public String updateProfile(
             @RequestParam String fullName,
@@ -41,43 +84,266 @@ public class ProfileController {
             @RequestParam(required = false) String dateOfBirth,
             @RequestParam(required = false) String gender,
             Principal principal,
-            RedirectAttributes redirectAttributes) {
-
-        User currentUser = userService.getCurrentUser(principal);
-        currentUser.setFullName(fullName);
-        currentUser.setPhoneNumber(phoneNumber);
-        currentUser.setAddress(address);
-        currentUser.setGender(gender);
-        
-        if (dateOfBirth != null && !dateOfBirth.isEmpty()) {
-            currentUser.setDateOfBirth(LocalDate.parse(dateOfBirth));
+            RedirectAttributes redirectAttributes
+    ) {
+        // Input validation
+        if (fullName == null || fullName.isBlank()) {
+            redirectAttributes.addFlashAttribute("error",
+                    "Full name is required.");
+            return "redirect:/profile";
         }
 
-        userRepository.save(currentUser);
+        if (fullName.length() > MAX_NAME_LENGTH) {
+            redirectAttributes.addFlashAttribute("error",
+                    "Full name is too long " +
+                            "(max " + MAX_NAME_LENGTH + " characters).");
+            return "redirect:/profile";
+        }
 
-        redirectAttributes.addFlashAttribute("success", "Profile updated successfully!");
+        if (phoneNumber == null || phoneNumber.isBlank()) {
+            redirectAttributes.addFlashAttribute("error",
+                    "Phone number is required.");
+            return "redirect:/profile";
+        }
+
+        if (phoneNumber.length() > MAX_PHONE_LENGTH) {
+            redirectAttributes.addFlashAttribute("error",
+                    "Phone number is too long.");
+            return "redirect:/profile";
+        }
+
+        // Validate phone format (Ghana numbers)
+        if (!phoneNumber.matches(
+                "^[\\+]?[(]?[0-9]{3}[)]?[-\\s\\.]?" +
+                        "[0-9]{3}[-\\s\\.]?[0-9]{4,6}$")) {
+            redirectAttributes.addFlashAttribute("error",
+                    "Please enter a valid phone number.");
+            return "redirect:/profile";
+        }
+
+        if (address != null &&
+                address.length() > MAX_ADDRESS_LENGTH) {
+            redirectAttributes.addFlashAttribute("error",
+                    "Address is too long " +
+                            "(max " + MAX_ADDRESS_LENGTH + " characters).");
+            return "redirect:/profile";
+        }
+
+        // Validate gender value
+        if (gender != null && !gender.isBlank() &&
+                !Set.of("MALE", "FEMALE", "OTHER", "PREFER_NOT_TO_SAY")
+                        .contains(gender.toUpperCase())) {
+            redirectAttributes.addFlashAttribute("error",
+                    "Invalid gender value.");
+            return "redirect:/profile";
+        }
+
+        // Parse date of birth safely
+        LocalDate dob = null;
+        if (dateOfBirth != null && !dateOfBirth.isBlank()) {
+            try {
+                dob = LocalDate.parse(dateOfBirth);
+
+                // Must be at least 16 years old
+                if (dob.isAfter(
+                        LocalDate.now().minusYears(16))) {
+                    redirectAttributes.addFlashAttribute("error",
+                            "You must be at least 16 years old " +
+                                    "to use GhanaRide.");
+                    return "redirect:/profile";
+                }
+
+                // Must be realistic (not before 1900)
+                if (dob.isBefore(LocalDate.of(1900, 1, 1))) {
+                    redirectAttributes.addFlashAttribute("error",
+                            "Please enter a valid date of birth.");
+                    return "redirect:/profile";
+                }
+
+            } catch (DateTimeParseException e) {
+                redirectAttributes.addFlashAttribute("error",
+                        "Invalid date of birth format. " +
+                                "Please use the date picker.");
+                return "redirect:/profile";
+            }
+        }
+
+        // Update via service layer (not directly via repo)
+        try {
+            userService.updateProfile(
+                    principal,
+                    fullName.trim(),
+                    phoneNumber.trim(),
+                    address != null ? address.trim() : null,
+                    dob,
+                    gender != null ? gender.toUpperCase() : null
+            );
+
+            log.info("Profile updated for user: {}",
+                    principal.getName());
+
+            redirectAttributes.addFlashAttribute("success",
+                    "Profile updated successfully!");
+
+        } catch (Exception e) {
+            log.error("Profile update failed for user: {}",
+                    principal.getName(), e);
+            redirectAttributes.addFlashAttribute("error",
+                    "Failed to update profile. Please try again.");
+        }
+
         return "redirect:/profile";
     }
 
+    // =========================================================
+    // UPLOAD PROFILE IMAGE
+    // =========================================================
     @PostMapping("/upload-image")
     public String uploadProfileImage(
             @RequestParam("profileImage") MultipartFile file,
             Principal principal,
-            RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes
+    ) {
+        // Check file was selected
+        if (file == null || file.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error",
+                    "Please select an image to upload.");
+            return "redirect:/profile";
+        }
 
-        if (file.isEmpty()) {
-            redirectAttributes.addFlashAttribute("error", "Please select an image to upload.");
+        // Validate file type
+        String contentType = file.getContentType();
+        if (contentType == null ||
+                !ALLOWED_IMAGE_TYPES.contains(contentType)) {
+            redirectAttributes.addFlashAttribute("error",
+                    "Profile image must be JPEG, PNG, or WebP. " +
+                            "Other formats are not supported.");
+            return "redirect:/profile";
+        }
+
+        // Validate file size
+        if (file.getSize() > MAX_PROFILE_IMAGE_SIZE) {
+            redirectAttributes.addFlashAttribute("error",
+                    "Profile image must be smaller than 2MB. " +
+                            "Please compress your image and try again.");
+            return "redirect:/profile";
+        }
+
+        // Validate filename (prevent path traversal)
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename != null &&
+                (originalFilename.contains("..") ||
+                        originalFilename.contains("/"))) {
+            log.warn(
+                    "Suspicious filename in profile upload: {} " +
+                            "by user: {}",
+                    originalFilename, principal.getName()
+            );
+            redirectAttributes.addFlashAttribute("error",
+                    "Invalid file name.");
             return "redirect:/profile";
         }
 
         try {
-            User currentUser = userService.getCurrentUser(principal);
-            String imagePath = fileStorageService.storeProfileImage(file);
-            currentUser.setProfileImagePath("/" + imagePath);
-            userRepository.save(currentUser);
-            redirectAttributes.addFlashAttribute("success", "Profile image updated successfully!");
+            // Use service layer (not repository directly)
+            userService.updateProfileImage(principal, file);
+
+            log.info("Profile image updated for user: {}",
+                    principal.getName());
+
+            redirectAttributes.addFlashAttribute("success",
+                    "Profile picture updated successfully!");
+
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Failed to upload image: " + e.getMessage());
+            log.error(
+                    "Profile image upload failed for user: {}",
+                    principal.getName(), e
+            );
+            // Generic error — don't expose file system details
+            redirectAttributes.addFlashAttribute("error",
+                    "Failed to upload image. " +
+                            "Please try again with a different image.");
+        }
+
+        return "redirect:/profile";
+    }
+
+    // =========================================================
+    // CHANGE PASSWORD
+    // (Separate from password reset — user must know
+    //  current password)
+    // =========================================================
+    @PostMapping("/change-password")
+    public String changePassword(
+            @RequestParam String currentPassword,
+            @RequestParam String newPassword,
+            @RequestParam String confirmNewPassword,
+            Principal principal,
+            RedirectAttributes redirectAttributes
+    ) {
+        // Validate new password length
+        if (newPassword == null ||
+                newPassword.length() < 8) {
+            redirectAttributes.addFlashAttribute("error",
+                    "New password must be at least 8 characters.");
+            return "redirect:/profile";
+        }
+
+        // Validate password strength
+        boolean hasUpper = newPassword.chars()
+                .anyMatch(Character::isUpperCase);
+        boolean hasLower = newPassword.chars()
+                .anyMatch(Character::isLowerCase);
+        boolean hasDigit = newPassword.chars()
+                .anyMatch(Character::isDigit);
+
+        if (!hasUpper || !hasLower || !hasDigit) {
+            redirectAttributes.addFlashAttribute("error",
+                    "New password must contain at least one " +
+                            "uppercase letter, one lowercase letter, " +
+                            "and one number.");
+            return "redirect:/profile";
+        }
+
+        // Validate passwords match
+        if (!newPassword.equals(confirmNewPassword)) {
+            redirectAttributes.addFlashAttribute("error",
+                    "New passwords do not match.");
+            return "redirect:/profile";
+        }
+
+        // Don't allow same password
+        if (currentPassword.equals(newPassword)) {
+            redirectAttributes.addFlashAttribute("error",
+                    "New password must be different from " +
+                            "your current password.");
+            return "redirect:/profile";
+        }
+
+        try {
+            userService.changePassword(
+                    principal, currentPassword, newPassword
+            );
+
+            log.info("Password changed for user: {}",
+                    principal.getName());
+
+            redirectAttributes.addFlashAttribute("success",
+                    "Password changed successfully! " +
+                            "Please use your new password next time " +
+                            "you log in.");
+
+        } catch (IllegalArgumentException e) {
+            // Service throws this for wrong current password
+            redirectAttributes.addFlashAttribute("error",
+                    "Current password is incorrect.");
+        } catch (Exception e) {
+            log.error(
+                    "Password change failed for user: {}",
+                    principal.getName(), e
+            );
+            redirectAttributes.addFlashAttribute("error",
+                    "Failed to change password. Please try again.");
         }
 
         return "redirect:/profile";

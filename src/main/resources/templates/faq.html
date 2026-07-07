@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html th:replace="~{layout :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>FAQ - GhanaRide</title>
+</head>
+<body>
+<main th:fragment="main" class="container py-5" style="max-width: 800px;">
+    <div class="text-center mb-5">
+        <h2 class="fw-bold">Frequently Asked Questions</h2>
+        <p class="text-muted">Everything you need to know about riding and driving with GhanaRide</p>
+    </div>
+
+    <div class="accordion" id="faqAccordion">
+
+        <div class="accordion-item mb-3 border-0 shadow-sm rounded-3 overflow-hidden">
+            <h2 class="accordion-header">
+                <button class="accordion-button collapsed fw-medium" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                    How do I book a ride?
+                </button>
+            </h2>
+            <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                <div class="accordion-body text-muted">
+                    Search for your route on the homepage, pick an available trip, choose your seat, and complete payment. You'll get a booking reference and confirmation right away.
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion-item mb-3 border-0 shadow-sm rounded-3 overflow-hidden">
+            <h2 class="accordion-header">
+                <button class="accordion-button collapsed fw-medium" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                    How do I become a driver on GhanaRide?
+                </button>
+            </h2>
+            <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                <div class="accordion-body text-muted">
+                    Register for a Driver account, upload your vehicle and license details, and wait for approval from our team. Once approved, you can start listing trips.
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion-item mb-3 border-0 shadow-sm rounded-3 overflow-hidden">
+            <h2 class="accordion-header">
+                <button class="accordion-button collapsed fw-medium" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                    What payment methods are accepted?
+                </button>
+            </h2>
+            <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                <div class="accordion-body text-muted">
+                    We support Mobile Money, debit/credit cards, and bank transfers through Paystack, as well as cash payment options for select trips.
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion-item mb-3 border-0 shadow-sm rounded-3 overflow-hidden">
+            <h2 class="accordion-header">
+                <button class="accordion-button collapsed fw-medium" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+                    Can I cancel or change my booking?
+                </button>
+            </h2>
+            <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                <div class="accordion-body text-muted">
+                    Yes — visit "My Bookings" from your dashboard to cancel or modify an upcoming trip, subject to the trip's cancellation policy.
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion-item mb-3 border-0 shadow-sm rounded-3 overflow-hidden">
+            <h2 class="accordion-header">
+                <button class="accordion-button collapsed fw-medium" type="button" data-bs-toggle="collapse" data-bs-target="#faq5">
+                    Who do I contact for support?
+                </button>
+            </h2>
+            <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                <div class="accordion-body text-muted">
+                    Reach us through the <a th:href="@{/contact}">Contact page</a> and our support team will respond as soon as possible.
+                </div>
+            </div>
+        </div>
+
+    </div>
+</main>
+</body>
+</html>

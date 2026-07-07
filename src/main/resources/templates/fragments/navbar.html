@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+
+<nav th:fragment="navbar" class="navbar navbar-expand-lg fixed-top" id="mainNavbar">
+    <div class="container">
+        <!-- Brand / Logo -->
+        <a class="navbar-brand d-flex align-items-center" th:href="@{/}">
+            <img th:src="@{/images/icon-192.svg}" alt="GhanaRide Logo" width="36" height="36" class="me-2 rounded-circle">
+            <span class="fw-bold fs-4" style="color: #FCD116;">GhanaRide</span>
+        </a>
+
+        <!-- Mobile Toggle Button -->
+        <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
+                aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Navbar Links -->
+        <div class="collapse navbar-collapse" id="navbarContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
+                <li class="nav-item">
+                    <a class="nav-link fw-medium" th:href="@{/}" id="nav-home">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link fw-medium" th:href="@{/about}" id="nav-about">About Us</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link fw-medium" th:href="@{/contact}" id="nav-contact">Contact</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link fw-medium" th:href="@{/faq}" id="nav-faq">FAQ</a>
+                </li>
+            </ul>
+
+            <div class="d-flex align-items-center gap-2">
+
+                <!-- Dark/Light Mode Toggle -->
+                <button id="themeToggleBtn" class="btn btn-sm rounded-pill px-2 py-1" title="Toggle dark/light mode" aria-label="Toggle theme">
+                    <i id="themeIcon" class="bi bi-moon-fill fs-6"></i>
+                </button>
+
+                <!-- Install App Button (Hidden by default, shown via JS if PWA is installable) -->
+                <button id="installAppBtn" class="btn btn-outline-warning btn-sm d-none rounded-pill px-3">
+                    <i class="bi bi-download me-1"></i> Install App
+                </button>
+
+                <!-- Anonymous Users -->
+                <div sec:authorize="isAnonymous()" class="d-flex gap-2">
+                    <a th:href="@{/login}" class="btn btn-link text-decoration-none fw-medium nav-link">Login</a>
+                    <a th:href="@{/register}" class="btn btn-primary rounded-pill px-4 fw-medium shadow-sm">Sign Up</a>
+                </div>
+
+                <!-- Authenticated Users -->
+                <div sec:authorize="isAuthenticated()" class="dropdown">
+                    <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle nav-link"
+                       id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <div class="avatar-circle me-1 d-flex justify-content-center align-items-center fw-bold"
+                             style="width: 36px; height: 36px; background-color: #FCD116; color: #1a1a2e; border-radius: 50%; font-size: 0.9rem;">
+                            <span th:text="${#strings.substring(#authentication.name, 0, 1).toUpperCase()}">U</span>
+                        </div>
+                        <span class="d-none d-lg-inline ms-1 small fw-medium" th:text="${#authentication.name}">User</span>
+                    </a>
+
+                    <ul class="dropdown-menu dropdown-menu-end shadow-lg" aria-labelledby="userDropdown">
+                        <li class="px-3 py-2 border-bottom mb-1">
+                            <div class="fw-bold" sec:authentication="name">User Name</div>
+                            <div class="small text-muted">Logged in</div>
+                        </li>
+
+                        <!-- Role-based Dashboard Links -->
+                        <li sec:authorize="hasRole('USER')">
+                            <a class="dropdown-item" th:href="@{/dashboard}"><i class="bi bi-speedometer2 me-2 text-primary"></i> Passenger Dashboard</a>
+                        </li>
+                        <li sec:authorize="hasRole('DRIVER')">
+                            <a class="dropdown-item" th:href="@{/driver/dashboard}"><i class="bi bi-car-front me-2 text-primary"></i> Driver Dashboard</a>
+                        </li>
+                        <li sec:authorize="hasRole('COMPANY')">
+                            <a class="dropdown-item" th:href="@{/company/dashboard}"><i class="bi bi-building me-2 text-primary"></i> Company Dashboard</a>
+                        </li>
+                        <li sec:authorize="hasRole('ADMIN')">
+                            <a class="dropdown-item" th:href="@{/admin/dashboard}"><i class="bi bi-shield-lock me-2 text-danger"></i> Admin Dashboard</a>
+                        </li>
+
+                        <li><hr class="dropdown-divider"></li>
+
+                        <li>
+                            <a class="dropdown-item" th:href="@{/my-bookings}"><i class="bi bi-ticket-perforated me-2 text-secondary"></i> My Bookings</a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" th:href="@{/profile}"><i class="bi bi-person me-2 text-secondary"></i> Profile Settings</a>
+                        </li>
+
+                        <li><hr class="dropdown-divider"></li>
+
+                        <li>
+                            <form th:action="@{/logout}" method="post" class="m-0 p-0">
+                                <button type="submit" class="dropdown-item text-danger"><i class="bi bi-box-arrow-right me-2"></i> Logout</button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+
+</body>
+</html>

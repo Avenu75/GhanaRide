@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html th:replace="~{layout :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="${pageTitle != null ? pageTitle : 'Available Rides — GhanaRide'}">Available Rides — GhanaRide</title>
+</head>
+<body>
+<main th:fragment="main">
+    <div class="container py-4">
+        
+        <div class="text-center mb-5">
+            <h1 class="display-5 fw-bold" style="font-family: 'Outfit', sans-serif;">Available Rides</h1>
+            <p class="text-muted fs-5">Find and book your next trip across Ghana</p>
+        </div>
+
+        <!-- Search Card -->
+        <div class="card border-0 shadow-sm rounded-4 mb-5 p-4 bg-card">
+            <form th:action="@{/rides}" method="get" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label for="fromLocation" class="form-label">Leaving from</label>
+                    <select id="fromLocation" name="from" class="form-select">
+                        <option value="">Any city</option>
+                        <option th:each="loc : ${locations}" 
+                                th:value="${loc}" 
+                                th:text="${loc}"
+                                th:selected="${loc == searchFrom}"></option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="toLocation" class="form-label">Going to</label>
+                    <select id="toLocation" name="to" class="form-select">
+                        <option value="">Any city</option>
+                        <option th:each="loc : ${locations}" 
+                                th:value="${loc}" 
+                                th:text="${loc}"
+                                th:selected="${loc == searchTo}"></option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="date" class="form-label">Date (Optional)</label>
+                    <input type="date" id="date" name="date" class="form-control" th:value="${searchDate}">
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary w-100 py-2">
+                        <i class="bi bi-search me-2"></i>Search Rides
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Results Section -->
+        <div th:if="${isSearchResult}">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="mb-0 fw-bold">Search Results</h4>
+                <a th:href="@{/rides}" class="btn btn-sm btn-outline-secondary">Clear Search</a>
+            </div>
+            <div th:if="${trips == null || trips.isEmpty()}" class="text-center py-5">
+                <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 80px; height: 80px; background-color: rgba(255,255,255,0.05);">
+                    <i class="bi bi-search text-muted fs-1"></i>
+                </div>
+                <h4 class="fw-bold">No rides found</h4>
+                <p class="text-muted">We couldn't find any trips matching your search criteria. Try different cities or dates.</p>
+                <a th:href="@{/rides}" class="btn btn-primary mt-2">View All Rides</a>
+            </div>
+        </div>
+
+        <div th:unless="${isSearchResult}" class="mb-4">
+            <h4 class="fw-bold">All Upcoming Rides</h4>
+            <div th:if="${trips == null || trips.isEmpty()}" class="text-center py-5">
+                <p class="text-muted">No rides available at the moment. Check back later!</p>
+            </div>
+        </div>
+
+        <!-- Trips List -->
+        <div th:if="${trips != null && !trips.isEmpty()}" class="row g-4">
+            <div th:each="trip : ${trips}" class="col-md-6 col-lg-4">
+                <div class="card h-100 trip-card">
+                    <div class="card-body">
+                        <!-- Header: Company & Price -->
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <span class="badge bg-success mb-2" th:if="${trip.company != null}">
+                                    <i class="bi bi-building me-1"></i><span th:text="${trip.company.companyName}">Company</span>
+                                </span>
+                                <span class="badge bg-info mb-2" th:unless="${trip.company != null}">
+                                    <i class="bi bi-person me-1"></i>Independent
+                                </span>
+                            </div>
+                            <div class="trip-price">
+                                GHC <span th:text="${trip.price}">0.00</span>
+                            </div>
+                        </div>
+
+                        <!-- Route -->
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="d-flex flex-column align-items-center me-3">
+                                <i class="bi bi-circle text-success small"></i>
+                                <div style="width: 2px; height: 20px; background-color: var(--border-color); margin: 2px 0;"></div>
+                                <i class="bi bi-geo-alt-fill text-danger small"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="fw-bold fs-5" th:text="${trip.fromLocation}">From</div>
+                                <div class="fw-bold fs-5" th:text="${trip.toLocation}">To</div>
+                            </div>
+                        </div>
+
+                        <!-- Details -->
+                        <div class="row g-2 text-muted small mb-4">
+                            <div class="col-6">
+                                <i class="bi bi-calendar3 me-1 text-warning"></i>
+                                <span th:text="${#temporals.format(trip.departureTime, 'MMM dd, yyyy')}">Date</span>
+                            </div>
+                            <div class="col-6">
+                                <i class="bi bi-clock me-1 text-warning"></i>
+                                <span th:text="${#temporals.format(trip.departureTime, 'HH:mm')}">Time</span>
+                            </div>
+                            <div class="col-6">
+                                <i class="bi bi-car-front me-1 text-warning"></i>
+                                <span th:text="${trip.car != null ? trip.car.model : 'Standard'}">Car</span>
+                            </div>
+                            <div class="col-6">
+                                <i class="bi bi-people me-1 text-warning"></i>
+                                <span th:text="${trip.availableSeats}">0</span> seats left
+                            </div>
+                        </div>
+
+                        <!-- Status/Action -->
+                        <div class="mt-auto">
+                            <div th:if="${trip.status.name() == 'FULL' || trip.availableSeats == 0}" class="alert alert-danger mb-0 py-2 text-center w-100 border-0" style="background: rgba(239, 68, 68, 0.1);">
+                                <i class="bi bi-x-circle me-1"></i> Fully Booked
+                            </div>
+                            <a th:if="${trip.status.name() != 'FULL' && trip.availableSeats > 0}" 
+                               th:href="@{/booking/{id}(id=${trip.id})}" 
+                               class="btn btn-warning w-100 text-dark fw-bold">
+                                Book Now <i class="bi bi-arrow-right ms-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</main>
+</body>
+</html>

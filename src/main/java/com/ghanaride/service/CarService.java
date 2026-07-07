@@ -1,30 +1,57 @@
 package com.ghanaride.service;
 
 import com.ghanaride.entity.Car;
+import com.ghanaride.entity.Company;
 import com.ghanaride.entity.User;
+import com.ghanaride.exception.ResourceNotFoundException;
 import com.ghanaride.repository.CarRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Handles vehicle (car) management.
+ * Used by both individual drivers and companies.
+ */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CarService {
 
     private final CarRepository carRepository;
 
+    // =========================================================
+    // SAVE / UPDATE
+    // =========================================================
+    @Transactional
     public Car saveCar(Car car) {
-        return carRepository.save(car);
+        // Normalize number plate
+        if (car.getNumberPlate() != null) {
+            car.setNumberPlate(
+                    car.getNumberPlate().trim().toUpperCase()
+            );
+        }
+        Car saved = carRepository.save(car);
+        log.info("Car saved: plate={} driver={}",
+                saved.getNumberPlate(),
+                saved.getDriver() != null
+                        ? saved.getDriver().getEmail() : "company"
+        );
+        return saved;
     }
 
+    // =========================================================
+    // QUERIES
+    // =========================================================
     public List<Car> findByDriver(User driver) {
         return carRepository.findByDriver(driver);
     }
-    
-    public List<Car> findByCompany(com.ghanaride.entity.Company company) {
+
+    public List<Car> findByCompany(Company company) {
         return carRepository.findByCompany(company);
     }
 
@@ -37,19 +64,29 @@ public class CarService {
     }
 
     public boolean existsByNumberPlate(String plate) {
-        return carRepository.existsByNumberPlate(plate);
+        if (plate == null || plate.isBlank()) return false;
+        return carRepository.existsByNumberPlate(
+                plate.trim().toUpperCase()
+        );
     }
 
-    // ===== DELETE CAR =====
+    public List<Car> findAllCars() {
+        return carRepository.findAll();
+    }
+
+    // =========================================================
+    // DELETE
+    // =========================================================
     @Transactional
     public void deleteCar(Long carId) {
         Car car = carRepository.findById(carId)
-                .orElseThrow(() -> new RuntimeException("Car not found with id: " + carId));
-        carRepository.delete(car);
-    }
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Car", carId)
+                );
 
-    // ===== FIND ALL CARS =====
-    public List<Car> findAllCars() {
-        return carRepository.findAll();
+        log.warn("Car deleted: id={} plate={}",
+                carId, car.getNumberPlate());
+
+        carRepository.delete(car);
     }
 }

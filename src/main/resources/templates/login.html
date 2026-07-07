@@ -4,124 +4,131 @@
     <title>Login - GhanaRide</title>
 </head>
 <body>
-<main th:fragment="main">
-    <div class="auth-container">
-        <div class="text-center mb-4">
-            <h2 class="text-light"><i class="bi bi-bus-front text-warning"></i> GhanaRide</h2>
-            <p class="text-muted">Welcome back! Please login to your account.</p>
-        </div>
-
-        <!-- Account Locked -->
-        <div th:if="${param.locked}" class="alert alert-danger d-flex align-items-start gap-2" role="alert">
-            <i class="bi bi-lock-fill fs-5 mt-1"></i>
-            <div>
-                <strong>Account Temporarily Locked</strong>
-                <p class="mb-0 small">
-                    Too many failed login attempts. Your account is locked for
-                    <strong th:text="${param.minutes}">15</strong> minute(s).
-                    Please try again later.
-                </p>
-            </div>
-        </div>
-
-        <!-- Wrong Password with Remaining Attempts Warning -->
-        <div th:if="${param.error != null and param.remaining != null}"
-             class="alert alert-warning d-flex align-items-start gap-2" role="alert">
-            <i class="bi bi-exclamation-triangle-fill fs-5 mt-1"></i>
-            <div>
-                <strong>Invalid Credentials</strong>
-                <p class="mb-0 small">
-                    Wrong username or password.
-                    <strong th:text="${param.remaining}">2</strong> attempt(s) remaining
-                    before your account is locked for 15 minutes.
-                </p>
-            </div>
-        </div>
-
-        <!-- General Wrong Password -->
-        <div th:if="${param.error != null and param.remaining == null and param.locked == null}"
-             class="alert alert-danger" role="alert">
-            <i class="bi bi-x-circle me-2"></i>Invalid username or password.
-        </div>
-
-        <!-- Logged Out -->
-        <div th:if="${param.logout}" class="alert alert-success" role="alert">
-            <i class="bi bi-check-circle me-2"></i>You have been logged out successfully.
-        </div>
-
-        <!-- Registered -->
-        <div th:if="${param.registered}" class="alert alert-success" role="alert">
-            <i class="bi bi-check-circle me-2"></i>Registration successful! Please login.
-        </div>
-
-
-
-        <!-- Password Reset -->
-        <div th:if="${param.resetSuccess}" class="alert alert-success" role="alert">
-            <i class="bi bi-check-circle me-2"></i>Password changed successfully. Please login.
-        </div>
-
-        <!-- Login Form — hidden when locked -->
-        <div th:if="${param.locked == null}">
-            <form th:action="@{/login}" method="post">
-                <div class="mb-3">
-                    <label for="username" class="form-label">Username</label>
-                    <input type="text" class="form-control" id="username"
-                           name="username" required autofocus>
+<main th:fragment="main" class="d-flex align-items-center justify-content-center py-5" style="min-height: 80vh;">
+    <div class="card border-0 shadow-lg rounded-4 bg-card" style="width: 100%; max-width: 450px;">
+        <div class="card-body p-4 p-md-5">
+            <div class="text-center mb-4">
+                <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3 shadow-sm" style="width: 60px; height: 60px; background-color: rgba(252,209,22,0.15); color: #FCD116;">
+                    <i class="bi bi-person-fill fs-2"></i>
                 </div>
-                <div class="mb-4">
-                    <label for="password" class="form-label">Password</label>
-                    <input type="password" class="form-control" id="password"
-                           name="password" required>
-                    <div class="text-end mt-1">
-                        <a th:href="@{/forgot-password}"
-                           class="text-warning text-decoration-none small">
-                            Forgot Password?
-                        </a>
+                <h3 class="fw-bold mb-1">Welcome Back</h3>
+                <p class="text-muted small">Please enter your details to sign in</p>
+            </div>
+
+            <!-- Alerts -->
+            <div th:if="${param.locked}" class="alert alert-danger d-flex align-items-center rounded-3 mb-4 shadow-sm" role="alert">
+                <i class="bi bi-lock-fill fs-5 me-3"></i>
+                <div>
+                    <h6 class="alert-heading mb-1 fw-bold">Account Locked</h6>
+                    <p class="mb-0 small">Too many attempts. Locked for <strong th:text="${param.minutes}">15</strong> min(s).</p>
+                </div>
+            </div>
+
+            <div th:if="${param.error != null and param.remaining != null}" class="alert alert-warning d-flex align-items-center rounded-3 mb-4 shadow-sm" role="alert">
+                <i class="bi bi-exclamation-triangle-fill fs-5 me-3"></i>
+                <div>
+                    <h6 class="alert-heading mb-1 fw-bold">Invalid Credentials</h6>
+                    <p class="mb-0 small"><strong th:text="${param.remaining}">2</strong> attempt(s) remaining.</p>
+                </div>
+            </div>
+
+            <div th:if="${param.error != null and param.remaining == null and param.locked == null}" class="alert alert-danger rounded-3 mb-4 shadow-sm d-flex align-items-center" role="alert">
+                <i class="bi bi-x-circle-fill me-2 fs-5"></i> Invalid username or password.
+            </div>
+
+            <div th:if="${param.logout}" class="alert alert-success rounded-3 mb-4 shadow-sm d-flex align-items-center" role="alert">
+                <i class="bi bi-check-circle-fill me-2 fs-5"></i> Logged out successfully.
+            </div>
+
+            <div th:if="${param.registered}" class="alert alert-success rounded-3 mb-4 shadow-sm d-flex align-items-center" role="alert">
+                <i class="bi bi-check-circle-fill me-2 fs-5"></i> Registration successful! Please login.
+            </div>
+
+            <div th:if="${param.resetSuccess}" class="alert alert-success rounded-3 mb-4 shadow-sm d-flex align-items-center" role="alert">
+                <i class="bi bi-check-circle-fill me-2 fs-5"></i> Password changed successfully.
+            </div>
+
+            <!-- Login Form -->
+            <div th:if="${param.locked == null}">
+                <form th:action="@{/login}" method="post">
+                    <div class="mb-3">
+                        <label for="username" class="form-label fw-medium text-muted small">Username</label>
+                        <div class="input-group input-group-lg shadow-sm">
+                            <span class="input-group-text bg-body border-end-0 border-secondary-subtle text-muted">
+                                <i class="bi bi-person"></i>
+                            </span>
+                            <input type="text" class="form-control bg-body border-start-0 border-secondary-subtle custom-input" id="username" name="username" placeholder="Enter username" required autofocus>
+                        </div>
                     </div>
-                </div>
-                <div class="d-grid gap-2">
-                    <button type="submit" class="btn btn-primary btn-lg">
-                        <i class="bi bi-box-arrow-in-right me-2"></i>Login
+                    
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="password" class="form-label fw-medium text-muted small mb-0">Password</label>
+                            <a th:href="@{/forgot-password}" class="text-decoration-none small fw-medium" style="color: #FCD116;">Forgot Password?</a>
+                        </div>
+                        <div class="input-group input-group-lg shadow-sm">
+                            <span class="input-group-text bg-body border-end-0 border-secondary-subtle text-muted">
+                                <i class="bi bi-lock"></i>
+                            </span>
+                            <input type="password" class="form-control bg-body border-start-0 border-secondary-subtle custom-input" id="password" name="password" placeholder="Enter password" required>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-warning w-100 py-3 fw-bold fs-5 shadow-sm mb-4" style="background-color: #FCD116; border: none;">
+                        Login
                     </button>
                     
-                    <div class="position-relative mt-3 mb-3 text-center">
+                    <div class="position-relative mb-4 text-center">
                         <hr class="text-secondary opacity-25">
-                        <span class="position-absolute top-50 start-50 translate-middle px-3 text-muted small" style="background: var(--card-bg);">OR</span>
+                        <span class="position-absolute top-50 start-50 translate-middle px-3 text-muted small bg-card">OR</span>
                     </div>
 
-                    <a th:href="@{/oauth2/authorization/google}" class="btn btn-outline-light btn-lg d-flex align-items-center justify-content-center gap-2">
+                    <a th:href="@{/oauth2/authorization/google}" class="btn btn-outline-secondary w-100 py-2 d-flex align-items-center justify-content-center gap-2 rounded-3 text-body bg-body shadow-sm hover-bg-light border-secondary-subtle">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 48 48">
                             <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
                             <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
                             <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
                             <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
                         </svg>
-                        Sign in with Google
+                        <span class="fw-medium">Sign in with Google</span>
                     </a>
+                </form>
+                
+                <div class="text-center mt-4">
+                    <p class="text-muted small mb-0">Don't have an account? 
+                        <a th:href="@{/register}" class="fw-bold text-decoration-none" style="color: #0F9D58;">Sign up</a>
+                    </p>
                 </div>
-            </form>
-            <div class="text-center mt-4">
-                <p class="text-muted">Don't have an account?
-                    <a th:href="@{/register}" class="text-warning text-decoration-none">
-                        Register here
-                    </a>
-                </p>
+            </div>
+
+            <!-- Locked State -->
+            <div th:if="${param.locked != null}" class="text-center mt-4 bg-body rounded-3 p-4 border border-danger-subtle">
+                <i class="bi bi-clock-history text-danger fs-1 mb-2 d-block"></i>
+                <p class="text-muted small mb-3">Account will automatically unlock after the lockout period expires.</p>
+                <a th:href="@{/}" class="btn btn-outline-secondary btn-sm w-100">
+                    <i class="bi bi-house me-1"></i>Return to Home
+                </a>
             </div>
         </div>
-
-        <!-- Show when locked -->
-        <div th:if="${param.locked != null}" class="text-center mt-4">
-            <p class="text-muted small">
-                <i class="bi bi-clock me-1"></i>
-                Account will automatically unlock after the lockout period.
-            </p>
-            <a th:href="@{/}" class="btn btn-outline-secondary btn-sm mt-2">
-                <i class="bi bi-house me-1"></i>Back to Home
-            </a>
-        </div>
-
     </div>
+    
+    <style>
+        .custom-input:focus {
+            box-shadow: none !important;
+            border-color: var(--bs-border-color-translucent) !important;
+        }
+        .input-group:focus-within {
+            box-shadow: 0 0 0 0.25rem rgba(252, 209, 22, 0.25) !important;
+            border-radius: var(--bs-border-radius-lg);
+        }
+        .input-group:focus-within .input-group-text,
+        .input-group:focus-within .form-control {
+            border-color: #FCD116 !important;
+        }
+        .hover-bg-light:hover {
+            background-color: var(--bs-secondary-bg) !important;
+        }
+    </style>
 </main>
 </body>
 </html>

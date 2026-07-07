@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<th:block th:fragment="scripts">
+    <script th:src="@{/webjars/bootstrap/5.3.2/js/bootstrap.bundle.min.js}"></script>
+
+    <!-- ============================================================
+         THEME SYSTEM — Dark / Light Mode
+         Reads from localStorage, applies on every page load.
+         Toggle button is in the navbar (#themeToggleBtn).
+         ============================================================ -->
+    <script>
+        (function () {
+            // 1. Determine stored theme, fallback to system preference
+            const getStoredTheme = () => localStorage.getItem('ghanaride-theme');
+            const getPreferredTheme = () => {
+                const stored = getStoredTheme();
+                if (stored) return stored;
+                return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            };
+
+            // 2. Apply theme immediately (before DOMContentLoaded to avoid flash)
+            const applyTheme = (theme) => {
+                document.documentElement.setAttribute('data-bs-theme', theme);
+                if (theme === 'light') {
+                    document.documentElement.classList.add('light-mode');
+                    document.documentElement.classList.remove('dark-mode');
+                } else {
+                    document.documentElement.classList.add('dark-mode');
+                    document.documentElement.classList.remove('light-mode');
+                }
+            };
+
+            applyTheme(getPreferredTheme());
+
+            // 3. Once DOM is ready, wire up the toggle button
+            window.addEventListener('DOMContentLoaded', () => {
+                const btn = document.getElementById('themeToggleBtn');
+                const icon = document.getElementById('themeIcon');
+
+                const syncIcon = (theme) => {
+                    if (!icon) return;
+                    if (theme === 'light') {
+                        icon.className = 'bi bi-sun-fill fs-6';
+                        if (btn) btn.title = 'Switch to dark mode';
+                    } else {
+                        icon.className = 'bi bi-moon-fill fs-6';
+                        if (btn) btn.title = 'Switch to light mode';
+                    }
+                };
+
+                // Sync icon to current theme
+                syncIcon(getPreferredTheme());
+
+                // Mark active nav link
+                const currentPath = window.location.pathname;
+                const navLinks = document.querySelectorAll('.navbar-nav .nav-link');
+                navLinks.forEach(link => {
+                    const href = link.getAttribute('href') || '';
+                    if (href === currentPath || (currentPath.startsWith(href) && href !== '/')) {
+                        link.classList.add('active');
+                    }
+                });
+                // Exact match for home
+                const homeLink = document.getElementById('nav-home');
+                if (homeLink && currentPath === '/') {
+                    homeLink.classList.add('active');
+                }
+
+                // Toggle on button click
+                if (btn) {
+                    btn.addEventListener('click', () => {
+                        const current = document.documentElement.getAttribute('data-bs-theme') || 'dark';
+                        const next = current === 'dark' ? 'light' : 'dark';
+                        localStorage.setItem('ghanaride-theme', next);
+                        applyTheme(next);
+                        syncIcon(next);
+                    });
+                }
+
+                // Listen for system preference change
+                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+                    if (!getStoredTheme()) {
+                        const systemTheme = e.matches ? 'dark' : 'light';
+                        applyTheme(systemTheme);
+                        syncIcon(systemTheme);
+                    }
+                });
+            });
+        })();
+    </script>
+
+    <!-- ============================================================
+         PWA SERVICE WORKER & INSTALL PROMPT
+         ============================================================ -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(() => console.log('SW registered'))
+                    .catch(err => console.log('SW registration failed:', err));
+            });
+        }
+
+        let deferredPrompt;
+        const installBtn = document.getElementById('installAppBtn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            if (installBtn) installBtn.classList.remove('d-none');
+        });
+
+        if (installBtn) {
+            installBtn.addEventListener('click', () => {
+                installBtn.classList.add('d-none');
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    deferredPrompt.userChoice.then(() => { deferredPrompt = null; });
+                }
+            });
+        }
+
+        window.addEventListener('appinstalled', () => {
+            console.log('PWA installed');
+            if (installBtn) installBtn.classList.add('d-none');
+        });
+    </script>
+
+    <!-- ============================================================
+         AUTO-DISMISS ALERTS after 5 seconds
+         ============================================================ -->
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.alert.auto-dismiss').forEach(alert => {
+                setTimeout(() => {
+                    const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
+                    if (bsAlert) bsAlert.close();
+                }, 5000);
+            });
+        });
+    </script>
+</th:block>
+
+</body>
+</html>

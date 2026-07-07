@@ -6,96 +6,234 @@ import com.ghanaride.repository.PasswordResetTokenRepository;
 import com.ghanaride.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Handles password reset token lifecycle:
+ * 1. Generate token → store in DB → send email
+ * 2. Validate token (not expired, not used)
+ * 3. Reset password → invalidate token
+ *
+ * Rate limiting: stored in DB (not in-memory)
+ * so it works across restarts and multiple instances.
+ *
+ * Token expiry: 24 hours (industry standard)
+ */
+@Slf4j
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class PasswordResetService {
 
     private final UserRepository userRepository;
-    private final PasswordResetTokenRepository tokenRepository;
+    private final PasswordResetTokenRepository
+            tokenRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
-    // In-memory rate limiting map: key = identifier (email/username), value = last request time
-    private final Map<String, LocalDateTime> rateLimitMap = new ConcurrentHashMap<>();
+    @Value("${app.base-url}")
+    private String baseUrl;
+
+    // Rate limit: 1 request per minute
     private static final int RATE_LIMIT_MINUTES = 1;
-    private static final int TOKEN_EXPIRY_MINUTES = 15;
 
+    // Token valid for 24 hours (industry standard)
+    // was 15 minutes — too short for Ghanaian users
+    // who may have unreliable email delivery
+    private static final int TOKEN_EXPIRY_HOURS = 24;
+
+    // =========================================================
+    // CREATE PASSWORD RESET TOKEN
+    // Returns true if request was processed
+    // Returns false if rate limited
+    // Never reveals whether user exists (prevents enumeration)
+    // =========================================================
     @Transactional
-    public boolean createPasswordResetToken(String emailOrUsername) {
-        // Enforce rate limit
-        LocalDateTime now = LocalDateTime.now();
-        if (rateLimitMap.containsKey(emailOrUsername)) {
-            LocalDateTime lastRequest = rateLimitMap.get(emailOrUsername);
-            if (lastRequest.plusMinutes(RATE_LIMIT_MINUTES).isAfter(now)) {
-                log.warn("Rate limit triggered for reset request: {}", emailOrUsername);
+    public boolean createPasswordResetToken(
+            String emailOrUsername
+    ) {
+        // DB-based rate limiting
+        // (works across restarts + multiple instances)
+        Optional<PasswordResetToken> existingToken =
+                tokenRepository
+                        .findLatestByEmailOrUsername(
+                                emailOrUsername
+                        );
+
+        if (existingToken.isPresent()) {
+            LocalDateTime lastRequest =
+                    existingToken.get().getCreatedAt();
+            if (lastRequest != null &&
+                    lastRequest.plusMinutes(RATE_LIMIT_MINUTES)
+                            .isAfter(LocalDateTime.now())) {
+                log.warn(
+                        "Rate limit: password reset for {}",
+                        emailOrUsername
+                );
                 return false;
             }
         }
-        rateLimitMap.put(emailOrUsername, now);
 
-        // Find the user by username or email
-        Optional<User> userOpt = userRepository.findByEmail(emailOrUsername);
+        // Find user (try email first, then username)
+        Optional<User> userOpt =
+                userRepository.findByEmail(
+                        emailOrUsername.toLowerCase()
+                );
+
         if (userOpt.isEmpty()) {
-            userOpt = userRepository.findByUsername(emailOrUsername);
+            userOpt = userRepository.findByUsername(
+                    emailOrUsername
+            );
         }
 
         if (userOpt.isPresent()) {
             User user = userOpt.get();
 
-            // Prevent multiple active tokens by deleting old ones
+            // Delete any existing tokens for this user
             tokenRepository.deleteByUser(user);
 
-            // Generate token
+            // Generate secure token
             String token = UUID.randomUUID().toString();
-            PasswordResetToken resetToken = new PasswordResetToken();
+
+            // Create and save token
+            PasswordResetToken resetToken =
+                    new PasswordResetToken();
             resetToken.setToken(token);
             resetToken.setUser(user);
-            resetToken.setExpiryDate(now.plusMinutes(TOKEN_EXPIRY_MINUTES));
+            resetToken.setCreatedAt(LocalDateTime.now());
+            resetToken.setExpiryDate(
+                    LocalDateTime.now()
+                            .plusHours(TOKEN_EXPIRY_HOURS)
+            );
             tokenRepository.save(resetToken);
 
-            // Print link to system logs (simulating sending email)
-            String resetLink = "http://localhost:8080/reset-password?token=" + token;
-            log.info("========================================");
-            log.info("PASSWORD RESET LINK GENERATED FOR USER: {}", user.getUsername());
-            log.info("Reset Link: {}", resetLink);
-            log.info("This link will expire in {} minutes.", TOKEN_EXPIRY_MINUTES);
-            log.info("========================================");
+            // Send real email (async — non-blocking)
+            String fullName =
+                    user.getFullName() != null
+                            ? user.getFullName()
+                            : user.getUsername();
+
+            emailService.sendPasswordResetEmail(
+                    user.getEmail(), fullName, token
+            );
+
+            log.info(
+                    "Password reset token created for user: {}",
+                    user.getEmail()
+            );
+
         } else {
-            // Log warning but do not return error to prevent user enumeration
-            log.warn("Password reset requested for non-existent account: {}", emailOrUsername);
+            // Log warning but return true
+            // Never reveal if account exists!
+            log.warn(
+                    "Password reset requested for " +
+                            "non-existent account: {}",
+                    emailOrUsername
+            );
         }
 
         return true;
     }
 
-    public Optional<PasswordResetToken> validatePasswordResetToken(String token) {
-        Optional<PasswordResetToken> resetTokenOpt = tokenRepository.findByToken(token);
-        if (resetTokenOpt.isPresent()) {
-            PasswordResetToken resetToken = resetTokenOpt.get();
-            if (!resetToken.isExpired()) {
-                return Optional.of(resetToken);
-            }
+    // =========================================================
+    // VALIDATE TOKEN
+    // Returns token if valid, empty if expired/invalid
+    // =========================================================
+    public Optional<PasswordResetToken>
+    validatePasswordResetToken(String token) {
+
+        if (token == null || token.isBlank()) {
+            return Optional.empty();
         }
-        return Optional.empty();
+
+        return tokenRepository.findByToken(token)
+                .filter(t -> !t.isExpired());
     }
 
+    // =========================================================
+    // CHECK IF TOKEN IS VALID (boolean version)
+    // Used by AuthController
+    // =========================================================
+    public boolean isPasswordResetTokenValid(String token) {
+        return validatePasswordResetToken(token).isPresent();
+    }
+
+    // =========================================================
+    // RESET PASSWORD
+    // Updates password and immediately invalidates token
+    // =========================================================
     @Transactional
-    public void resetPassword(PasswordResetToken resetToken, String newPassword) {
+    public void resetPassword(
+            PasswordResetToken resetToken,
+            String newPassword
+    ) {
         User user = resetToken.getUser();
-        user.setPassword(passwordEncoder.encode(newPassword));
+
+        // Encode and save new password
+        user.setPassword(
+                passwordEncoder.encode(newPassword)
+        );
         userRepository.save(user);
-        
-        // Invalidate the token immediately after successful reset
+
+        // Immediately invalidate the token
+        // (prevents token reuse)
         tokenRepository.delete(resetToken);
+
+        log.info(
+                "Password successfully reset for user: {}",
+                user.getEmail()
+        );
+    }
+
+    // =========================================================
+    // RESET BY TOKEN STRING (used by AuthController)
+    // =========================================================
+    @Transactional
+    public void resetPassword(
+            String token,
+            String newPassword
+    ) {
+        PasswordResetToken resetToken =
+                validatePasswordResetToken(token)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Invalid or expired reset token"
+                                )
+                        );
+        resetPassword(resetToken, newPassword);
+    }
+
+    // =========================================================
+    // SCHEDULED CLEANUP
+    // Runs every hour — removes expired tokens from DB
+    // =========================================================
+    @Scheduled(fixedRate = 3600000)
+    @Transactional
+    public void cleanupExpiredTokens() {
+        try {
+            int deleted = tokenRepository
+                    .deleteByExpiryDateBefore(
+                            LocalDateTime.now()
+                    );
+            if (deleted > 0) {
+                log.info(
+                        "Cleaned up {} expired password " +
+                                "reset tokens",
+                        deleted
+                );
+            }
+        } catch (Exception e) {
+            log.error(
+                    "Failed to cleanup password reset tokens",
+                    e
+            );
+        }
     }
 }

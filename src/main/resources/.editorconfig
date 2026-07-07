@@ -1,0 +1,97 @@
+# =============================================================
+# GHANARIDE - PRODUCTION PROFILE
+# Used on Railway deployment
+# ALL values must come from Railway environment variables
+# NEVER hardcode secrets here
+# =============================================================
+
+# -------------------------------------------------------------
+# DATABASE (Railway MySQL — from environment variables)
+# -------------------------------------------------------------
+spring.datasource.url=${SPRING_DATASOURCE_URL}
+spring.datasource.username=${SPRING_DATASOURCE_USERNAME}
+spring.datasource.password=${SPRING_DATASOURCE_PASSWORD}
+
+# Production pool sizing
+spring.datasource.hikari.maximum-pool-size=10
+spring.datasource.hikari.minimum-idle=3
+
+# Production: validate schema only (Flyway manages changes)
+spring.jpa.hibernate.ddl-auto=validate
+spring.jpa.show-sql=false
+
+# Flyway enabled in production
+spring.flyway.enabled=true
+
+# -------------------------------------------------------------
+# THYMELEAF (cache ON in production for performance)
+# -------------------------------------------------------------
+spring.thymeleaf.cache=true
+
+# -------------------------------------------------------------
+# LOGGING (minimal in production)
+# -------------------------------------------------------------
+logging.level.com.ghanaride=INFO
+logging.level.org.springframework=WARN
+logging.level.org.hibernate=WARN
+
+# Log to file in production
+logging.file.name=/app/logs/ghanaride.log
+logging.file.max-size=10MB
+logging.file.max-history=30
+logging.logback.rollingpolicy.max-file-size=10MB
+logging.logback.rollingpolicy.max-history=30
+logging.logback.rollingpolicy.total-size-cap=100MB
+
+# -------------------------------------------------------------
+# APP URL (your live domain)
+# -------------------------------------------------------------
+app.base-url=https://ghanaride.me
+
+# -------------------------------------------------------------
+# EMAIL (production Gmail)
+# -------------------------------------------------------------
+spring.mail.host=smtp.gmail.com
+spring.mail.port=587
+spring.mail.username=${MAIL_USERNAME}
+spring.mail.password=${MAIL_PASSWORD}
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true
+
+# -------------------------------------------------------------
+# PAYSTACK (LIVE keys in production)
+# -------------------------------------------------------------
+paystack.secret.key=${PAYSTACK_SECRET_KEY}
+paystack.public.key=${PAYSTACK_PUBLIC_KEY}
+paystack.webhook.secret=${PAYSTACK_WEBHOOK_SECRET}
+
+# -------------------------------------------------------------
+# GOOGLE OAUTH2
+# -------------------------------------------------------------
+spring.security.oauth2.client.registration.google.client-id=${GOOGLE_CLIENT_ID}
+spring.security.oauth2.client.registration.google.client-secret=${GOOGLE_CLIENT_SECRET}
+
+# -------------------------------------------------------------
+# SECURITY (strict in production)
+# -------------------------------------------------------------
+server.servlet.session.cookie.secure=true
+server.servlet.session.cookie.same-site=strict
+app.security.remember-me-key=${REMEMBER_ME_KEY}
+
+# -------------------------------------------------------------
+# ACTUATOR (restricted in production)
+# Railway uses /actuator/health for health checks
+# -------------------------------------------------------------
+management.endpoints.web.exposure.include=health,info,prometheus
+management.endpoint.health.show-details=never
+management.endpoint.health.show-components=never
+
+# -------------------------------------------------------------
+# PERFORMANCE
+# -------------------------------------------------------------
+# Serve static files with long cache headers
+spring.web.resources.cache.cachecontrol.max-age=365d
+spring.web.resources.cache.cachecontrol.cache-public=true
+
+# Async request handling
+spring.mvc.async.request-timeout=30000

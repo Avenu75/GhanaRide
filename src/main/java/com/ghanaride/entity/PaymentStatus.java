@@ -1,6 +1,7 @@
 package com.ghanaride.entity;
-
 public enum PaymentStatus {
-    PAID,
-    PENDING
+    PENDING,    // Payment not yet made
+    PAID,       // Payment confirmed
+    FAILED,     // Payment failed
+    REFUNDED    // Payment refunded
 }

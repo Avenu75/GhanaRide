@@ -1,205 +1,21 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
-      th:fragment="layout(title, content)">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:replace="${title}">GhanaRide</title>
-    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.2/css/bootstrap.min.css}">
-    <link rel="stylesheet" th:href="@{/css/style.css}">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" th:href="@{/webjars/bootstrap-icons/1.11.1/font/bootstrap-icons.css}">
-    
-    <!-- PWA Setup -->
-    <link rel="manifest" th:href="@{/manifest.json}">
-    <meta name="theme-color" content="#0F9D58">
-    <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}">
-    <link rel="apple-touch-icon" th:href="@{/images/apple-touch-icon.svg}">
-</head>
-<body>
+<html xmlns:th="http://www.thymeleaf.org" th:fragment="layout(title, content)">
+<head th:replace="~{fragments/head :: head(${title})}"></head>
+<body class="d-flex flex-column min-vh-100">
+
     <!-- Navigation Bar -->
-    <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="container">
-            <a class="navbar-brand" th:href="@{/}"><img th:src="@{/images/logo.svg}" alt="G"> GhanaRide</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <!-- USER links -->
-                    <li class="nav-item" sec:authorize="hasRole('USER')">
-                        <a class="nav-link" th:href="@{/dashboard}"><i class="bi bi-speedometer2"></i> Dashboard</a>
-                    </li>
-                    <li class="nav-item" sec:authorize="hasRole('USER')">
-                        <a class="nav-link" th:href="@{/my-bookings}"><i class="bi bi-ticket-perforated"></i> My Bookings</a>
-                    </li>
-                    <!-- DRIVER links -->
-                    <li class="nav-item" sec:authorize="hasRole('DRIVER')">
-                        <a class="nav-link" th:href="@{/driver/dashboard}"><i class="bi bi-speedometer2"></i> Dashboard</a>
-                    </li>
-                    <li class="nav-item" sec:authorize="hasRole('DRIVER')">
-                        <a class="nav-link" th:href="@{/driver/add-trip}"><i class="bi bi-plus-circle"></i> Add Trip</a>
-                    </li>
-                    <!-- COMPANY links -->
-                    <li class="nav-item" sec:authorize="hasRole('COMPANY')">
-                        <a class="nav-link" th:href="@{/company/dashboard}"><i class="bi bi-speedometer2"></i> Dashboard</a>
-                    </li>
-                    <li class="nav-item" sec:authorize="hasRole('COMPANY')">
-                        <a class="nav-link" th:href="@{/company/vehicles}"><i class="bi bi-car-front"></i> Fleet</a>
-                    </li>
-                    <li class="nav-item" sec:authorize="hasRole('COMPANY')">
-                        <a class="nav-link" th:href="@{/company/trips/add}"><i class="bi bi-plus-circle"></i> Add Trip</a>
-                    </li>
-                    <!-- ADMIN links -->
-                    <li class="nav-item" sec:authorize="hasRole('ADMIN')">
-                        <a class="nav-link" th:href="@{/admin/dashboard}"><i class="bi bi-speedometer2"></i> Dashboard</a>
-                    </li>
-                    <li class="nav-item" sec:authorize="hasRole('ADMIN')">
-                        <a class="nav-link" th:href="@{/admin/trips}"><i class="bi bi-signpost-2"></i> Manage Trips</a>
-                    </li>
-                    <li class="nav-item" sec:authorize="hasRole('ADMIN')">
-                        <a class="nav-link" th:href="@{/admin/users}"><i class="bi bi-people"></i> Manage Users</a>
-                    </li>
-                </ul>
-                
-                <div class="d-flex align-items-center gap-2">
-                    <button class="btn btn-outline-secondary btn-sm me-2" id="themeToggleBtn" aria-label="Toggle Theme">
-                        <i class="bi bi-moon-fill" id="themeIcon"></i>
-                    </button>
-                    
-                    <button id="pwa-install-btn" class="me-2" aria-label="Install App">
-                        <i class="bi bi-download"></i> Install App
-                    </button>
-                    
-                    <!-- Guest links -->
-                    <ul class="navbar-nav" sec:authorize="!isAuthenticated()">
-                        <li class="nav-item">
-                            <a class="nav-link" th:href="@{/login}"><i class="bi bi-box-arrow-in-right"></i> Login</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" th:href="@{/register}"><i class="bi bi-person-plus"></i> Register</a>
-                        </li>
-                    </ul>
+    <nav th:replace="~{fragments/navbar :: navbar}"></nav>
 
-                    <!-- Authenticated User links -->
-                    <ul class="navbar-nav" sec:authorize="isAuthenticated()">
-                        <li class="nav-item me-2">
-                            <a th:href="@{/profile}" class="nav-link">
-                                <i class="bi bi-person-circle fs-5"></i>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <span class="nav-link" sec:authentication="name"></span>
-                        </li>
-                        <li class="nav-item">
-                            <form th:action="@{/logout}" method="post" class="d-inline">
-                                <button type="submit" class="btn btn-outline-danger btn-sm ms-2 mt-1"><i class="bi bi-box-arrow-right"></i> Logout</button>
-                            </form>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Main Content -->
-    <div class="container mt-4 mb-5">
+    <!-- Main Content with padding for fixed navbar -->
+    <main class="flex-shrink-0" style="padding-top: 76px;">
         <th:block th:replace="${content}"/>
-    </div>
+    </main>
 
     <!-- Footer -->
-    <footer class="text-center py-4 mt-auto border-top border-secondary" style="border-color: var(--border-color) !important; background-color: var(--card-bg);">
-        <div class="container d-flex flex-column flex-md-row justify-content-between align-items-center">
-            <p class="text-muted mb-0 small">&copy; 2026 GhanaRide — Campus & Intercity Transport</p>
-            <div class="d-flex gap-3 mt-3 mt-md-0">
-                <a th:href="@{/about}" class="text-decoration-none small text-muted">About</a>
-                <a th:href="@{/contact}" class="text-decoration-none small text-muted">Contact</a>
-            </div>
-        </div>
-    </footer>
+    <footer th:replace="~{fragments/footer :: footer}"></footer>
 
-    <script th:src="@{/webjars/bootstrap/5.3.2/js/bootstrap.bundle.min.js}"></script>
-    
-    <!-- Theme Switcher Script -->
-    <script>
-        const themeToggleBtn = document.getElementById('themeToggleBtn');
-        const themeIcon = document.getElementById('themeIcon');
-        const body = document.body;
+    <!-- Shared Scripts (Bootstrap, Theme, PWA) -->
+    <th:block th:replace="~{fragments/scripts :: scripts}"></th:block>
 
-        // Apply theme immediately on load
-        if (localStorage.getItem('theme') === 'light') {
-            body.classList.add('light-mode');
-            if (themeIcon) themeIcon.classList.replace('bi-moon-fill', 'bi-sun-fill');
-        }
-
-        if (themeToggleBtn) {
-            themeToggleBtn.addEventListener('click', () => {
-                if (body.classList.contains('light-mode')) {
-                    body.classList.remove('light-mode');
-                    localStorage.setItem('theme', 'dark');
-                    if (themeIcon) themeIcon.classList.replace('bi-sun-fill', 'bi-moon-fill');
-                } else {
-                    body.classList.add('light-mode');
-                    localStorage.setItem('theme', 'light');
-                    if (themeIcon) themeIcon.classList.replace('bi-moon-fill', 'bi-sun-fill');
-                }
-            });
-        }
-    </script>
-    
-    <!-- PWA Registration & Install Script -->
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(registration => {
-                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
-                    })
-                    .catch(err => {
-                        console.log('ServiceWorker registration failed: ', err);
-                    });
-            });
-        }
-
-        let deferredPrompt;
-        const installBtn = document.getElementById('pwa-install-btn');
-
-        window.addEventListener('beforeinstallprompt', (e) => {
-            // Prevent Chrome 67 and earlier from automatically showing the prompt
-            e.preventDefault();
-            // Stash the event so it can be triggered later.
-            deferredPrompt = e;
-            // Update UI to notify the user they can add to home screen
-            if (installBtn) {
-                installBtn.classList.add('visible');
-            }
-        });
-
-        if (installBtn) {
-            installBtn.addEventListener('click', (e) => {
-                // hide our user interface that shows our A2HS button
-                installBtn.classList.remove('visible');
-                // Show the prompt
-                if (deferredPrompt) {
-                    deferredPrompt.prompt();
-                    // Wait for the user to respond to the prompt
-                    deferredPrompt.userChoice.then((choiceResult) => {
-                        if (choiceResult.outcome === 'accepted') {
-                            console.log('User accepted the A2HS prompt');
-                        } else {
-                            console.log('User dismissed the A2HS prompt');
-                        }
-                        deferredPrompt = null;
-                    });
-                }
-            });
-        }
-
-        window.addEventListener('appinstalled', (evt) => {
-            // Log install to analytics
-            console.log('INSTALL: Success');
-        });
-    </script>
 </body>
 </html>

@@ -178,6 +178,17 @@
                                     <i class="bi bi-people-fill"></i>
                                 </a>
 
+                                <!-- Real-Time Tools (Chat & Broadcast Location) -->
+                                <button type="button"
+                                        class="btn btn-sm btn-primary text-light"
+                                        title="Chat & Location"
+                                        th:if="${trip.status.name() == 'APPROVED' or trip.status.name() == 'FULL'}"
+                                        th:data-trip="${trip.id}"
+                                        th:data-route="${trip.fromLocation + ' → ' + trip.toLocation}"
+                                        onclick="openRealTimeModal(this)">
+                                    <i class="bi bi-broadcast"></i>
+                                </button>
+
                                 <!-- Mark as Full (only for APPROVED trips) -->
                                 <form th:if="${trip.status.name() == 'APPROVED'}"
                                       th:action="@{/driver/trips/{id}/full(id=${trip.id})}"
@@ -284,6 +295,205 @@
         });
     </script>
 
+    <!-- REAL-TIME DRIVER MODAL (Location & Chat) -->
+    <div class="modal fade" id="realTimeModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow-lg bg-card text-light" style="background: var(--card-bg);">
+                <div class="modal-header border-secondary-subtle">
+                    <h5 class="modal-title fw-bold">
+                        <i class="bi bi-broadcast me-2 text-primary"></i> Live Trip: <span id="rtRouteText">Route</span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div class="row g-0">
+                        <!-- Location Control Side -->
+                        <div class="col-md-5 p-4 border-end border-secondary-subtle bg-dark bg-opacity-50">
+                            <h6 class="text-warning mb-3"><i class="bi bi-geo-alt-fill me-2"></i>Location Broadcasting</h6>
+                            <p class="small text-muted">Turn this on when you start driving so passengers can track your live location on the map.</p>
+                            
+                            <div class="form-check form-switch fs-5 mb-3">
+                                <input class="form-check-input" type="checkbox" role="switch" id="broadcastToggle">
+                                <label class="form-check-label ms-2 text-light" for="broadcastToggle">Share Location</label>
+                            </div>
+                            
+                            <div id="broadcastStatus" class="alert alert-secondary small py-2 d-none">
+                                <i class="bi bi-hourglass-split me-1"></i> Waiting for GPS...
+                            </div>
+                        </div>
+                        
+                        <!-- Chat Side -->
+                        <div class="col-md-7 d-flex flex-column h-100" style="min-height: 400px;">
+                            <div class="p-3 bg-dark bg-opacity-25 border-bottom border-secondary-subtle">
+                                <h6 class="mb-0 text-info"><i class="bi bi-chat-dots-fill me-2"></i>Passenger Chat</h6>
+                            </div>
+                            <div class="p-3 flex-grow-1" id="driverChatMessages" style="overflow-y: auto; height: 300px;">
+                                <!-- Chat messages appear here -->
+                            </div>
+                            <div class="p-3 border-top border-secondary-subtle bg-dark bg-opacity-50">
+                                <form id="driverChatForm" class="d-flex m-0">
+                                    <input type="text" id="driverChatInput" class="form-control bg-dark text-light border-secondary rounded-pill me-2" placeholder="Message passengers..." required autocomplete="off">
+                                    <button type="submit" class="btn btn-primary rounded-circle shadow-sm" style="width: 40px; height: 40px; padding: 0;">
+                                        <i class="bi bi-send-fill"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SockJS & STOMP -->
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        const driverName = /*[[${currentUser.fullName != null ? currentUser.fullName : currentUser.username}]]*/ 'Driver';
+        /*]]>*/
+        
+        let stompClient = null;
+        let activeRtTripId = null;
+        let watchId = null;
+
+        // Modal closed -> stop everything
+        document.getElementById('realTimeModal').addEventListener('hidden.bs.modal', function () {
+            stopBroadcasting();
+            document.getElementById('broadcastToggle').checked = false;
+            if (stompClient !== null) {
+                stompClient.disconnect();
+            }
+            activeRtTripId = null;
+        });
+
+        // Toggle Switch Event
+        document.getElementById('broadcastToggle').addEventListener('change', function(e) {
+            const statusDiv = document.getElementById('broadcastStatus');
+            if (this.checked) {
+                statusDiv.classList.remove('d-none', 'alert-secondary', 'alert-danger');
+                statusDiv.classList.add('alert-warning');
+                statusDiv.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Requesting GPS access...';
+                startBroadcasting();
+            } else {
+                stopBroadcasting();
+                statusDiv.classList.add('d-none');
+            }
+        });
+
+        function openRealTimeModal(btn) {
+            const tripId = btn.getAttribute('data-trip');
+            const route = btn.getAttribute('data-route');
+            activeRtTripId = tripId;
+            
+            document.getElementById('rtRouteText').innerText = route;
+            document.getElementById('driverChatMessages').innerHTML = ''; // Clear old chat
+            
+            new bootstrap.Modal(document.getElementById('realTimeModal')).show();
+
+            // Connect WebSocket
+            const socket = new SockJS('/ws-ghanaride');
+            stompClient = Stomp.over(socket);
+            stompClient.debug = null;
+            
+            stompClient.connect({}, function (frame) {
+                // Subscribe to chat
+                stompClient.subscribe('/topic/chat/' + tripId, function(message) {
+                    const chat = JSON.parse(message.body);
+                    appendDriverMessage(chat.senderName, chat.content, chat.senderName === driverName);
+                });
+            });
+        }
+
+        // Send Chat
+        document.getElementById('driverChatForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const input = document.getElementById('driverChatInput');
+            const msgText = input.value.trim();
+            if (msgText && stompClient && stompClient.connected && activeRtTripId) {
+                const chatMessage = {
+                    tripId: activeRtTripId,
+                    senderName: driverName,
+                    content: msgText,
+                    type: 'CHAT'
+                };
+                stompClient.send("/app/chat", {}, JSON.stringify(chatMessage));
+                input.value = '';
+            }
+        });
+
+        function appendDriverMessage(sender, text, isMe) {
+            const messagesDiv = document.getElementById('driverChatMessages');
+            const msgHtml = isMe 
+                ? `<div class="d-flex justify-content-end mb-2">
+                     <div class="bg-primary text-white rounded-3 px-3 py-2 shadow-sm" style="max-width: 80%; border-bottom-right-radius: 0 !important;">
+                        ${text}
+                     </div>
+                   </div>`
+                : `<div class="d-flex justify-content-start mb-2">
+                     <div class="bg-dark border border-secondary-subtle rounded-3 px-3 py-2 shadow-sm text-light" style="max-width: 80%; border-bottom-left-radius: 0 !important;">
+                        <small class="text-info fw-bold d-block mb-1" style="font-size: 0.75rem;">${sender}</small>
+                        ${text}
+                     </div>
+                   </div>`;
+            messagesDiv.insertAdjacentHTML('beforeend', msgHtml);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // Geolocation Broadcasting
+        function startBroadcasting() {
+            if (!navigator.geolocation) {
+                alert("Geolocation is not supported by your browser.");
+                document.getElementById('broadcastToggle').checked = false;
+                return;
+            }
+
+            const statusDiv = document.getElementById('broadcastStatus');
+            
+            watchId = navigator.geolocation.watchPosition(
+                function(position) {
+                    // Success callback
+                    statusDiv.classList.remove('alert-warning', 'alert-danger');
+                    statusDiv.classList.add('alert-success');
+                    statusDiv.innerHTML = `<i class="bi bi-broadcast me-1"></i> Live: ${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)}`;
+                    
+                    // Send to server
+                    if (stompClient && stompClient.connected && activeRtTripId) {
+                        const locUpdate = {
+                            tripId: activeRtTripId,
+                            driverId: driverName,
+                            latitude: position.coords.latitude,
+                            longitude: position.coords.longitude,
+                            speed: position.coords.speed || 0,
+                            heading: position.coords.heading || 0
+                        };
+                        stompClient.send("/app/location", {}, JSON.stringify(locUpdate));
+                    }
+                },
+                function(error) {
+                    // Error callback
+                    console.error("GPS Error", error);
+                    statusDiv.classList.remove('alert-warning', 'alert-success');
+                    statusDiv.classList.add('alert-danger');
+                    statusDiv.innerHTML = '<i class="bi bi-exclamation-triangle me-1"></i> GPS Error: ' + error.message;
+                    document.getElementById('broadcastToggle').checked = false;
+                },
+                {
+                    enableHighAccuracy: true,
+                    maximumAge: 10000, // 10 seconds
+                    timeout: 5000
+                }
+            );
+        }
+
+        function stopBroadcasting() {
+            if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+            }
+        }
+    </script>
 </main>
 </body>
 </html>

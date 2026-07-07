@@ -4,121 +4,125 @@
     <title>My Profile - GhanaRide</title>
 </head>
 <body>
-<main th:fragment="main">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="text-light fw-bold mb-0"><i class="bi bi-person-circle text-warning me-2"></i>My Profile</h2>
-            </div>
-            
-            <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
-            <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+<main th:fragment="main" class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="d-flex align-items-center mb-4">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center me-3 shadow-sm" style="width: 50px; height: 50px; background-color: rgba(252,209,22,0.15); color: #FCD116;">
+                        <i class="bi bi-person-circle fs-3"></i>
+                    </div>
+                    <h2 class="fw-bold mb-0 text-body">My Profile</h2>
+                </div>
+                
+                <div th:if="${error}" class="alert alert-danger alert-dismissible fade show rounded-3 shadow-sm d-flex align-items-center" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
+                    <span th:text="${error}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                <div th:if="${success}" class="alert alert-success alert-dismissible fade show rounded-3 shadow-sm d-flex align-items-center" role="alert">
+                    <i class="bi bi-check-circle-fill me-2 fs-5"></i>
+                    <span th:text="${success}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
 
-            <div class="row g-4">
-                <!-- Profile Image Card -->
-                <div class="col-md-4">
-                    <div class="card bg-dark border-secondary h-100 shadow-sm text-center">
-                        <div class="card-body d-flex flex-column align-items-center justify-content-center">
-                            
-                            <div class="position-relative mb-3">
-                                <img th:if="${currentUser.profileImagePath != null}" 
-                                     th:src="@{${currentUser.profileImagePath}}" 
-                                     alt="Profile Image" 
-                                     class="rounded-circle object-fit-cover border border-3 border-warning"
-                                     style="width: 150px; height: 150px;">
-                                     
-                                <div th:unless="${currentUser.profileImagePath != null}" 
-                                     class="rounded-circle bg-secondary d-flex justify-content-center align-items-center border border-3 border-warning text-light"
-                                     style="width: 150px; height: 150px;">
-                                    <i class="bi bi-person-fill" style="font-size: 5rem;"></i>
+                <div class="row g-4 align-items-start">
+                    <!-- Profile Image Card -->
+                    <div class="col-md-4">
+                        <div class="card border-0 shadow-sm rounded-4 bg-card text-center h-100">
+                            <div class="card-body p-4 d-flex flex-column align-items-center">
+                                
+                                <div class="position-relative mb-3">
+                                    <img th:if="${currentUser.profileImagePath != null}" 
+                                         th:src="@{${currentUser.profileImagePath}}" 
+                                         alt="Profile Image" 
+                                         class="rounded-circle object-fit-cover shadow-sm"
+                                         style="width: 140px; height: 140px; border: 4px solid #FCD116;">
+                                         
+                                    <div th:unless="${currentUser.profileImagePath != null}" 
+                                         class="rounded-circle bg-body d-flex justify-content-center align-items-center shadow-sm text-secondary"
+                                         style="width: 140px; height: 140px; border: 4px solid #FCD116;">
+                                        <i class="bi bi-person-fill" style="font-size: 4.5rem;"></i>
+                                    </div>
                                 </div>
+                                
+                                <h5 class="fw-bold text-body mb-1" th:text="${currentUser.username}">Username</h5>
+                                <span class="badge mb-4 px-3 py-2 rounded-pill" style="background-color: rgba(252,209,22,0.2); color: #c4a110; border: 1px solid #FCD116;" th:text="${currentUser.role}">USER</span>
+                                
+                                <!-- Image Upload Form -->
+                                <form th:action="@{/profile/upload-image}" method="post" enctype="multipart/form-data" class="w-100 mt-auto">
+                                    <div class="input-group mb-3 shadow-sm rounded-3">
+                                        <input type="file" class="form-control bg-body border-secondary-subtle custom-file-input text-muted" name="profileImage" accept="image/*" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-outline-warning w-100 fw-bold shadow-sm rounded-3">
+                                        <i class="bi bi-camera me-2"></i>Update Photo
+                                    </button>
+                                </form>
+                                
                             </div>
-                            
-                            <h5 class="text-light fw-bold" th:text="${currentUser.username}">Username</h5>
-                            <span class="badge bg-warning text-dark rounded-pill mb-3" th:text="${currentUser.role}">USER</span>
-                            
-                            <!-- Image Upload Form -->
-                            <form th:action="@{/profile/upload-image}" method="post" enctype="multipart/form-data" class="w-100">
-                                <div class="input-group input-group-sm mb-2">
-                                    <input type="file" class="form-control form-control-dark" name="profileImage" accept="image/*" required>
-                                </div>
-                                <button type="submit" class="btn btn-outline-warning btn-sm w-100"><i class="bi bi-camera me-1"></i> Update Photo</button>
-                            </form>
-                            
+                        </div>
+                    </div>
+                    
+                    <!-- Profile Details Form -->
+                    <div class="col-md-8">
+                        <div class="card border-0 shadow-sm rounded-4 bg-card h-100">
+                            <div class="card-body p-4 p-md-5">
+                                <h5 class="fw-bold mb-4 border-bottom pb-3" style="color: #FCD116;">Personal Information</h5>
+                                
+                                <form th:action="@{/profile/update}" method="post">
+                                    <div class="row g-4">
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-medium text-muted small">Full Name <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control form-control-lg bg-body border-secondary-subtle custom-input shadow-sm" name="fullName" th:value="${currentUser.fullName}" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-medium text-muted small">Phone Number <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control form-control-lg bg-body border-secondary-subtle custom-input shadow-sm" name="phoneNumber" th:value="${currentUser.phoneNumber}" required>
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label fw-medium text-muted small">Email Address</label>
+                                            <input type="email" class="form-control form-control-lg bg-body border-secondary-subtle text-muted shadow-sm" th:value="${currentUser.email}" disabled>
+                                            <div class="form-text text-muted small mt-2"><i class="bi bi-info-circle me-1"></i> Email address cannot be changed for security reasons.</div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-medium text-muted small">Date of Birth</label>
+                                            <input type="date" class="form-control form-control-lg bg-body border-secondary-subtle custom-input shadow-sm text-muted" name="dateOfBirth" th:value="${currentUser.dateOfBirth}">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-medium text-muted small">Gender</label>
+                                            <select class="form-select form-select-lg bg-body border-secondary-subtle custom-input shadow-sm text-muted" name="gender">
+                                                <option value="">Select Gender...</option>
+                                                <option value="Male" th:selected="${currentUser.gender == 'Male'}">Male</option>
+                                                <option value="Female" th:selected="${currentUser.gender == 'Female'}">Female</option>
+                                                <option value="Other" th:selected="${currentUser.gender == 'Other'}">Other</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label fw-medium text-muted small">Address</label>
+                                            <textarea class="form-control bg-body border-secondary-subtle custom-input shadow-sm" name="address" rows="3" th:text="${currentUser.address}"></textarea>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-5 text-end border-top pt-4">
+                                        <button type="submit" class="btn btn-warning px-5 py-2 fw-bold fs-6 shadow-sm" style="background-color: #FCD116; border: none;">
+                                            <i class="bi bi-save-fill me-2"></i>Save Changes
+                                        </button>
+                                    </div>
+                                </form>
+                                
+                            </div>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Profile Details Form -->
-                <div class="col-md-8">
-                    <div class="card bg-dark border-secondary h-100 shadow-sm">
-                        <div class="card-body p-4">
-                            <h5 class="text-warning border-bottom border-secondary pb-2 mb-4">Personal Information</h5>
-                            
-                            <form th:action="@{/profile/update}" method="post">
-                                <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label text-light">Full Name <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control form-control-dark" name="fullName" th:value="${currentUser.fullName}" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label text-light">Phone Number <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control form-control-dark" name="phoneNumber" th:value="${currentUser.phoneNumber}" required>
-                                    </div>
-                                    <div class="col-12">
-                                        <label class="form-label text-light">Email Address</label>
-                                        <input type="email" class="form-control form-control-dark text-muted" th:value="${currentUser.email}" disabled>
-                                        <div class="form-text text-muted small">Email cannot be changed.</div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label text-light">Date of Birth</label>
-                                        <input type="date" class="form-control form-control-dark" name="dateOfBirth" th:value="${currentUser.dateOfBirth}">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label text-light">Gender</label>
-                                        <select class="form-select form-control-dark" name="gender">
-                                            <option value="">Select Gender...</option>
-                                            <option value="Male" th:selected="${currentUser.gender == 'Male'}">Male</option>
-                                            <option value="Female" th:selected="${currentUser.gender == 'Female'}">Female</option>
-                                            <option value="Other" th:selected="${currentUser.gender == 'Other'}">Other</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-12">
-                                        <label class="form-label text-light">Address</label>
-                                        <textarea class="form-control form-control-dark" name="address" rows="2" th:text="${currentUser.address}"></textarea>
-                                    </div>
-                                </div>
-                                
-                                <div class="mt-4 text-end">
-                                    <button type="submit" class="btn btn-warning px-4"><i class="bi bi-save me-1"></i> Save Changes</button>
-                                </div>
-                            </form>
-                            
-                        </div>
-                    </div>
-                </div>
             </div>
-            
         </div>
     </div>
+    
     <style>
-        .form-control-dark, .form-select.form-control-dark {
-            background-color: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: #fff;
-        }
-        .form-control-dark:focus, .form-select.form-control-dark:focus {
-            background-color: rgba(255, 255, 255, 0.08);
-            border-color: var(--ghana-gold);
-            color: #fff;
-            box-shadow: 0 0 0 0.25rem rgba(252, 209, 22, 0.25);
-        }
-        .form-control-dark::placeholder {
-            color: rgba(255, 255, 255, 0.5);
-        }
-        .form-control-dark:disabled {
-            background-color: rgba(255, 255, 255, 0.02);
-            color: rgba(255, 255, 255, 0.4) !important;
+        .custom-input:focus, .form-select:focus, .custom-file-input:focus {
+            box-shadow: 0 0 0 0.25rem rgba(252, 209, 22, 0.25) !important;
+            border-color: #FCD116 !important;
         }
     </style>
 </main>
