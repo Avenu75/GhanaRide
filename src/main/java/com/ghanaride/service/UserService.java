@@ -168,6 +168,7 @@ public class UserService {
 
     // =========================================================
     // GET CURRENT USER
+    // Supports both standard users and Google OAuth2 users (using their email attribute)
     // =========================================================
     public User getCurrentUser(Principal principal) {
         if (principal == null) {
@@ -176,16 +177,27 @@ public class UserService {
             );
         }
 
+        String identifier = principal.getName();
+
+        // If logged in via OAuth2, retrieve the user by email instead of the Google ID principal.getName()
+        if (principal instanceof org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken oauthToken) {
+            org.springframework.security.oauth2.core.user.OAuth2User oauth2User = oauthToken.getPrincipal();
+            if (oauth2User != null && oauth2User.getAttribute("email") != null) {
+                identifier = oauth2User.getAttribute("email");
+            }
+        }
+
+        String finalIdentifier = identifier;
         return userRepository
                 .findByUsernameOrEmail(
-                        principal.getName(),
-                        principal.getName().toLowerCase()
+                        identifier,
+                        identifier.toLowerCase()
                 )
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
                                 "User",
-                                "username",
-                                principal.getName()
+                                "identifier",
+                                finalIdentifier
                         )
                 );
     }
