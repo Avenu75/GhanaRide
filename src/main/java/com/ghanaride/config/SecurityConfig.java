@@ -310,7 +310,7 @@ public class SecurityConfig {
                 .oauth2Login(oauth -> oauth
                         .loginPage("/login")
                         .successHandler(oAuthSuccessHandler)
-                        .failureUrl("/login?error=oauth_failed")
+                        .failureHandler(failureHandler)
                 )
 
                 // -------------------------------------------------

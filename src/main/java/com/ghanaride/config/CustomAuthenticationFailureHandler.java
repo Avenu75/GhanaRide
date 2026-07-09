@@ -51,6 +51,15 @@ public class CustomAuthenticationFailureHandler
         // Get client IP for logging
         String clientIp = getClientIp(request);
 
+        // Handle OAuth2 specific failures first with full logging
+        if (exception instanceof org.springframework.security.oauth2.core.OAuth2AuthenticationException) {
+            log.error("Google OAuth2 Handshake Failed! Details: {}", exception.getMessage(), exception);
+            response.sendRedirect(
+                    "/login?error=oauth_failed"
+            );
+            return;
+        }
+
         // Handle specific exception types FIRST
         // before recording attempts
         // (some failures shouldn't count as attempts)
