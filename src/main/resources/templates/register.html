@@ -49,8 +49,8 @@
                             </div>
                         </div>
                     </div>
-                    <!-- Hidden input to send accountType value -->
-                    <input type="hidden" name="accountType" id="accountTypeInput" value="passenger">
+                    <!-- Hidden input to send accountType value (bound to RegisterDTO) -->
+                    <input type="hidden" th:field="*{accountType}" id="accountTypeInput">
                 </div>
 
                 <!-- Personal / Admin Information (always visible) -->
@@ -229,9 +229,13 @@
                 }
             }
 
-            // Auto-select Passenger on load
+            // Auto-select saved account type on load (preserves selection after validation errors)
             document.addEventListener('DOMContentLoaded', () => {
-                selectType('passenger');
+                let savedType = document.getElementById('accountTypeInput').value;
+                if (!savedType || savedType.trim() === '') {
+                    savedType = 'passenger';
+                }
+                selectType(savedType);
             });
         </script>
     </div>
