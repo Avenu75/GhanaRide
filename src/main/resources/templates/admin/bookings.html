@@ -78,9 +78,9 @@
                         <!-- Driver -->
                         <td>
                             <div class="text-light small"
-                                 th:text="${booking.trip.driver.fullName}">Driver</div>
+                                 th:text="${booking.trip.driver != null ? booking.trip.driver.fullName : 'To Be Assigned'}">Driver</div>
                             <div class="small text-muted"
-                                 th:text="${booking.trip.car.numberPlate}">Plate</div>
+                                 th:text="${booking.trip.car != null ? booking.trip.car.numberPlate : 'To Be Assigned'}">Plate</div>
                         </td>
 
                         <!-- Seat -->

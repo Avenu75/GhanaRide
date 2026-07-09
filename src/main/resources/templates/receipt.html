@@ -4,83 +4,83 @@
     <title>Booking Receipt - GhanaRide</title>
 </head>
 <body>
-    <main th:fragment="main">
-        <div class="receipt-container">
-            <div class="text-center mb-4">
-                <h2 class="text-success mb-2"><i class="bi bi-check-circle-fill"></i> Booking Confirmed</h2>
-                <h4 class="text-light">GhanaRide Official Receipt</h4>
-                <div class="mt-3">
-                    <span class="text-muted">Reference: </span>
-                    <span class="fs-4 text-warning fw-bold font-monospace" th:text="${booking.bookingReference}">GR-123</span>
-                </div>
-                <div class="mt-2">
+<main th:fragment="main">
+    <div class="receipt-container">
+        <div class="text-center mb-4">
+            <h2 class="text-success mb-2"><i class="bi bi-check-circle-fill"></i> Booking Confirmed</h2>
+            <h4 class="text-light">GhanaRide Official Receipt</h4>
+            <div class="mt-3">
+                <span class="text-muted">Reference: </span>
+                <span class="fs-4 text-warning fw-bold font-monospace" th:text="${booking.bookingReference}">GR-123</span>
+            </div>
+            <div class="mt-2">
                     <span th:if="${booking.status.name() == 'ACTIVE' or booking.status.name() == 'CONFIRMED'}"
                           class="badge rounded-pill bg-info text-dark px-3 py-2 me-1">
                           <i class="bi bi-check me-1"></i> CONFIRMED
                     </span>
-                    <span th:if="${booking.status.name() == 'CANCELLED'}"
-                          class="badge rounded-pill bg-danger px-3 py-2 me-1">
+                <span th:if="${booking.status.name() == 'CANCELLED'}"
+                      class="badge rounded-pill bg-danger px-3 py-2 me-1">
                           <i class="bi bi-x me-1"></i> CANCELLED
                     </span>
-                    <span th:if="${booking.paymentStatus != null and booking.paymentStatus.name() == 'PAID'}" class="badge bg-success rounded-pill px-3 py-2"><i class="bi bi-check-circle me-1"></i> PAID</span>
-                    <span th:if="${booking.paymentStatus == null or booking.paymentStatus.name() == 'PENDING'}" class="badge bg-warning text-dark rounded-pill px-3 py-2"><i class="bi bi-clock me-1"></i> PENDING PAYMENT</span>
-                </div>
-            </div>
-            
-            <hr class="border mb-4">
-            
-            <div class="row g-4 mb-4">
-                <div class="col-md-6">
-                    <h6 class="text-muted text-uppercase mb-2">Trip Details</h6>
-                    <p class="mb-1 text-light"><strong>From:</strong> <span th:text="${booking.trip.fromLocation}">Accra</span></p>
-                    <p class="mb-1 text-light"><strong>To:</strong> <span th:text="${booking.trip.toLocation}">Kumasi</span></p>
-                    <p class="mb-1 text-light" th:if="${booking.trip.pickupStation != null and !booking.trip.pickupStation.isEmpty()}"><strong>Station:</strong> <span th:text="${booking.trip.pickupStation}">Station</span></p>
-                    <p class="mb-1 text-light"><strong>Date:</strong> <span th:text="${#temporals.format(booking.trip.departureTime, 'dd MMM yyyy')}">Date</span></p>
-                    <p class="mb-1 text-light"><strong>Time:</strong> <span th:text="${#temporals.format(booking.trip.departureTime, 'h:mm a')}">Time</span></p>
-                </div>
-                <div class="col-md-6">
-                    <h6 class="text-muted text-uppercase mb-2">Driver & Vehicle</h6>
-                    <p class="mb-1 text-light"><strong>Driver:</strong> <span th:text="${booking.trip.driver.fullName}">Driver</span></p>
-                    <p class="mb-1 text-light"><strong>Contact:</strong> <span th:text="${booking.trip.driver.phoneNumber}">Phone</span></p>
-                    <p class="mb-1 text-light"><strong>Car:</strong> <span th:text="${booking.trip.car.carBrand}">Car</span></p>
-                    <p class="mb-1 text-light"><strong>Plate:</strong> <span th:text="${booking.trip.car.numberPlate}">Plate</span></p>
-                </div>
-            </div>
-            
-            <div class="row g-4 mb-4" th:if="${booking.bookingType != null and booking.bookingType.name() == 'RELATIVE'}">
-                <div class="col-12">
-                    <h6 class="text-warning text-uppercase mb-2">Passenger Details</h6>
-                    <p class="mb-1 text-light"><strong>Name:</strong> <span th:text="${booking.passengerName}">Name</span></p>
-                    <p class="mb-1 text-light"><strong>Phone:</strong> <span th:text="${booking.passengerPhone}">Phone</span></p>
-                </div>
-            </div>
-            
-            <div class="bg-dark rounded p-3 mb-4 border border d-flex justify-content-between align-items-center">
-                <div>
-                    <span class="text-muted d-block">Seat Number</span>
-                    <span class="fs-4 text-light fw-bold">#<span th:text="${booking.seatNumber}">1</span></span>
-                </div>
-                <div>
-                    <span class="text-muted d-block">Method</span>
-                    <span class="text-light fw-bold" th:text="${booking.paymentMethod != null ? booking.paymentMethod : 'N/A'}">CASH</span>
-                </div>
-                <div class="text-end">
-                    <span class="text-muted d-block">Total Amount</span>
-                    <span class="fs-3 text-warning fw-bold">GHC <span th:text="${booking.totalAmount}">0.00</span></span>
-                </div>
-            </div>
-            
-            <div class="text-center text-muted small mb-4">
-                Booked on <span th:text="${#temporals.format(booking.bookingDate, 'dd MMM yyyy HH:mm')}">Date</span>
-                <br>Please present this receipt to the driver before boarding.
-            </div>
-            
-            <div class="d-flex justify-content-center gap-3 d-print-none">
-                <button onclick="window.print()" class="btn btn-warning"><i class="bi bi-printer"></i> Print Receipt</button>
-                <a th:href="@{/my-bookings}" class="btn btn-outline-light"><i class="bi bi-list"></i> My Bookings</a>
-                <a th:href="@{/dashboard}" class="btn btn-outline-warning">Home</a>
+                <span th:if="${booking.paymentStatus != null and booking.paymentStatus.name() == 'PAID'}" class="badge bg-success rounded-pill px-3 py-2"><i class="bi bi-check-circle me-1"></i> PAID</span>
+                <span th:if="${booking.paymentStatus == null or booking.paymentStatus.name() == 'PENDING'}" class="badge bg-warning text-dark rounded-pill px-3 py-2"><i class="bi bi-clock me-1"></i> PENDING PAYMENT</span>
             </div>
         </div>
-    </main>
+
+        <hr class="border mb-4">
+
+        <div class="row g-4 mb-4">
+            <div class="col-md-6">
+                <h6 class="text-muted text-uppercase mb-2">Trip Details</h6>
+                <p class="mb-1 text-light"><strong>From:</strong> <span th:text="${booking.trip.fromLocation}">Accra</span></p>
+                <p class="mb-1 text-light"><strong>To:</strong> <span th:text="${booking.trip.toLocation}">Kumasi</span></p>
+                <p class="mb-1 text-light" th:if="${booking.trip.pickupStation != null and !booking.trip.pickupStation.isEmpty()}"><strong>Station:</strong> <span th:text="${booking.trip.pickupStation}">Station</span></p>
+                <p class="mb-1 text-light"><strong>Date:</strong> <span th:text="${#temporals.format(booking.trip.departureTime, 'dd MMM yyyy')}">Date</span></p>
+                <p class="mb-1 text-light"><strong>Time:</strong> <span th:text="${#temporals.format(booking.trip.departureTime, 'h:mm a')}">Time</span></p>
+            </div>
+            <div class="col-md-6">
+                <h6 class="text-muted text-uppercase mb-2">Driver & Vehicle</h6>
+                <p class="mb-1 text-light"><strong>Driver:</strong> <span th:text="${booking.trip.driver != null ? booking.trip.driver.fullName : 'To Be Assigned'}">Driver</span></p>
+                <p class="mb-1 text-light"><strong>Contact:</strong> <span th:text="${booking.trip.driver != null ? booking.trip.driver.phoneNumber : 'To Be Assigned'}">Phone</span></p>
+                <p class="mb-1 text-light"><strong>Car:</strong> <span th:text="${booking.trip.car != null ? booking.trip.car.carBrand : 'To Be Assigned'}">Car</span></p>
+                <p class="mb-1 text-light"><strong>Plate:</strong> <span th:text="${booking.trip.car != null ? booking.trip.car.numberPlate : 'To Be Assigned'}">Plate</span></p>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4" th:if="${booking.bookingType != null and booking.bookingType.name() == 'RELATIVE'}">
+            <div class="col-12">
+                <h6 class="text-warning text-uppercase mb-2">Passenger Details</h6>
+                <p class="mb-1 text-light"><strong>Name:</strong> <span th:text="${booking.passengerName}">Name</span></p>
+                <p class="mb-1 text-light"><strong>Phone:</strong> <span th:text="${booking.passengerPhone}">Phone</span></p>
+            </div>
+        </div>
+
+        <div class="bg-dark rounded p-3 mb-4 border border d-flex justify-content-between align-items-center">
+            <div>
+                <span class="text-muted d-block">Seat Number</span>
+                <span class="fs-4 text-light fw-bold">#<span th:text="${booking.seatNumber}">1</span></span>
+            </div>
+            <div>
+                <span class="text-muted d-block">Method</span>
+                <span class="text-light fw-bold" th:text="${booking.paymentMethod != null ? booking.paymentMethod : 'N/A'}">CASH</span>
+            </div>
+            <div class="text-end">
+                <span class="text-muted d-block">Total Amount</span>
+                <span class="fs-3 text-warning fw-bold">GHC <span th:text="${booking.totalAmount}">0.00</span></span>
+            </div>
+        </div>
+
+        <div class="text-center text-muted small mb-4">
+            Booked on <span th:text="${#temporals.format(booking.bookingDate, 'dd MMM yyyy HH:mm')}">Date</span>
+            <br>Please present this receipt to the driver before boarding.
+        </div>
+
+        <div class="d-flex justify-content-center gap-3 d-print-none">
+            <button onclick="window.print()" class="btn btn-warning"><i class="bi bi-printer"></i> Print Receipt</button>
+            <a th:href="@{/my-bookings}" class="btn btn-outline-secondary"><i class="bi bi-list"></i> My Bookings</a>
+            <a th:href="@{/dashboard}" class="btn btn-outline-warning">Home</a>
+        </div>
+    </div>
+</main>
 </body>
 </html>
