@@ -114,16 +114,6 @@ public class SecurityConfig {
 
         http
                 // -------------------------------------------------
-                // RATE LIMITING FILTER
-                // Add before authentication filter
-                // Blocks brute force attacks on /login
-                // -------------------------------------------------
-                .addFilterBefore(
-                        new LoginRateLimitFilter(maxLoginAttempts),
-                        UsernamePasswordAuthenticationFilter.class
-                )
-
-                // -------------------------------------------------
                 // CSRF PROTECTION
                 // Thymeleaf th:action auto-injects CSRF tokens
                 // so all forms are protected automatically.
@@ -452,101 +442,4 @@ public class SecurityConfig {
         );
     }
 
-    // =========================================================
-    // LOGIN RATE LIMIT FILTER
-    // Blocks IPs that fail login more than N times
-    // Protects against brute force attacks
-    // Production-grade: tracks per-IP attempt counts
-    // =========================================================
-    public static class LoginRateLimitFilter extends OncePerRequestFilter {
-
-        private final int maxAttempts;
-        // In production, replace with Redis for multi-instance support
-        private final ConcurrentHashMap<String, AtomicInteger> attemptMap =
-                new ConcurrentHashMap<>();
-        private final ConcurrentHashMap<String, Long> lockoutMap =
-                new ConcurrentHashMap<>();
-
-        private static final long LOCKOUT_DURATION_MS = 15 * 60 * 1000L; // 15 min
-
-        public LoginRateLimitFilter(int maxAttempts) {
-            this.maxAttempts = maxAttempts;
-        }
-
-        @Override
-        protected void doFilterInternal(
-                HttpServletRequest request,
-                HttpServletResponse response,
-                FilterChain filterChain
-        ) throws ServletException, IOException {
-
-            // Only apply to POST /login
-            if (!request.getRequestURI().equals("/login") ||
-                    !request.getMethod().equals("POST")) {
-                filterChain.doFilter(request, response);
-                return;
-            }
-
-            String ipAddress = getClientIpAddress(request);
-
-            // Check if IP is locked out
-            if (isLockedOut(ipAddress)) {
-                log.warn("Rate limited login attempt from IP: {}", ipAddress);
-                response.sendRedirect(
-                        "/login?error=too_many_attempts"
-                );
-                return;
-            }
-
-            // Track the attempt
-            attemptMap.computeIfAbsent(
-                    ipAddress,
-                    k -> new AtomicInteger(0)
-            ).incrementAndGet();
-
-            // Check if now exceeds limit
-            if (attemptMap.get(ipAddress).get() >= maxAttempts) {
-                lockoutMap.put(ipAddress, System.currentTimeMillis());
-                attemptMap.remove(ipAddress);
-                log.warn("IP {} locked out after {} failed attempts",
-                        ipAddress, maxAttempts);
-                response.sendRedirect(
-                        "/login?error=too_many_attempts"
-                );
-                return;
-            }
-
-            filterChain.doFilter(request, response);
-        }
-
-        private boolean isLockedOut(String ipAddress) {
-            Long lockoutTime = lockoutMap.get(ipAddress);
-            if (lockoutTime == null) return false;
-
-            if (System.currentTimeMillis() - lockoutTime > LOCKOUT_DURATION_MS) {
-                // Lockout expired — remove and allow
-                lockoutMap.remove(ipAddress);
-                return false;
-            }
-            return true;
-        }
-
-        private String getClientIpAddress(HttpServletRequest request) {
-            // Handle Railway/proxy forwarded IP
-            String xForwardedFor = request.getHeader("X-Forwarded-For");
-            if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
-                return xForwardedFor.split(",")[0].trim();
-            }
-            String xRealIp = request.getHeader("X-Real-IP");
-            if (xRealIp != null && !xRealIp.isEmpty()) {
-                return xRealIp;
-            }
-            return request.getRemoteAddr();
-        }
-
-        @Override
-        protected boolean shouldNotFilterAsyncDispatch() {
-            return false;
-        }
-    }
 }

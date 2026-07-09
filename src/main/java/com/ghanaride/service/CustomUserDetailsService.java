@@ -28,6 +28,7 @@ public class CustomUserDetailsService
         implements UserDetailsService {
 
     private final UserRepository userRepository;
+    private final LoginAttemptService loginAttemptService;
 
     @Override
     @Transactional(readOnly = true)
@@ -80,15 +81,22 @@ public class CustomUserDetailsService
             );
         }
 
-        // Check locked
-        if (user.isAccountLocked()) {
+        // Check locked (either via User entity flag or DB-backed loginAttemptService)
+        if (user.isAccountLocked() || loginAttemptService.isLocked(trimmed)) {
             log.warn(
                     "Login blocked — locked: {}",
                     user.getEmail()
             );
-            throw new LockedException(
-                    "Account temporarily locked."
-            );
+            long minutes = loginAttemptService.getMinutesUntilUnlock(trimmed);
+            if (minutes > 0) {
+                throw new LockedException(
+                        "Account temporarily locked. Try again in " + minutes + " minutes."
+                );
+            } else {
+                throw new LockedException(
+                        "Account temporarily locked."
+                );
+            }
         }
 
         log.debug(
