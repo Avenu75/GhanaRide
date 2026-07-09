@@ -149,9 +149,9 @@ public class User {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
-        // Ensure defaults are set
-        if (!emailVerified) emailVerified = true;
-        if (!enabled)       enabled       = true;
+        // Ensure defaults are set safely (null-safe check for Boolean wrappers)
+        if (emailVerified == null || !emailVerified) emailVerified = true;
+        if (enabled == null || !enabled)             enabled       = true;
     }
 
     @PreUpdate

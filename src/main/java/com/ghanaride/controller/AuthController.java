@@ -57,6 +57,14 @@ public class AuthController {
             model.addAttribute("loginError",
                     "Google sign-in failed. Please try again " +
                             "or use email/password.");
+        } else if ("disabled".equals(error)) {
+            model.addAttribute("loginError",
+                    "Account is disabled or email is not verified. " +
+                            "Please contact support.");
+        } else if ("locked".equals(error)) {
+            model.addAttribute("loginError",
+                    "Your account has been locked due to too many failed attempts. " +
+                            "Please try again in 15 minutes.");
         } else if (error != null) {
             // Generic error — don't reveal specific reason
             // (prevents username enumeration)
