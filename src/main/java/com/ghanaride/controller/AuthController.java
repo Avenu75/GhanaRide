@@ -133,6 +133,7 @@ public class AuthController {
             model.addAttribute("pageTitle", "Register — GhanaRide");
             model.addAttribute("pageDescription",
                     "Join GhanaRide as a passenger, driver, or company.");
+            model.addAttribute("error", "Please fix the highlighted errors below.");
             return "register";
         }
 
@@ -145,6 +146,7 @@ public class AuthController {
                     "Passwords do not match"
             );
             model.addAttribute("pageTitle", "Register — GhanaRide");
+            model.addAttribute("error", "Passwords do not match. Please verify.");
             return "register";
         }
 
@@ -173,6 +175,7 @@ public class AuthController {
 
         if (hasConflict) {
             model.addAttribute("pageTitle", "Register — GhanaRide");
+            model.addAttribute("error", "Registration failed. Username or email already exists.");
             return "register";
         }
 

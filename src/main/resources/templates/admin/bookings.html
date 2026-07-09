@@ -201,6 +201,9 @@
     <script>
         let bookingIdToDelete = null;
 
+        // Move modal to body to avoid z-index/transform issues from parent containers
+        document.body.appendChild(document.getElementById('deleteBookingModal'));
+
         function confirmDeleteBooking(btn) {
             bookingIdToDelete = btn.getAttribute('data-id');
             document.getElementById('deleteBookingRef').textContent = btn.getAttribute('data-ref');

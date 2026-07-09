@@ -41,7 +41,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  * - Security headers (HSTS, CSP, etc.)
  * - Session management
  * - Remember-me
- * - Rate limiting on login endpoint
  * - CSRF protection
  */
 @Slf4j
@@ -441,5 +440,4 @@ public class SecurityConfig {
                 "upgrade-insecure-requests"
         );
     }
-
 }

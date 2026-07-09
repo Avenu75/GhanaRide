@@ -294,6 +294,10 @@
         let tripIdToDelete = null;
         let tripIdToFail = null;
 
+        // Move modals to body to avoid z-index/transform issues from parent containers
+        document.body.appendChild(document.getElementById('deleteModal'));
+        document.body.appendChild(document.getElementById('failModal'));
+
         function confirmDelete(tripId, routeName) {
             tripIdToDelete = tripId;
             document.getElementById('deleteTripRoute').textContent = routeName;

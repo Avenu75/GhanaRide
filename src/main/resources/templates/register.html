@@ -15,6 +15,7 @@
                 <p class="text-muted small">Join GhanaRide to start booking or driving</p>
             </div>
 
+            <!-- General Error Alert Banner -->
             <div th:if="${error}" class="alert alert-danger d-flex align-items-center rounded-3 mb-4 shadow-sm" role="alert">
                 <i class="bi bi-exclamation-triangle-fill fs-5 me-3"></i>
                 <div th:text="${error}">Error message</div>
@@ -59,18 +60,22 @@
                         <div class="col-md-6">
                             <label for="fullName" class="form-label fw-medium text-muted small" id="nameLabel">Full Name</label>
                             <input type="text" class="form-control bg-card custom-input" id="fullName" th:field="*{fullName}" required>
+                            <div class="text-danger small mt-1 fw-medium" th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}"></div>
                         </div>
                         <div class="col-md-6">
                             <label for="username" class="form-label fw-medium text-muted small">Username</label>
                             <input type="text" class="form-control bg-card custom-input" id="username" th:field="*{username}" required>
+                            <div class="text-danger small mt-1 fw-medium" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></div>
                         </div>
                         <div class="col-md-6">
                             <label for="email" class="form-label fw-medium text-muted small" id="emailLabel">Email Address</label>
                             <input type="email" class="form-control bg-card custom-input" id="email" th:field="*{email}" required>
+                            <div class="text-danger small mt-1 fw-medium" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
                         </div>
                         <div class="col-md-6">
                             <label for="phoneNumber" class="form-label fw-medium text-muted small" id="phoneLabel">Phone Number</label>
                             <input type="text" class="form-control bg-card custom-input" id="phoneNumber" th:field="*{phone}">
+                            <div class="text-danger small mt-1 fw-medium" th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}"></div>
                         </div>
                     </div>
                 </div>
@@ -112,10 +117,12 @@
                         <div class="col-md-6">
                             <label for="password" class="form-label fw-medium text-muted small">Password</label>
                             <input type="password" class="form-control bg-card custom-input" id="password" th:field="*{password}" required>
+                            <div class="text-danger small mt-1 fw-medium" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
                         </div>
                         <div class="col-md-6">
                             <label for="confirmPassword" class="form-label fw-medium text-muted small">Confirm Password</label>
                             <input type="password" class="form-control bg-card custom-input" id="confirmPassword" th:field="*{confirmPassword}" required>
+                            <div class="text-danger small mt-1 fw-medium" th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}"></div>
                         </div>
                     </div>
                 </div>
@@ -137,7 +144,7 @@
                             <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
                             <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
                         </svg>
-                        <span class="fw-medium">Sign up with Google</span>
+                        <span class="fw-medium">Sign in with Google</span>
                     </a>
                 </div>
             </form>

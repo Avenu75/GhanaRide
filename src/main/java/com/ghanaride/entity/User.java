@@ -95,6 +95,7 @@ public class User {
     // =========================================================
     // ACCOUNT STATUS FLAGS
     // Used by CustomUserDetailsService for auth checks
+    // Changed fields to Object wrappers 'Boolean' to handle pre-existing NULL values in database
     // =========================================================
 
     /**
@@ -104,10 +105,9 @@ public class User {
      * Set to false to enable email verification flow.
      */
     @Column(
-            name = "email_verified",
-            nullable = false
+            name = "email_verified"
     )
-    private boolean emailVerified = true;
+    private Boolean emailVerified = true;
 
     /**
      * Whether the account is active.
@@ -115,10 +115,9 @@ public class User {
      * Disabled users cannot log in.
      */
     @Column(
-            name = "enabled",
-            nullable = false
+            name = "enabled"
     )
-    private boolean enabled = true;
+    private Boolean enabled = true;
 
     /**
      * Whether the account is locked.
@@ -126,10 +125,9 @@ public class User {
      * Automatically cleared after lockout duration.
      */
     @Column(
-            name = "account_locked",
-            nullable = false
+            name = "account_locked"
     )
-    private boolean accountLocked = false;
+    private Boolean accountLocked = false;
 
     // =========================================================
     // TIMESTAMPS
@@ -179,6 +177,23 @@ public class User {
         this.role      = role;
         this.enabled   = true;
         this.emailVerified = true;
+    }
+
+    // =========================================================
+    // NULL-SAFE BOOLEAN GETTERS
+    // Ensures existing database rows with NULL are treated safely as defaults
+    // and supports backward compatibility with .is...() methods
+    // =========================================================
+    public boolean isEmailVerified() {
+        return emailVerified != null && emailVerified;
+    }
+
+    public boolean isEnabled() {
+        return enabled != null && enabled;
+    }
+
+    public boolean isAccountLocked() {
+        return accountLocked != null && accountLocked;
     }
 
     // =========================================================

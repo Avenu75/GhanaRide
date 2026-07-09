@@ -190,6 +190,9 @@
     <script>
         let userIdToDelete = null;
 
+        // Move modal to body to avoid z-index/transform issues from parent containers
+        document.body.appendChild(document.getElementById('deleteUserModal'));
+
         function confirmDeleteUser(btn) {
             userIdToDelete = btn.getAttribute('data-id');
             document.getElementById('deleteUserName').textContent = btn.getAttribute('data-name');
