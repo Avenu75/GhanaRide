@@ -53,13 +53,13 @@
             <h4 class="fw-bold mb-3 d-flex align-items-center">
                 <i class="bi bi-calendar2-check-fill me-2" style="color: #0F9D58;"></i>Upcoming Trips
             </h4>
-            
+
             <div class="row g-4">
                 <div class="col-md-6 col-xl-4" th:each="booking : ${upcomingBookings}">
                     <div class="card border-0 rounded-4 shadow-sm bg-card h-100 position-relative overflow-hidden">
                         <!-- Status Ribbon -->
                         <div class="position-absolute top-0 start-0 w-100" style="height: 4px;" th:styleappend="${booking.paymentStatus != null and booking.paymentStatus.name() == 'PAID' ? 'background-color: #0F9D58;' : 'background-color: #FCD116;'}"></div>
-                        
+
                         <div class="card-body p-4 d-flex flex-column">
                             <div class="d-flex justify-content-between align-items-start mb-3">
                                 <div>
@@ -71,7 +71,7 @@
                                     <span th:if="${booking.paymentStatus == null or booking.paymentStatus.name() == 'PENDING'}" class="badge bg-warning text-dark rounded-pill small">PENDING PAY</span>
                                 </div>
                             </div>
-                            
+
                             <div class="d-flex align-items-center justify-content-between mb-3">
                                 <div class="text-center" style="flex: 1;">
                                     <h5 class="fw-bold text-body mb-0 text-truncate" th:text="${booking.trip.fromLocation}" th:title="${booking.trip.fromLocation}">From</h5>
@@ -92,7 +92,7 @@
                                 </div>
                                 <div class="d-flex align-items-center mb-2 text-muted small">
                                     <i class="bi bi-person-badge-fill me-2 text-primary"></i>
-                                    <span class="text-truncate" th:text="${booking.trip.driver.fullName}">Driver Name</span>
+                                    <span class="text-truncate" th:text="${booking.trip.driver != null ? booking.trip.driver.fullName : 'To Be Assigned'}">Driver Name</span>
                                 </div>
                                 <div class="d-flex align-items-center text-muted small">
                                     <i class="bi bi-segmented-nav me-2 text-info"></i>
@@ -107,7 +107,7 @@
                                 <a th:if="${booking.paymentStatus == null or booking.paymentStatus.name() == 'PENDING'}" th:href="@{/payment/{id}(id=${booking.id})}" class="btn btn-warning flex-grow-1 rounded-3 fw-bold shadow-sm" style="background-color: #FCD116; border: none;">
                                     <i class="bi bi-credit-card me-1"></i>Pay Now
                                 </a>
-                                
+
                                 <div th:if="${cancelEligibility[booking.id]}">
                                     <button type="button" class="btn btn-danger rounded-3 shadow-sm px-3 cancel-timer-btn h-100"
                                             th:data-id="${booking.id}"
@@ -117,19 +117,19 @@
                                         <i class="bi bi-x-circle"></i> <span class="cancel-timer-text d-none d-sm-inline">Cancel</span>
                                     </button>
                                 </div>
-                                
+
                                 <!-- Real-time Actions -->
-                                <button type="button" class="btn btn-info text-white rounded-3 shadow-sm px-3 h-100" 
-                                        th:data-trip="${booking.trip.id}" th:data-driver="${booking.trip.driver.fullName}" 
+                                <button type="button" class="btn btn-info text-white rounded-3 shadow-sm px-3 h-100"
+                                        th:data-trip="${booking.trip.id}" th:data-driver="${booking.trip.driver != null ? booking.trip.driver.fullName : 'To Be Assigned'}"
                                         onclick="openTrackModal(this)">
                                     <i class="bi bi-geo-alt-fill"></i> <span class="d-none d-sm-inline">Track</span>
                                 </button>
-                                <button type="button" class="btn btn-primary rounded-3 shadow-sm px-3 h-100" 
-                                        th:data-trip="${booking.trip.id}" th:data-driver="${booking.trip.driver.fullName}" 
+                                <button type="button" class="btn btn-primary rounded-3 shadow-sm px-3 h-100"
+                                        th:data-trip="${booking.trip.id}" th:data-driver="${booking.trip.driver != null ? booking.trip.driver.fullName : 'To Be Assigned'}"
                                         onclick="openChatModal(this)">
                                     <i class="bi bi-chat-dots-fill"></i> <span class="d-none d-sm-inline">Chat</span>
                                 </button>
-                                
+
                                 <!-- Hidden Cancel Form -->
                                 <form th:id="'cancelForm-' + ${booking.id}" th:action="@{/booking/{id}/cancel(id=${booking.id})}" method="post" style="display:none;"></form>
                             </div>
@@ -144,44 +144,44 @@
             <h5 class="fw-bold mb-3 d-flex align-items-center text-muted">
                 <i class="bi bi-clock-history me-2"></i>Past Bookings
             </h5>
-            
+
             <div class="card border-0 rounded-4 shadow-sm bg-card overflow-hidden">
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0 text-muted">
                         <thead class="bg-body border-bottom border-secondary-subtle">
-                            <tr>
-                                <th class="py-3 ps-4 border-0">Reference</th>
-                                <th class="py-3 border-0">Route</th>
-                                <th class="py-3 border-0">Date</th>
-                                <th class="py-3 border-0">Status</th>
-                                <th class="py-3 pe-4 border-0 text-end">Action</th>
-                            </tr>
+                        <tr>
+                            <th class="py-3 ps-4 border-0">Reference</th>
+                            <th class="py-3 border-0">Route</th>
+                            <th class="py-3 border-0">Date</th>
+                            <th class="py-3 border-0">Status</th>
+                            <th class="py-3 pe-4 border-0 text-end">Action</th>
+                        </tr>
                         </thead>
                         <tbody>
-                            <tr th:each="booking : ${pastBookings}">
-                                <td class="ps-4">
-                                    <span class="font-monospace small fw-medium text-body" th:text="${booking.bookingReference}">REF</span>
-                                </td>
-                                <td>
-                                    <div class="fw-medium text-body small">
-                                        <span th:text="${booking.trip.fromLocation}">From</span> <i class="bi bi-arrow-right mx-1"></i> <span th:text="${booking.trip.toLocation}">To</span>
-                                    </div>
-                                </td>
-                                <td>
-                                    <span class="small" th:text="${#temporals.format(booking.trip.departureTime, 'dd MMM yyyy')}">Date</span>
-                                </td>
-                                <td>
-                                    <span th:if="${booking.status.name() == 'CANCELLED'}" class="badge bg-danger rounded-pill shadow-sm"><i class="bi bi-x-circle me-1"></i>Cancelled</span>
-                                    <span th:if="${booking.status.name() == 'COMPLETED'}" class="badge bg-success rounded-pill shadow-sm"><i class="bi bi-check-circle me-1"></i>Completed</span>
-                                    <span th:if="${booking.status.name() == 'EXPIRED'}" class="badge bg-secondary rounded-pill shadow-sm"><i class="bi bi-clock me-1"></i>Expired</span>
-                                    <span th:if="${booking.status.name() != 'CANCELLED' and booking.status.name() != 'COMPLETED' and booking.status.name() != 'EXPIRED'}" class="badge bg-secondary rounded-pill shadow-sm" th:text="${booking.status}">Status</span>
-                                </td>
-                                <td class="pe-4 text-end">
-                                    <a th:if="${booking.paymentStatus != null and booking.paymentStatus.name() == 'PAID'}" th:href="@{/booking/receipt/{id}(id=${booking.id})}" class="btn btn-sm btn-outline-secondary rounded-pill shadow-sm" title="View Receipt">
-                                        <i class="bi bi-receipt"></i>
-                                    </a>
-                                </td>
-                            </tr>
+                        <tr th:each="booking : ${pastBookings}">
+                            <td class="ps-4">
+                                <span class="font-monospace small fw-medium text-body" th:text="${booking.bookingReference}">REF</span>
+                            </td>
+                            <td>
+                                <div class="fw-medium text-body small">
+                                    <span th:text="${booking.trip.fromLocation}">From</span> <i class="bi bi-arrow-right mx-1"></i> <span th:text="${booking.trip.toLocation}">To</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="small" th:text="${#temporals.format(booking.trip.departureTime, 'dd MMM yyyy')}">Date</span>
+                            </td>
+                            <td>
+                                <span th:if="${booking.status.name() == 'CANCELLED'}" class="badge bg-danger rounded-pill shadow-sm"><i class="bi bi-x-circle me-1"></i>Cancelled</span>
+                                <span th:if="${booking.status.name() == 'COMPLETED'}" class="badge bg-success rounded-pill shadow-sm"><i class="bi bi-check-circle me-1"></i>Completed</span>
+                                <span th:if="${booking.status.name() == 'EXPIRED'}" class="badge bg-secondary rounded-pill shadow-sm"><i class="bi bi-clock me-1"></i>Expired</span>
+                                <span th:if="${booking.status.name() != 'CANCELLED' and booking.status.name() != 'COMPLETED' and booking.status.name() != 'EXPIRED'}" class="badge bg-secondary rounded-pill shadow-sm" th:text="${booking.status}">Status</span>
+                            </td>
+                            <td class="pe-4 text-end">
+                                <a th:if="${booking.paymentStatus != null and booking.paymentStatus.name() == 'PAID'}" th:href="@{/booking/receipt/{id}(id=${booking.id})}" class="btn btn-sm btn-outline-secondary rounded-pill shadow-sm" title="View Receipt">
+                                    <i class="bi bi-receipt"></i>
+                                </a>
+                            </td>
+                        </tr>
                         </tbody>
                     </table>
                 </div>
@@ -228,7 +228,7 @@
         function confirmCancelBooking(btn) {
             bookingIdToCancel = btn.getAttribute('data-id');
             document.getElementById('cancelBookingRef').textContent = btn.getAttribute('data-ref');
-            
+
             // Do not append the modal to document.body, let it stay where it is.
             const cancelModal = new bootstrap.Modal(document.getElementById('cancelBookingModal'));
             cancelModal.show();
@@ -249,28 +249,28 @@
             buttons.forEach(btn => {
                 const expiryStr = btn.getAttribute('data-expiry');
                 if (!expiryStr) return;
-                
+
                 // Keep the 'T' to ensure cross-browser parsing (e.g. Safari)
                 const expiryDate = new Date(expiryStr);
                 const now = new Date();
                 const diffMs = expiryDate - now;
-                
+
                 if (diffMs <= 0) {
                     btn.disabled = true;
                     btn.classList.remove('btn-danger');
                     btn.classList.add('btn-secondary');
                     // Hide the button entirely when expired or change text
-                    btn.style.display = 'none'; 
+                    btn.style.display = 'none';
                 }
             });
         }
-        
+
         setInterval(updateCancelTimers, 60000); // Check every minute
         updateCancelTimers();
     </script>
 
     <!-- REAL-TIME MAP & CHAT MODALS -->
-    
+
     <!-- Track Modal -->
     <div class="modal fade" id="trackModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -326,7 +326,7 @@
         /*<![CDATA[*/
         const currentUserFullName = /*[[${currentUser.fullName != null ? currentUser.fullName : currentUser.username}]]*/ 'Passenger';
         /*]]>*/
-        
+
         let stompClient = null;
         let currentTripId = null;
         let map = null;
@@ -358,7 +358,7 @@
             const socket = new SockJS('/ws-ghanaride');
             stompClient = Stomp.over(socket);
             stompClient.debug = null; // Disable excessive console logging
-            
+
             stompClient.connect({}, function (frame) {
                 callback();
             });
@@ -377,7 +377,7 @@
             const driverName = btn.getAttribute('data-driver');
             document.getElementById('trackDriverName').innerText = driverName;
             document.getElementById('trackStatus').innerText = 'Connecting to live location...';
-            
+
             const modal = new bootstrap.Modal(document.getElementById('trackModal'));
             modal.show();
 
@@ -387,7 +387,7 @@
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     maxZoom: 19, attribution: '© OpenStreetMap'
                 }).addTo(map);
-                
+
                 // Custom car icon
                 const carIcon = L.divIcon({
                     html: '<div style="background-color: #0F9D58; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; color: white; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"><i class="bi bi-car-front-fill" style="font-size: 12px;"></i></div>',
@@ -416,7 +416,7 @@
             const driverName = btn.getAttribute('data-driver');
             document.getElementById('chatDriverName').innerText = driverName;
             document.getElementById('chatMessages').innerHTML = ''; // Clear old messages
-            
+
             const modal = new bootstrap.Modal(document.getElementById('chatModal'));
             modal.show();
 
@@ -446,7 +446,7 @@
 
         function appendMessage(sender, text, isMe) {
             const messagesDiv = document.getElementById('chatMessages');
-            const msgHtml = isMe 
+            const msgHtml = isMe
                 ? `<div class="d-flex justify-content-end mb-2">
                      <div class="bg-primary text-white rounded-3 px-3 py-2 shadow-sm" style="max-width: 80%; border-bottom-right-radius: 0 !important;">
                         ${text}
