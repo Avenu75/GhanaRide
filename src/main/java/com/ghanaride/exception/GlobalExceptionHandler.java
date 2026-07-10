@@ -27,10 +27,13 @@ public class GlobalExceptionHandler {
     // =========================================================
     // 404 — Page Not Found
     // =========================================================
-    @ExceptionHandler(NoHandlerFoundException.class)
+    @ExceptionHandler({
+            NoHandlerFoundException.class,
+            org.springframework.web.servlet.resource.NoResourceFoundException.class
+    })
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public String handleNotFound(
-            NoHandlerFoundException ex,
+            Exception ex,
             HttpServletRequest request,
             Model model
     ) {

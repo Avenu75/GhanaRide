@@ -134,7 +134,9 @@ public class CustomAuthenticationFailureHandler
             }
         }
 
-        // Generic failure (don't reveal reason)
+        // Generic failure (don't reveal reason, but LOG it for debugging)
+        log.error("Unexpected authentication failure for '{}' from IP {}: {}", 
+                  identifier, clientIp, exception.getMessage(), exception);
         response.sendRedirect("/login?error=true");
     }
 

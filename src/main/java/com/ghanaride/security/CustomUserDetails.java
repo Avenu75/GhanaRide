@@ -124,6 +124,6 @@ public class CustomUserDetails
     }
 
     public Long getId() {
-        return 0L;
+        return userId;
     }
 }

@@ -75,27 +75,11 @@ public class SecurityConfig {
     private String appBaseUrl;
 
     // =========================================================
-    // AUTHENTICATION PROVIDER
-    // Wires together UserDetailsService + PasswordEncoder
+    // AUTHENTICATION PROVIDER & MANAGER
+    // Spring Boot auto-configures DaoAuthenticationProvider 
+    // and AuthenticationManager automatically since we have
+    // UserDetailsService and PasswordEncoder beans.
     // =========================================================
-    @Bean
-    public DaoAuthenticationProvider daoAuthenticationProvider(PasswordEncoder passwordEncoder) {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userDetailsService);
-        authProvider.setPasswordEncoder(passwordEncoder);
-        // Show "bad credentials" instead of "user not found"
-        // (prevents username enumeration attacks)
-        authProvider.setHideUserNotFoundExceptions(true);
-        return authProvider;
-    }
-
-    // =========================================================
-    // AUTHENTICATION MANAGER
-    // =========================================================
-    @Bean
-    public AuthenticationManager authenticationManager(DaoAuthenticationProvider daoAuthenticationProvider) {
-        return new ProviderManager(daoAuthenticationProvider);
-    }
 
     // =========================================================
     // SESSION EVENT PUBLISHER
@@ -348,9 +332,9 @@ public class SecurityConfig {
                 // Limits concurrent sessions per user
                 // -------------------------------------------------
                 .sessionManagement(session -> session
-                        // Migrate session on login (prevents fixation)
+                        // Change session ID on login (prevents fixation without dropping OAuth request)
                         .sessionFixation(
-                                sf -> sf.migrateSession()
+                                sf -> sf.changeSessionId()
                         )
                         // Max 3 concurrent sessions per user
                         // (prevents account sharing abuse)

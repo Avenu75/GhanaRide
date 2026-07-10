@@ -4,6 +4,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
 
@@ -12,7 +13,9 @@ import java.util.Map;
  * get proper ROLE_* authorities and work with the
  * existing @PreAuthorize / hasRole checks.
  */
-public class CustomOAuth2User implements OAuth2User, UserDetails {
+public class CustomOAuth2User implements OAuth2User, UserDetails, Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private final CustomUserDetails userDetails;
     private final Map<String, Object> attributes;
