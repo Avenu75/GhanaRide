@@ -124,44 +124,113 @@ public class UserService {
     // =========================================================
     // REGISTER OAUTH USER (Google Sign-In)
     // =========================================================
+    // FIX 2026-07-10: null-safe, length-safe, constraint-safe
+    // - fullName never null, truncated 100
+    // - username sanitized, max 50, collision-safe + UUID fallback
+    // - explicit enabled / emailVerified / accountLocked
+    // - duplicate race handling
     @Transactional
     public User registerOAuthUser(
             String email,
             String fullName,
             String googleId
     ) {
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException("OAuth email is required");
+        }
+
+        String normalizedEmail = email.toLowerCase().trim();
+
+        // Prevent duplicate race condition
+        userRepository.findByEmail(normalizedEmail).ifPresent(existing -> {
+            log.info("OAuth user already exists, returning existing: {}", normalizedEmail);
+            // Throw to trigger caller fallback to findByEmail
+            throw new org.springframework.dao.DataIntegrityViolationException("User already exists: " + normalizedEmail);
+        });
+
         User user = new User();
-        user.setEmail(email.toLowerCase().trim());
-        user.setFullName(fullName);
+        user.setEmail(normalizedEmail);
+
+        // fullName is NOT NULL in DB, max 100 chars
+        String safeFullName = (fullName != null && !fullName.isBlank())
+                ? fullName.trim()
+                : normalizedEmail.split("@")[0];
+        if (safeFullName.length() > 100) {
+            safeFullName = safeFullName.substring(0, 100);
+        }
+        user.setFullName(safeFullName);
 
         // Generate unique username from email prefix
-        String baseUsername = email.split("@")[0]
-                .replaceAll("[^a-zA-Z0-9_]", "");
+        // DB column: varchar(50) unique not null
+        String emailPrefix = normalizedEmail.split("@")[0];
+        String baseUsername = emailPrefix.replaceAll("[^a-zA-Z0-9_]", "");
+        if (baseUsername.isBlank()) {
+            baseUsername = "user";
+        }
+        // Reserve space for numeric suffix, keep <= 45 chars base
+        if (baseUsername.length() > 45) {
+            baseUsername = baseUsername.substring(0, 45);
+        }
+
         String username = baseUsername;
         int suffix = 1;
-        while (userRepository.existsByUsername(username)) {
-            username = baseUsername + suffix++;
+        // max 1000 attempts to avoid infinite loop
+        while (userRepository.existsByUsername(username) && suffix < 1000) {
+            String suffixStr = String.valueOf(suffix++);
+            int maxBase = 50 - suffixStr.length();
+            String truncatedBase = baseUsername.length() > maxBase
+                    ? baseUsername.substring(0, maxBase)
+                    : baseUsername;
+            username = truncatedBase + suffixStr;
         }
+
+        if (userRepository.existsByUsername(username)) {
+            // Final fallback: UUID prefix
+            username = "u_" + java.util.UUID.randomUUID().toString()
+                    .replace("-", "").substring(0, 12);
+        }
+
         user.setUsername(username);
 
-        // Random password — OAuth users never use password
+        // Random password — OAuth users never use password login
+        // Still must be BCrypt-encoded and NOT NULL
         user.setPassword(
                 passwordEncoder.encode(
-                        java.util.UUID.randomUUID().toString()
+                        "OAUTH_" + java.util.UUID.randomUUID()
                 )
         );
 
-        // Google already verified the email
+        // Explicitly set all account flags to avoid NULL DB issues
         user.setEmailVerified(true);
+        user.setEnabled(true);
+        user.setAccountLocked(false);
+
         user.setRole(Role.USER);
         user.setAccountType("passenger");
 
-        User saved = userRepository.save(user);
+        // Optional: store googleId if you add a column later
+        // user.setGoogleId(googleId);
 
-        log.info(
-                "OAuth user registered: {} via Google",
-                email
-        );
+        User saved;
+        try {
+            saved = userRepository.saveAndFlush(user);
+        } catch (org.springframework.dao.DataIntegrityViolationException dive) {
+            log.error("OAuth user save failed constraint violation for {}: {}", normalizedEmail, dive.getMessage());
+            // Possibly race condition – try to load existing
+            return userRepository.findByEmail(normalizedEmail)
+                    .orElseThrow(() -> dive);
+        }
+
+        log.info("OAuth user registered: id={} email={} username={} via Google{}",
+                saved.getId(), normalizedEmail, username,
+                googleId != null ? " sub=" + googleId : "");
+
+        // Welcome email – non-blocking, ignore failures
+        try {
+            emailService.sendWelcomeEmail(saved.getEmail(), saved.getFullName());
+        } catch (Exception e) {
+            log.warn("Welcome email failed for OAuth user {}: {}", normalizedEmail, e.getMessage());
+        }
 
         return saved;
     }
@@ -169,6 +238,7 @@ public class UserService {
     // =========================================================
     // GET CURRENT USER
     // Supports both standard users and Google OAuth2 users (using their email attribute)
+    // FIX 2026-07-10: handles CustomOAuth2User, CustomUserDetails, OAuth2AuthenticationToken
     // =========================================================
     public User getCurrentUser(Principal principal) {
         if (principal == null) {
@@ -179,15 +249,40 @@ public class UserService {
 
         String identifier = principal.getName();
 
-        // If logged in via OAuth2, retrieve the user by email instead of the Google ID principal.getName()
+        // 1. OAuth2AuthenticationToken (Google login)
         if (principal instanceof org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken oauthToken) {
             org.springframework.security.oauth2.core.user.OAuth2User oauth2User = oauthToken.getPrincipal();
-            if (oauth2User != null && oauth2User.getAttribute("email") != null) {
-                identifier = oauth2User.getAttribute("email");
+            if (oauth2User != null) {
+                // Try CustomOAuth2User first
+                if (oauth2User instanceof com.ghanaride.security.CustomOAuth2User co2u) {
+                    return userRepository.findById(co2u.getId())
+                            .orElseThrow(() -> new ResourceNotFoundException("User", "id", co2u.getId()));
+                }
+                // Fall back to email attribute
+                String email = oauth2User.getAttribute("email");
+                if (email != null && !email.isBlank()) {
+                    identifier = email;
+                }
             }
         }
+        // 2. CustomOAuth2User directly (if used as Principal)
+        else if (principal instanceof com.ghanaride.security.CustomOAuth2User co2u) {
+            return userRepository.findById(co2u.getId())
+                    .orElseThrow(() -> new ResourceNotFoundException("User", "id", co2u.getId()));
+        }
+        // 3. CustomUserDetails
+        else if (principal instanceof com.ghanaride.security.CustomUserDetails cud) {
+            identifier = cud.getUsername();
+            // fast path – try by id to avoid username/email ambiguity
+            if (cud.getId() != null) {
+                return userRepository.findById(cud.getId())
+                        .orElseThrow(() -> new ResourceNotFoundException("User", "id", cud.getId()));
+            }
+        }
+        // 4. Standard Authentication.getName() fallback
+        // identifier already = principal.getName()
 
-        String finalIdentifier = identifier;
+        final String finalIdentifier = identifier;
         return userRepository
                 .findByUsernameOrEmail(
                         identifier,

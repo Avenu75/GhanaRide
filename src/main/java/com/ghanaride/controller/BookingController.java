@@ -103,17 +103,20 @@ public class BookingController {
         List<Booking> myBookings =
                 bookingService.findByUserWithDetails(currentUser);
 
+        // Null-safe counts – FIX 2026-07-10 prevents NPE 500 for OAuth fresh users
         long upcomingCount = myBookings.stream()
-                .filter(b ->
-                        b.getStatus() != BookingStatus.CANCELLED &&
-                                b.getTrip().getDepartureTime()
-                                        .isAfter(LocalDateTime.now()))
+                .filter(b -> b != null
+                        && b.getStatus() != BookingStatus.CANCELLED
+                        && b.getTrip() != null
+                        && b.getTrip().getDepartureTime() != null
+                        && b.getTrip().getDepartureTime().isAfter(LocalDateTime.now()))
                 .count();
 
         long completedCount = myBookings.stream()
-                .filter(b ->
-                        b.getTrip().getStatus() ==
-                                TripStatus.COMPLETED)
+                .filter(b -> b != null
+                        && b.getTrip() != null
+                        && b.getTrip().getStatus() ==
+                        TripStatus.COMPLETED)
                 .count();
 
         model.addAttribute("currentUser", currentUser);
@@ -476,18 +479,23 @@ public class BookingController {
                 bookingService.findByUserWithDetails(currentUser);
 
         // Split into upcoming and past for better UX
+        // Null-safe split – FIX 2026-07-10
         List<Booking> upcomingBookings = allBookings.stream()
-                .filter(b ->
-                        b.getStatus() != BookingStatus.CANCELLED &&
-                                b.getTrip().getDepartureTime()
-                                        .isAfter(LocalDateTime.now()))
+                .filter(b -> b != null
+                        && b.getStatus() != BookingStatus.CANCELLED
+                        && b.getTrip() != null
+                        && b.getTrip().getDepartureTime() != null
+                        && b.getTrip().getDepartureTime()
+                        .isAfter(LocalDateTime.now()))
                 .toList();
 
         List<Booking> pastBookings = allBookings.stream()
-                .filter(b ->
-                        b.getStatus() == BookingStatus.CANCELLED ||
-                                b.getTrip().getDepartureTime()
-                                        .isBefore(LocalDateTime.now()))
+                .filter(b -> b == null
+                        || b.getStatus() == BookingStatus.CANCELLED
+                        || b.getTrip() == null
+                        || b.getTrip().getDepartureTime() == null
+                        || b.getTrip().getDepartureTime()
+                        .isBefore(LocalDateTime.now()))
                 .toList();
 
         // Pre-calculate cancel eligibility for each booking

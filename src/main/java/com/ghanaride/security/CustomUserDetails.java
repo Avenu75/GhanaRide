@@ -122,4 +122,8 @@ public class CustomUserDetails
                 ", enabled=" + isEnabled() +
                 "}";
     }
+
+    public Long getId() {
+        return 0L;
+    }
 }

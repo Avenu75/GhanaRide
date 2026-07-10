@@ -57,6 +57,7 @@ public class SecurityConfig {
     private final CustomAuthenticationSuccessHandler successHandler;
     private final CustomAuthenticationFailureHandler failureHandler;
     private final CustomOAuthSuccessHandler oAuthSuccessHandler;
+    private final com.ghanaride.service.CustomOAuth2UserService customOAuth2UserService;
 
     // =========================================================
     // Config values from application.properties
@@ -306,9 +307,13 @@ public class SecurityConfig {
 
                 // -------------------------------------------------
                 // GOOGLE OAUTH2 LOGIN
+                // FIX 2026-07-10: use CustomOAuth2UserService to inject ROLE_*
                 // -------------------------------------------------
                 .oauth2Login(oauth -> oauth
                         .loginPage("/login")
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(customOAuth2UserService)
+                        )
                         .successHandler(oAuthSuccessHandler)
                         .failureHandler(failureHandler)
                 )
