@@ -191,10 +191,23 @@ public class CustomOAuthSuccessHandler implements AuthenticationSuccessHandler {
         } catch (Exception e) {
             log.warn("Could not update lastLoginAt for OAuth user: {}", email, e);
         }
-
         log.info("OAuth login success: {} ({}) role={}", email, user.getUsername(), user.getRole());
 
+        // v3.2 – PROFILE COMPLETION ENFORCEMENT
+        // Google users often lack phoneNumber – force /profile first
+        try {
+            if (!userService.isProfileComplete(user)) {
+                log.info("OAuth first-login – profile incomplete, forcing /profile for {}", email);
+                request.getSession().setAttribute("OAUTH_JUST_REGISTERED", true);
+                response.sendRedirect("/profile?complete=oauth&welcome=true");
+                return;
+            }
+        } catch (Exception e) {
+            log.warn("Profile completeness check failed, continuing to dashboard: {}", e.getMessage());
+        }
+
         // Check for saved request
+
         SavedRequest savedRequest = requestCache.getRequest(request, response);
 
         if (savedRequest != null) {

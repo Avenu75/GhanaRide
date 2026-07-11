@@ -226,6 +226,15 @@ public class BookingController {
         User currentUser =
                 userService.getCurrentUser(principal);
 
+        // v3.2 PROFILE COMPLETION ENFORCEMENT – block booking if phone missing
+        if (!userService.isProfileComplete(currentUser)) {
+            redirectAttributes.addFlashAttribute("error",
+                    "Please complete your profile – a valid Ghana phone number is required before booking. " +
+                            "Google accounts need to add a phone number once.");
+            redirectAttributes.addFlashAttribute("highlight", "phoneNumber");
+            return "redirect:/profile?complete=booking&tripId=" + tripId;
+        }
+
         // Driver can't book their own trip
         if (trip.getDriver() != null &&
                 trip.getDriver().getId()
@@ -279,6 +288,13 @@ public class BookingController {
         Trip trip = tripOpt.get();
         User currentUser =
                 userService.getCurrentUser(principal);
+
+        // v3.2 PROFILE COMPLETENESS – block POST if incomplete
+        if (!userService.isProfileComplete(currentUser)) {
+            redirectAttributes.addFlashAttribute("error",
+                    "Profile incomplete – add your phone number in Profile Settings before booking.");
+            return "redirect:/profile?complete=booking&tripId=" + tripId;
+        }
 
         // Re-validate trip availability
         // (may have changed between GET and POST)

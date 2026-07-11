@@ -60,11 +60,20 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         final String googleId = googleIdRaw;
 
         // find or create – variables inside lambda are now final
-        User user = userService.findByEmail(email)
-                .orElseGet(() -> {
-                    log.info("Auto-registering new OAuth user: {} via {}", email, registrationId);
-                    return userService.registerOAuthUser(email, displayName, googleId);
-                });
+        User user;
+        try {
+            user = userService.findByEmail(email)
+                    .orElseGet(() -> {
+                        log.info("Auto-registering new OAuth user: {} via {}", email, registrationId);
+                        return userService.registerOAuthUser(email, displayName, googleId);
+                    });
+        } catch (Exception e) {
+            // Defensive: if registerOAuthUser race hits duplicate, load existing
+            log.warn("OAuth auto-register failed for {}, trying load existing: {}", email, e.getMessage());
+            user = userService.findByEmail(email)
+                    .orElseThrow(() -> new OAuth2AuthenticationException(
+                            new OAuth2Error("user_create_failed"), e.getMessage(), e));
+        }
 
         if (!user.isEnabled()) {
             throw new OAuth2AuthenticationException(new OAuth2Error("disabled"), "Account disabled");

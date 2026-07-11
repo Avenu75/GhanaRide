@@ -6,6 +6,41 @@
 <body>
 <main th:fragment="main" class="py-5">
     <div class="container">
+
+        <!-- v3.2 PROFILE COMPLETION BANNER – OAuth users must add phone -->
+        <div th:if="${param.complete}" class="alert alert-warning alert-dismissible fade show rounded-4 shadow-sm mb-4" role="alert">
+            <div class="d-flex align-items-start">
+                <i class="bi bi-exclamation-triangle-fill fs-4 me-3 mt-1" style="color:#e6a800;"></i>
+                <div class="flex-grow-1">
+                    <h5 class="fw-bold mb-1">Complete your profile to continue</h5>
+                    <p class="mb-2" th:switch="${param.complete[0]}">
+                        <span th:case="'oauth'">Welcome to GhanaRide! Since you signed in with Google, please add your Ghana phone number – it’s required to book rides and receive driver updates.</span>
+                        <span th:case="'booking'">You need a verified phone number before booking. Drivers will call this number at pickup.</span>
+                        <span th:case="'required'">Your profile is incomplete. Please update your contact details to continue booking.</span>
+                        <span th:case="*">Please complete the missing information below to unlock booking.</span>
+                    </p>
+                    <ul class="mb-2 small" th:if="${missingFields != null and !#lists.isEmpty(missingFields)}">
+                        <li th:each="f : ${missingFields}" th:text="${f} + ' is required'">Phone number is required</li>
+                    </ul>
+                    <div th:if="${param.tripId}" class="small text-muted">
+                        You were trying to book trip #<span th:text="${param.tripId[0]}">0</span> – you’ll return there automatically after saving.
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        </div>
+
+        <div th:if="${param.welcome}" class="alert alert-success rounded-4 shadow-sm mb-4">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            <strong>Google account connected!</strong> Just add your phone number below and you’re ready to book across Ghana.
+        </div>
+
+        <div th:if="${profileAlert}" class="alert alert-info rounded-4 shadow-sm mb-4">
+            <i class="bi bi-info-circle-fill me-2"></i>
+            <span th:text="${profileAlert}">Please complete your profile.</span>
+        </div>
+        <!-- END v3.2 banner -->
+
         <div class="row justify-content-center">
             <div class="col-lg-10">
                 <div class="d-flex align-items-center mb-4">
@@ -14,7 +49,7 @@
                     </div>
                     <h2 class="fw-bold mb-0 text-body">My Profile</h2>
                 </div>
-                
+
                 <div th:if="${error}" class="alert alert-danger alert-dismissible fade show rounded-3 shadow-sm d-flex align-items-center" role="alert">
                     <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
                     <span th:text="${error}"></span>
@@ -31,24 +66,24 @@
                     <div class="col-md-4">
                         <div class="card border-0 shadow-sm rounded-4 bg-card text-center h-100">
                             <div class="card-body p-4 d-flex flex-column align-items-center">
-                                
+
                                 <div class="position-relative mb-3">
-                                    <img th:if="${currentUser.profileImagePath != null}" 
-                                         th:src="@{${currentUser.profileImagePath}}" 
-                                         alt="Profile Image" 
+                                    <img th:if="${currentUser.profileImagePath != null}"
+                                         th:src="@{${currentUser.profileImagePath}}"
+                                         alt="Profile Image"
                                          class="rounded-circle object-fit-cover shadow-sm"
                                          style="width: 140px; height: 140px; border: 4px solid #FCD116;">
-                                         
-                                    <div th:unless="${currentUser.profileImagePath != null}" 
+
+                                    <div th:unless="${currentUser.profileImagePath != null}"
                                          class="rounded-circle bg-body d-flex justify-content-center align-items-center shadow-sm text-secondary"
                                          style="width: 140px; height: 140px; border: 4px solid #FCD116;">
                                         <i class="bi bi-person-fill" style="font-size: 4.5rem;"></i>
                                     </div>
                                 </div>
-                                
+
                                 <h5 class="fw-bold text-body mb-1" th:text="${currentUser.username}">Username</h5>
                                 <span class="badge mb-4 px-3 py-2 rounded-pill" style="background-color: rgba(252,209,22,0.2); color: #c4a110; border: 1px solid #FCD116;" th:text="${currentUser.role}">USER</span>
-                                
+
                                 <!-- Image Upload Form -->
                                 <form th:action="@{/profile/upload-image}" method="post" enctype="multipart/form-data" class="w-100 mt-auto">
                                     <div class="input-group mb-3 shadow-sm rounded-3">
@@ -58,17 +93,17 @@
                                         <i class="bi bi-camera me-2"></i>Update Photo
                                     </button>
                                 </form>
-                                
+
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Profile Details Form -->
                     <div class="col-md-8">
                         <div class="card border-0 shadow-sm rounded-4 bg-card h-100">
                             <div class="card-body p-4 p-md-5">
                                 <h5 class="fw-bold mb-4 border-bottom pb-3" style="color: #FCD116;">Personal Information</h5>
-                                
+
                                 <form th:action="@{/profile/update}" method="post">
                                     <div class="row g-4">
                                         <div class="col-md-6">
@@ -102,23 +137,23 @@
                                             <textarea class="form-control bg-body border-secondary-subtle custom-input shadow-sm" name="address" rows="3" th:text="${currentUser.address}"></textarea>
                                         </div>
                                     </div>
-                                    
+
                                     <div class="mt-5 text-end border-top pt-4">
                                         <button type="submit" class="btn btn-warning px-5 py-2 fw-bold fs-6 shadow-sm" style="background-color: #FCD116; border: none;">
                                             <i class="bi bi-save-fill me-2"></i>Save Changes
                                         </button>
                                     </div>
                                 </form>
-                                
+
                             </div>
                         </div>
                     </div>
                 </div>
-                
+
             </div>
         </div>
     </div>
-    
+
     <style>
         .custom-input:focus, .form-select:focus, .custom-file-input:focus {
             box-shadow: 0 0 0 0.25rem rgba(252, 209, 22, 0.25) !important;

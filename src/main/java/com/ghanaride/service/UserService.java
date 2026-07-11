@@ -520,4 +520,32 @@ public class UserService {
     ) {
         // Delegates to PasswordResetService
     }
+
+    // =========================================================
+    // PROFILE COMPLETENESS CHECK – v3.2
+    // OAuth users from Google often miss phoneNumber
+    // Enforce before booking
+    // =========================================================
+    public boolean isProfileComplete(User user) {
+        if (user == null) return false;
+        boolean hasName = user.getFullName() != null && !user.getFullName().isBlank();
+        // Ghana phone: +233xxxxxxxxx or 0xxxxxxxxx (9-10 digits after prefix)
+        boolean hasPhone = user.getPhoneNumber() != null &&
+                user.getPhoneNumber().replaceAll("[^0-9+]", "").length() >= 9;
+        return hasName && hasPhone && user.isEmailVerified() && user.isEnabled() && !user.isAccountLocked();
+    }
+
+    public java.util.List<String> getMissingProfileFields(User user) {
+        java.util.List<String> missing = new java.util.ArrayList<>();
+        if (user == null) {
+            missing.add("account");
+            return missing;
+        }
+        if (user.getFullName() == null || user.getFullName().isBlank()) missing.add("Full name");
+        if (user.getPhoneNumber() == null || user.getPhoneNumber().isBlank()) missing.add("Phone number");
+        if (!user.isEmailVerified()) missing.add("Email verification");
+        if (user.isEnabled() == false) missing.add("Account enabled");
+        if (user.isAccountLocked()) missing.add("Account locked – contact support");
+        return missing;
+    }
 }

@@ -54,11 +54,20 @@ public class ProfileController {
 
     // =========================================================
     // VIEW PROFILE
+    // v3.2 – adds profile-completion banner support
+    //   ?complete=oauth|booking|required
+    //   ?redirect=/booking/7
+    //   ?tripId=7
+    //   ?welcome=true
     // =========================================================
     @GetMapping
     public String viewProfile(
             Principal principal,
-            Model model
+            Model model,
+            @RequestParam(required = false) String complete,
+            @RequestParam(required = false) String redirect,
+            @RequestParam(required = false) Long tripId,
+            @RequestParam(required = false) String welcome
     ) {
         User currentUser =
                 userService.getCurrentUser(principal);
@@ -69,6 +78,25 @@ public class ProfileController {
         model.addAttribute("pageDescription",
                 "Manage your GhanaRide profile, personal " +
                         "information, and account settings.");
+
+        // v3.2 profile completion helpers
+        model.addAttribute("missingFields", userService.getMissingProfileFields(currentUser));
+        model.addAttribute("profileComplete", userService.isProfileComplete(currentUser));
+
+        // pass-through UI flags for Thymeleaf banners
+        if (complete != null) model.addAttribute("complete", complete);
+        if (redirect != null) model.addAttribute("redirectUrl", redirect);
+        if (tripId != null) model.addAttribute("tripId", tripId);
+        if (welcome != null) model.addAttribute("welcome", welcome);
+
+        // If coming from booking flow, show a stronger CTA
+        if ("booking".equals(complete) || "required".equals(complete)) {
+            model.addAttribute("profileAlert",
+                    "A Ghana phone number is required before you can book. Drivers use this to confirm pickup.");
+        } else if ("oauth".equals(complete)) {
+            model.addAttribute("profileAlert",
+                    "Welcome to GhanaRide! Complete your profile – add your phone number to start booking.");
+        }
 
         return "profile";
     }
