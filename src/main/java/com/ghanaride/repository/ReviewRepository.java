@@ -11,9 +11,9 @@ import java.util.List;
 public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     List<Review> findByDriverId(Long driverId);
-    
+
     List<Review> findByPassengerId(Long passengerId);
-    
+
     @Query("SELECT AVG(r.rating) FROM Review r WHERE r.driver.id = :driverId")
     Double getAverageRatingForDriver(Long driverId);
 }

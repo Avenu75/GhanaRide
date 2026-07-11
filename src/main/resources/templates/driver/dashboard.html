@@ -237,7 +237,7 @@
                              style="background: rgba(206,17,38,0.1); border: 1px solid rgba(206,17,38,0.2);">
                             <strong class="text-warning" id="cancelTripRoute">Route</strong>
                         </div>
-                        
+
                         <div class="mb-3">
                             <label for="cancelReason" class="form-label text-light">Reason for Cancellation</label>
                             <select class="form-select bg-dark text-light border-secondary" id="cancelReason" name="cancelReason" required>
@@ -249,7 +249,7 @@
                                 <option value="Other">Other</option>
                             </select>
                         </div>
-                        
+
                         <div class="mb-3" id="otherReasonDiv" style="display: none;">
                             <label for="cancelReasonDetails" class="form-label text-light">Please specify</label>
                             <textarea class="form-control bg-dark text-light border-secondary" id="cancelReasonDetails" name="cancelReasonDetails" rows="2"></textarea>
@@ -277,10 +277,10 @@
         function confirmCancelTrip(btn) {
             const tripId = btn.getAttribute('data-id');
             const route = btn.getAttribute('data-route');
-            
+
             document.getElementById('cancelTripRoute').textContent = route;
             document.getElementById('cancelTripForm').action = '/driver/trips/' + tripId + '/cancel';
-            
+
             new bootstrap.Modal(document.getElementById('cancelTripModal')).show();
         }
 
@@ -311,17 +311,17 @@
                         <div class="col-md-5 p-4 border-end border-secondary-subtle bg-dark bg-opacity-50">
                             <h6 class="text-warning mb-3"><i class="bi bi-geo-alt-fill me-2"></i>Location Broadcasting</h6>
                             <p class="small text-muted">Turn this on when you start driving so passengers can track your live location on the map.</p>
-                            
+
                             <div class="form-check form-switch fs-5 mb-3">
                                 <input class="form-check-input" type="checkbox" role="switch" id="broadcastToggle">
                                 <label class="form-check-label ms-2 text-light" for="broadcastToggle">Share Location</label>
                             </div>
-                            
+
                             <div id="broadcastStatus" class="alert alert-secondary small py-2 d-none">
                                 <i class="bi bi-hourglass-split me-1"></i> Waiting for GPS...
                             </div>
                         </div>
-                        
+
                         <!-- Chat Side -->
                         <div class="col-md-7 d-flex flex-column h-100" style="min-height: 400px;">
                             <div class="p-3 bg-dark bg-opacity-25 border-bottom border-secondary-subtle">
@@ -353,7 +353,7 @@
         /*<![CDATA[*/
         const driverName = /*[[${currentUser.fullName != null ? currentUser.fullName : currentUser.username}]]*/ 'Driver';
         /*]]>*/
-        
+
         let stompClient = null;
         let activeRtTripId = null;
         let watchId = null;
@@ -386,17 +386,17 @@
             const tripId = btn.getAttribute('data-trip');
             const route = btn.getAttribute('data-route');
             activeRtTripId = tripId;
-            
+
             document.getElementById('rtRouteText').innerText = route;
             document.getElementById('driverChatMessages').innerHTML = ''; // Clear old chat
-            
+
             new bootstrap.Modal(document.getElementById('realTimeModal')).show();
 
             // Connect WebSocket
             const socket = new SockJS('/ws-ghanaride');
             stompClient = Stomp.over(socket);
             stompClient.debug = null;
-            
+
             stompClient.connect({}, function (frame) {
                 // Subscribe to chat
                 stompClient.subscribe('/topic/chat/' + tripId, function(message) {
@@ -425,7 +425,7 @@
 
         function appendDriverMessage(sender, text, isMe) {
             const messagesDiv = document.getElementById('driverChatMessages');
-            const msgHtml = isMe 
+            const msgHtml = isMe
                 ? `<div class="d-flex justify-content-end mb-2">
                      <div class="bg-primary text-white rounded-3 px-3 py-2 shadow-sm" style="max-width: 80%; border-bottom-right-radius: 0 !important;">
                         ${text}
@@ -450,14 +450,14 @@
             }
 
             const statusDiv = document.getElementById('broadcastStatus');
-            
+
             watchId = navigator.geolocation.watchPosition(
                 function(position) {
                     // Success callback
                     statusDiv.classList.remove('alert-warning', 'alert-danger');
                     statusDiv.classList.add('alert-success');
                     statusDiv.innerHTML = `<i class="bi bi-broadcast me-1"></i> Live: ${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)}`;
-                    
+
                     // Send to server
                     if (stompClient && stompClient.connected && activeRtTripId) {
                         const locUpdate = {

@@ -41,7 +41,7 @@ public class RealTimeController {
     @MessageMapping("/location")
     public void processLocationUpdate(@Payload LocationUpdate locationUpdate) {
         // Broadcast location to passengers tracking this trip
-        log.debug("Location update for trip {}: lat={}, lng={}", 
+        log.debug("Location update for trip {}: lat={}, lng={}",
                 locationUpdate.getTripId(), locationUpdate.getLatitude(), locationUpdate.getLongitude());
         messagingTemplate.convertAndSend("/topic/location/" + locationUpdate.getTripId(), locationUpdate);
     }

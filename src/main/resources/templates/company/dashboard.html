@@ -4,126 +4,126 @@
     <title>Company Dashboard - GhanaRide</title>
 </head>
 <body>
-    <main th:fragment="main">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="text-light">
-                <i class="bi bi-building text-warning"></i> 
-                Welcome, <span th:text="${company.companyName}">Company</span>
-            </h2>
-            <span class="badge bg-warning text-dark px-3 py-2">
+<main th:fragment="main">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-light">
+            <i class="bi bi-building text-warning"></i>
+            Welcome, <span th:text="${company.companyName}">Company</span>
+        </h2>
+        <span class="badge bg-warning text-dark px-3 py-2">
                 <i class="bi bi-patch-check-fill"></i> Verified Transport Partner
             </span>
-        </div>
+    </div>
 
-        <div th:if="${success}" class="alert alert-success" role="alert" th:text="${success}"></div>
-        <div th:if="${error}" class="alert alert-danger" role="alert" th:text="${error}"></div>
+    <div th:if="${success}" class="alert alert-success" role="alert" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" role="alert" th:text="${error}"></div>
 
-        <!-- Stats Overview -->
-        <div class="row g-4 mb-5">
-            <div class="col-md-3">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body text-center">
-                        <i class="bi bi-car-front display-4 text-primary mb-3"></i>
-                        <h5 class="card-title text-muted">Total Vehicles</h5>
-                        <h2 class="mb-0 text-light" th:text="${totalVehicles}">0</h2>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body text-center">
-                        <i class="bi bi-signpost-2 display-4 text-warning mb-3"></i>
-                        <h5 class="card-title text-muted">Active Trips</h5>
-                        <h2 class="mb-0 text-light" th:text="${activeTrips}">0</h2>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body text-center">
-                        <i class="bi bi-check-circle display-4 text-success mb-3"></i>
-                        <h5 class="card-title text-muted">Completed Trips</h5>
-                        <h2 class="mb-0 text-light" th:text="${completedTrips}">0</h2>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body text-center">
-                        <i class="bi bi-cash-stack display-4 text-info mb-3"></i>
-                        <h5 class="card-title text-muted">Total Earnings</h5>
-                        <h2 class="mb-0 text-light">₵<span th:text="${#numbers.formatDecimal(earnings, 1, 2)}">0.00</span></h2>
-                    </div>
+    <!-- Stats Overview -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="bi bi-car-front display-4 text-primary mb-3"></i>
+                    <h5 class="card-title text-muted">Total Vehicles</h5>
+                    <h2 class="mb-0 text-light" th:text="${totalVehicles}">0</h2>
                 </div>
             </div>
         </div>
-
-        <!-- Quick Actions -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-body p-4 d-flex gap-3">
-                        <a th:href="@{/company/vehicles}" class="btn btn-outline-primary"><i class="bi bi-car-front"></i> Manage Fleet</a>
-                        <a th:href="@{/company/trips/add}" class="btn btn-warning"><i class="bi bi-plus-circle"></i> Create New Trip</a>
-                    </div>
+        <div class="col-md-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="bi bi-signpost-2 display-4 text-warning mb-3"></i>
+                    <h5 class="card-title text-muted">Active Trips</h5>
+                    <h2 class="mb-0 text-light" th:text="${activeTrips}">0</h2>
                 </div>
             </div>
         </div>
-
-        <!-- Recent Trips -->
-        <h4 class="text-light mb-3 mt-5">Your Recent Trips</h4>
-        <div class="card border-0 shadow-sm">
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Route</th>
-                                <th>Date & Time</th>
-                                <th>Vehicle</th>
-                                <th>Seats</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr th:each="trip : ${recentTrips}">
-                                <td>
-                                    <div class="fw-bold text-light" th:text="${trip.fromLocation + ' → ' + trip.toLocation}"></div>
-                                    <small class="text-muted" th:text="${trip.pickupStation}">Station</small>
-                                </td>
-                                <td th:text="${#temporals.format(trip.departureTime, 'dd MMM yyyy, HH:mm')}"></td>
-                                <td>
-                                    <span th:text="${trip.car.carBrand + ' ' + trip.car.model}">Vehicle</span>
-                                    <br>
-                                    <small class="text-muted" th:text="${trip.car.numberPlate}"></small>
-                                </td>
-                                <td>
-                                    <span th:text="${(trip.totalSeats - trip.availableSeats) + '/' + trip.totalSeats}"></span> booked
-                                </td>
-                                <td>
-                                    <span th:if="${trip.status.name() == 'PENDING'}" class="badge bg-warning text-dark">Pending</span>
-                                    <span th:if="${trip.status.name() == 'APPROVED'}" class="badge bg-success">Active</span>
-                                    <span th:if="${trip.status.name() == 'REJECTED'}" class="badge bg-danger">Rejected</span>
-                                    <span th:if="${trip.status.name() == 'COMPLETED'}" class="badge bg-secondary">Completed</span>
-                                    <span th:if="${trip.status.name() == 'FULL'}" class="badge bg-info text-dark">Full</span>
-                                </td>
-                                <td>
-                                    <a th:href="@{/company/trips/{id}/passengers(id=${trip.id})}"
-                                       class="btn btn-sm btn-info text-light"
-                                       title="View Passengers">
-                                        <i class="bi bi-people-fill"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                            <tr th:if="${#lists.isEmpty(recentTrips)}">
-                                <td colspan="6" class="text-center py-4 text-muted">No trips found. Create your first trip!</td>
-                            </tr>
-                        </tbody>
-                    </table>
+        <div class="col-md-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="bi bi-check-circle display-4 text-success mb-3"></i>
+                    <h5 class="card-title text-muted">Completed Trips</h5>
+                    <h2 class="mb-0 text-light" th:text="${completedTrips}">0</h2>
                 </div>
             </div>
         </div>
-    </main>
+        <div class="col-md-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="bi bi-cash-stack display-4 text-info mb-3"></i>
+                    <h5 class="card-title text-muted">Total Earnings</h5>
+                    <h2 class="mb-0 text-light">₵<span th:text="${#numbers.formatDecimal(earnings, 1, 2)}">0.00</span></h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4 d-flex gap-3">
+                    <a th:href="@{/company/vehicles}" class="btn btn-outline-primary"><i class="bi bi-car-front"></i> Manage Fleet</a>
+                    <a th:href="@{/company/trips/add}" class="btn btn-warning"><i class="bi bi-plus-circle"></i> Create New Trip</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Trips -->
+    <h4 class="text-light mb-3 mt-5">Your Recent Trips</h4>
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                    <tr>
+                        <th>Route</th>
+                        <th>Date & Time</th>
+                        <th>Vehicle</th>
+                        <th>Seats</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="trip : ${recentTrips}">
+                        <td>
+                            <div class="fw-bold text-light" th:text="${trip.fromLocation + ' → ' + trip.toLocation}"></div>
+                            <small class="text-muted" th:text="${trip.pickupStation}">Station</small>
+                        </td>
+                        <td th:text="${#temporals.format(trip.departureTime, 'dd MMM yyyy, HH:mm')}"></td>
+                        <td>
+                            <span th:text="${trip.car.carBrand + ' ' + trip.car.model}">Vehicle</span>
+                            <br>
+                            <small class="text-muted" th:text="${trip.car.numberPlate}"></small>
+                        </td>
+                        <td>
+                            <span th:text="${(trip.totalSeats - trip.availableSeats) + '/' + trip.totalSeats}"></span> booked
+                        </td>
+                        <td>
+                            <span th:if="${trip.status.name() == 'PENDING'}" class="badge bg-warning text-dark">Pending</span>
+                            <span th:if="${trip.status.name() == 'APPROVED'}" class="badge bg-success">Active</span>
+                            <span th:if="${trip.status.name() == 'REJECTED'}" class="badge bg-danger">Rejected</span>
+                            <span th:if="${trip.status.name() == 'COMPLETED'}" class="badge bg-secondary">Completed</span>
+                            <span th:if="${trip.status.name() == 'FULL'}" class="badge bg-info text-dark">Full</span>
+                        </td>
+                        <td>
+                            <a th:href="@{/company/trips/{id}/passengers(id=${trip.id})}"
+                               class="btn btn-sm btn-info text-light"
+                               title="View Passengers">
+                                <i class="bi bi-people-fill"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(recentTrips)}">
+                        <td colspan="6" class="text-center py-4 text-muted">No trips found. Create your first trip!</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</main>
 </body>
 </html>

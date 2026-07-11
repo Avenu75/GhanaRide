@@ -119,11 +119,9 @@
                                 </div>
 
                                 <!-- Real-time Actions -->
-                                <button type="button" class="btn btn-info text-white rounded-3 shadow-sm px-3 h-100"
-                                        th:data-trip="${booking.trip.id}" th:data-driver="${booking.trip.driver != null ? booking.trip.driver.fullName : 'To Be Assigned'}"
-                                        onclick="openTrackModal(this)">
+                                <a th:href="@{/track/{id}(id=${booking.id})}" class="btn btn-info text-white rounded-3 shadow-sm px-3 h-100" title="Live track – Google Maps Bolt style – Ghana only">
                                     <i class="bi bi-geo-alt-fill"></i> <span class="d-none d-sm-inline">Track</span>
-                                </button>
+                                </a>
                                 <button type="button" class="btn btn-primary rounded-3 shadow-sm px-3 h-100"
                                         th:data-trip="${booking.trip.id}" th:data-driver="${booking.trip.driver != null ? booking.trip.driver.fullName : 'To Be Assigned'}"
                                         onclick="openChatModal(this)">
@@ -177,6 +175,9 @@
                                 <span th:if="${booking.status.name() != 'CANCELLED' and booking.status.name() != 'COMPLETED' and booking.status.name() != 'EXPIRED'}" class="badge bg-secondary rounded-pill shadow-sm" th:text="${booking.status}">Status</span>
                             </td>
                             <td class="pe-4 text-end">
+                                <button th:if="${booking.status.name() == 'COMPLETED'}" type="button" class="btn btn-sm btn-warning rounded-pill shadow-sm me-1" th:attr="onclick=|openReview(${booking.id})|" title="Rate ride">
+                                    <i class="bi bi-star-fill"></i>
+                                </button>
                                 <a th:if="${booking.paymentStatus != null and booking.paymentStatus.name() == 'PAID'}" th:href="@{/booking/receipt/{id}(id=${booking.id})}" class="btn btn-sm btn-outline-secondary rounded-pill shadow-sm" title="View Receipt">
                                     <i class="bi bi-receipt"></i>
                                 </a>
@@ -462,6 +463,53 @@
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
         }
     </script>
+
+    <!-- v5.1 REVIEW MODAL -->
+    <div class="modal fade" id="reviewModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-card border-0 rounded-4">
+                <form method="post" action="/reviews">
+                    <div class="modal-header border-secondary">
+                        <h5 class="modal-title fw-800">⭐ Rate your ride</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="bookingId" id="reviewBookingId">
+                        <input type="hidden" name="_csrf" th:value="${_csrf?.token}">
+                        <div class="text-center mb-3">
+                            <div id="starPick" style="font-size:2rem; cursor:pointer; letter-spacing:6px;">☆☆☆☆☆</div>
+                            <input type="hidden" name="rating" id="ratingInput" value="5" required>
+                            <div class="small text-muted mt-1" id="ratingLabel">Tap stars – 5 = Excellent</div>
+                        </div>
+                        <textarea name="comment" class="form-control bg-body" rows="3" maxlength="500" placeholder="How was your GhanaRide? Driver, comfort, punctuality… (optional)"></textarea>
+                        <div class="small text-muted mt-2">Verified reviews only • helps drivers earn priority</div>
+                    </div>
+                    <div class="modal-footer border-secondary">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Later</button>
+                        <button class="btn btn-warning fw-bold">Submit 5★ review</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script>
+        function openReview(bookingId){
+            document.getElementById('reviewBookingId').value=bookingId;
+            document.getElementById('ratingInput').value=5;
+            document.getElementById('starPick').textContent='★★★★★';
+            new bootstrap.Modal(document.getElementById('reviewModal')).show();
+        }
+        const starEl=document.getElementById('starPick');
+        if(starEl){ starEl.addEventListener('click', e=>{
+            const rect=starEl.getBoundingClientRect(); const x=e.clientX-rect.left;
+            const stars=Math.max(1,Math.min(5,Math.ceil(x/rect.width*5)));
+            document.getElementById('ratingInput').value=stars;
+            starEl.textContent='★★★★★'.slice(0,stars)+'☆☆☆☆☆'.slice(stars);
+            document.getElementById('ratingLabel').textContent=['','Poor','Fair','Good','Very good','Excellent'][stars] + ' • ' + stars + '/5';
+        });}
+    </script>
+    <!-- /v5.1 REVIEW -->
+
 </main>
 </body>
 </html>

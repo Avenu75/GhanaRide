@@ -14,5 +14,6 @@ public enum PaymentMethod {
     MOBILE_MONEY,   // MTN MoMo, Vodafone Cash, AirtelTigo
     CARD,           // Visa/Mastercard via Paystack
     BANK_TRANSFER,  // Bank transfer via Paystack
-    CASH            // Cash to driver on travel day
+    CASH,            // Cash to driver on travel day
+    WALLET
 }

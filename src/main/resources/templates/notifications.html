@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html th:replace="~{layout :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title>Notifications — GhanaRide</title></head>
+<body>
+<main th:fragment="main" class="py-4">
+<div class="container" style="max-width:780px">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="fw-800">Inbox</h3>
+    <button class="btn btn-sm btn-outline-warning" onclick="markAll()">Mark all read</button>
+  </div>
+  <div class="card bg-card border-0 rounded-4 shadow-sm">
+    <div class="list-group list-group-flush">
+      <div th:each="n : ${notifications.content}" class="list-group-item bg-transparent text-body border-secondary" th:style="${!n.readFlag} ? 'background:rgba(252,209,22,.045)!important' : ''">
+        <div class="d-flex justify-content-between">
+          <div>
+            <div class="fw-bold" th:text="${n.title}">Title</div>
+            <div class="small text-muted" th:text="${n.message}">message</div>
+            <div class="small mt-1"><span class="badge bg-secondary" th:text="${n.type}">TYPE</span>
+              <span class="text-muted ms-2" th:text="${#temporals.format(n.createdAt,'dd MMM HH:mm')}">date</span></div>
+          </div>
+          <a th:if="${n.actionUrl}" th:href="${n.actionUrl}" class="btn btn-sm btn-outline-light">Open</a>
+        </div>
+      </div>
+      <div th:if="${notifications.empty}" class="p-5 text-center text-muted">No notifications yet — you’re all caught up ✨</div>
+    </div>
+  </div>
+</div>
+<script>
+async function markAll(){
+  await fetch('/api/notifications/read-all',{method:'POST'});
+  location.reload();
+}
+</script>
+</main>
+</body>
+</html>

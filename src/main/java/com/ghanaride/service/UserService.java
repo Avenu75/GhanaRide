@@ -529,9 +529,8 @@ public class UserService {
     public boolean isProfileComplete(User user) {
         if (user == null) return false;
         boolean hasName = user.getFullName() != null && !user.getFullName().isBlank();
-        // Ghana phone: +233xxxxxxxxx or 0xxxxxxxxx (9-10 digits after prefix)
-        boolean hasPhone = user.getPhoneNumber() != null &&
-                user.getPhoneNumber().replaceAll("[^0-9+]", "").length() >= 9;
+        // v5.2 GHANA ONLY – strict +233 validation
+        boolean hasPhone = com.ghanaride.config.GhanaOnlyConfig.isValidGhanaPhone(user.getPhoneNumber());
         return hasName && hasPhone && user.isEmailVerified() && user.isEnabled() && !user.isAccountLocked();
     }
 

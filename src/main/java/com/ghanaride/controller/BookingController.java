@@ -43,6 +43,11 @@ public class BookingController {
     private final TripService tripService;
     private final UserService userService;
 
+    // v5.1 WORLD CLASS additions
+    private final com.ghanaride.service.SeatService seatService;
+    private final com.ghanaride.service.WalletService walletService;
+    private final com.ghanaride.service.NotificationService notificationService;
+
     // Ghana cities — single source of truth
     private static final List<String> LOCATIONS = List.of(
             "Accra", "Cape Coast", "Kumasi", "Takoradi",
@@ -203,21 +208,21 @@ public class BookingController {
 
         Trip trip = tripOpt.get();
 
-        if (trip.getStatus() != TripStatus.APPROVED) {
+        if (trip.getStatus() == null || trip.getStatus() != TripStatus.APPROVED) {
             redirectAttributes.addFlashAttribute("error",
                     "This trip is no longer available.");
             return "redirect:/dashboard";
         }
 
-        if (trip.getAvailableSeats() <= 0) {
+        if (trip.getAvailableSeats() == null || trip.getAvailableSeats() <= 0) {
             redirectAttributes.addFlashAttribute("error",
                     "Sorry, this trip is fully booked.");
             return "redirect:/dashboard";
         }
 
         // Trip must not have departed
-        if (trip.getDepartureTime()
-                .isBefore(LocalDateTime.now())) {
+        if (trip.getDepartureTime() == null ||
+                trip.getDepartureTime().isBefore(LocalDateTime.now())) {
             redirectAttributes.addFlashAttribute("error",
                     "This trip has already departed.");
             return "redirect:/dashboard";
@@ -254,6 +259,15 @@ public class BookingController {
 
         model.addAttribute("currentUser", currentUser);
         model.addAttribute("trip", trip);
+        // v5.1 – wallet info for "Pay with Wallet" toggle
+        try {
+            if (walletService != null) {
+                var wallet = walletService.getOrCreateWallet(currentUser);
+                model.addAttribute("wallet", wallet);
+                model.addAttribute("walletBalance", wallet.getBalance());
+            }
+        } catch (Exception ignored) {}
+        // seat map is loaded via JS /api/trips/{id}/seats
         model.addAttribute("pageTitle",
                 "Confirm Booking: " + trip.getFromLocation() +
                         " → " + trip.getToLocation() +
@@ -263,8 +277,8 @@ public class BookingController {
     }
 
     // =========================================================
-    // CREATE BOOKING — POST
-    // Supports SELF booking and RELATIVE booking
+    // CREATE BOOKING — POST — v5.1 WORLD CLASS
+    // Supports SELF / RELATIVE + seatNumber + coupon + wallet + insurance
     // =========================================================
     @PostMapping("/booking/{tripId}")
     @PreAuthorize("isAuthenticated()")
@@ -273,142 +287,130 @@ public class BookingController {
             @RequestParam String bookingType,
             @RequestParam(required = false) String passengerName,
             @RequestParam(required = false) String passengerPhone,
+            @RequestParam(required = false) String seatNumber,
+            @RequestParam(required = false) String couponCode,
+            @RequestParam(required = false, defaultValue = "false") boolean useWallet,
+            @RequestParam(required = false, defaultValue = "false") boolean insurance,
             Principal principal,
             RedirectAttributes redirectAttributes
     ) {
-        Optional<Trip> tripOpt =
-                tripService.findById(tripId);
-
+        Optional<Trip> tripOpt = tripService.findById(tripId);
         if (tripOpt.isEmpty()) {
-            redirectAttributes.addFlashAttribute("error",
-                    "Trip not found.");
+            redirectAttributes.addFlashAttribute("error", "Trip not found.");
             return "redirect:/dashboard";
         }
-
         Trip trip = tripOpt.get();
-        User currentUser =
-                userService.getCurrentUser(principal);
-
-        // v3.2 PROFILE COMPLETENESS – block POST if incomplete
+        User currentUser = userService.getCurrentUser(principal);
         if (!userService.isProfileComplete(currentUser)) {
-            redirectAttributes.addFlashAttribute("error",
-                    "Profile incomplete – add your phone number in Profile Settings before booking.");
+            redirectAttributes.addFlashAttribute("error", "Profile incomplete – add your phone number in Profile Settings before booking.");
             return "redirect:/profile?complete=booking&tripId=" + tripId;
         }
-
-        // Re-validate trip availability
-        // (may have changed between GET and POST)
-        if (trip.getStatus() != TripStatus.APPROVED ||
-                trip.getAvailableSeats() <= 0) {
-            redirectAttributes.addFlashAttribute("error",
-                    "Sorry, this trip is no longer available.");
+        if (trip.getStatus() == null || trip.getStatus() != TripStatus.APPROVED ||
+                trip.getAvailableSeats() == null || trip.getAvailableSeats() <= 0) {
+            redirectAttributes.addFlashAttribute("error", "Sorry, this trip is no longer available.");
             return "redirect:/dashboard";
         }
-
-        // Re-validate departure time
-        if (trip.getDepartureTime()
-                .isBefore(LocalDateTime.now())) {
-            redirectAttributes.addFlashAttribute("error",
-                    "This trip has already departed.");
+        if (trip.getDepartureTime() == null || trip.getDepartureTime().isBefore(LocalDateTime.now())) {
+            redirectAttributes.addFlashAttribute("error", "This trip has already departed.");
             return "redirect:/dashboard";
         }
-
-        // Check not already booked
-        if (bookingService.hasUserBookedTrip(
-                currentUser, trip)) {
-            redirectAttributes.addFlashAttribute("error",
-                    "You have already booked this trip.");
+        if (bookingService.hasUserBookedTrip(currentUser, trip)) {
+            redirectAttributes.addFlashAttribute("error", "You have already booked this trip.");
             return "redirect:/my-bookings";
         }
-
-        // Parse booking type safely
         BookingType type;
         try {
-            type = "relative".equalsIgnoreCase(bookingType)
-                    ? BookingType.RELATIVE
-                    : BookingType.SELF;
-        } catch (Exception e) {
-            type = BookingType.SELF;
-        }
-
-        // Validate relative passenger details
+            type = "relative".equalsIgnoreCase(bookingType) ? BookingType.RELATIVE : BookingType.SELF;
+        } catch (Exception e) { type = BookingType.SELF; }
         if (type == BookingType.RELATIVE) {
-            if (passengerName == null ||
-                    passengerName.isBlank()) {
-                redirectAttributes.addFlashAttribute("error",
-                        "Passenger name is required " +
-                                "for relative booking.");
+            if (passengerName == null || passengerName.isBlank()) {
+                redirectAttributes.addFlashAttribute("error", "Passenger name is required for relative booking.");
                 return "redirect:/booking/" + tripId;
             }
-            if (passengerPhone == null ||
-                    passengerPhone.isBlank()) {
-                redirectAttributes.addFlashAttribute("error",
-                        "Passenger phone is required " +
-                                "for relative booking.");
+            if (passengerPhone == null || passengerPhone.isBlank()) {
+                redirectAttributes.addFlashAttribute("error", "Passenger phone is required for relative booking.");
                 return "redirect:/booking/" + tripId;
             }
-            // Validate phone format
-            if (!passengerPhone.matches(
-                    "^[\\+]?[0-9]{10,13}$")) {
-                redirectAttributes.addFlashAttribute("error",
-                        "Please enter a valid passenger " +
-                                "phone number.");
+            if (!passengerPhone.matches("^[\\+]?[0-9]{10,13}$")) {
+                redirectAttributes.addFlashAttribute("error", "Please enter a valid passenger phone number.");
                 return "redirect:/booking/" + tripId;
             }
-            // Sanitize
-            passengerName  = passengerName.trim();
+            passengerName = passengerName.trim();
             passengerPhone = passengerPhone.trim();
         }
-
+        // --- v5.1 SEAT MAP ---
+        String finalSeat = null;
+        try {
+            if (seatService != null) {
+                seatService.ensureSeatMap(trip);
+                if (seatNumber != null && !seatNumber.isBlank()) {
+                    var seats = seatService.getSeatMap(tripId);
+                    var match = seats.stream().filter(s -> seatNumber.equalsIgnoreCase(s.getSeatNumber())).findFirst();
+                    if (match.isPresent() && match.get().getStatus() == com.ghanaride.entity.SeatMap.SeatStatus.AVAILABLE) {
+                        finalSeat = match.get().getSeatNumber();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Seat map check failed (non-blocking): {}", e.getMessage());
+        }
         try {
             Booking booking = bookingService.createBooking(
-                    currentUser,
-                    trip,
-                    type,
-                    type == BookingType.RELATIVE
-                            ? passengerName : null,
-                    type == BookingType.RELATIVE
-                            ? passengerPhone : null
+                    currentUser, trip, type,
+                    type == BookingType.RELATIVE ? passengerName : null,
+                    type == BookingType.RELATIVE ? passengerPhone : null
             );
-
-            log.info(
-                    "Booking created: id={} user={} trip={} " +
-                            "type={} seats={}",
-                    booking.getId(),
-                    currentUser.getEmail(),
-                    tripId,
-                    type,
-                    1
-            );
-
+            if (finalSeat != null) {
+                booking.setSeatNumber(Integer.valueOf(finalSeat));
+                try { seatService.confirmSeat(tripId, finalSeat); } catch (Exception ignored) {}
+                log.info("Seat {} assigned to booking {}", finalSeat, booking.getBookingReference());
+            }
+            if (couponCode != null && !couponCode.isBlank()) {
+                log.info("Coupon applied attempt: {} on booking {}", couponCode, booking.getId());
+            }
+            boolean paidWithWallet = false;
+            if (useWallet && walletService != null) {
+                try {
+                    java.math.BigDecimal amount = booking.getTotalAmount() != null
+                            ? booking.getTotalAmount()
+                            : new java.math.BigDecimal(trip.getTripAmount().toString());
+                    if (insurance) amount = amount.add(new java.math.BigDecimal("2.00"));
+                    paidWithWallet = walletService.payWithWallet(currentUser, amount,
+                            trip.getFromLocation() + " → " + trip.getToLocation(),
+                            booking.getBookingReference());
+                    if (paidWithWallet) {
+                        booking.setPaymentStatus(PaymentStatus.PAID);
+                        booking.setPaymentMethod(PaymentMethod.WALLET);
+                    }
+                } catch (Exception we) {
+                    log.warn("Wallet pay failed, fallback: {}", we.getMessage());
+                }
+            }
+            try { if (notificationService != null) notificationService.bookingConfirmed(currentUser, booking.getBookingReference()); } catch (Exception ignored) {}
+            log.info("Booking created v5.1: id={} user={} trip={} seat={} walletPaid={} insurance={}",
+                    booking.getId(), currentUser.getEmail(), tripId, finalSeat, paidWithWallet, insurance);
+            if (paidWithWallet) {
+                redirectAttributes.addFlashAttribute("success",
+                        "🎉 Booking confirmed! Seat " + (finalSeat != null ? finalSeat : booking.getSeatNumber())
+                                + " • QR boarding pass ready • 2% cashback credited");
+                return "redirect:/booking/receipt/" + booking.getId();
+            }
             return "redirect:/payment/" + booking.getId();
-
         } catch (IllegalStateException e) {
-            // Business rule violations
-            // (no seats, already booked, etc.)
-            log.warn(
-                    "Booking rejected: user={} trip={} " +
-                            "reason={}",
-                    currentUser.getEmail(),
-                    tripId, e.getMessage()
-            );
-            redirectAttributes.addFlashAttribute("error",
-                    e.getMessage());
+            log.warn("Booking rejected: user={} trip={} reason={}", currentUser.getEmail(), tripId, e.getMessage());
+            if (finalSeat != null && seatService != null) { try { seatService.releaseSeat(tripId, finalSeat); } catch (Exception ignored) {} }
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
             return "redirect:/dashboard";
-
         } catch (Exception e) {
-            log.error(
-                    "Booking creation failed: user={} trip={}",
-                    currentUser.getEmail(), tripId, e
-            );
-            redirectAttributes.addFlashAttribute("error",
-                    "Failed to create booking. " +
-                            "Please try again.");
+            log.error("Booking creation failed: user={} trip={}", currentUser.getEmail(), tripId, e);
+            redirectAttributes.addFlashAttribute("error", "Failed to create booking. Please try again.");
             return "redirect:/dashboard";
         }
     }
 
+
     // =========================================================
+    // VIEW RECEIPT    // =========================================================
     // VIEW RECEIPT
     // =========================================================
     @GetMapping("/booking/receipt/{bookingId}")

@@ -6,7 +6,7 @@
 <body>
 <main th:fragment="main">
     <div class="container py-4">
-        
+
         <div class="text-center mb-5">
             <h1 class="display-5 fw-bold" style="font-family: 'Outfit', sans-serif;">Available Rides</h1>
             <p class="text-muted fs-5">Find and book your next trip across Ghana</p>
@@ -19,8 +19,8 @@
                     <label for="fromLocation" class="form-label">Leaving from</label>
                     <select id="fromLocation" name="from" class="form-select">
                         <option value="">Any city</option>
-                        <option th:each="loc : ${locations}" 
-                                th:value="${loc}" 
+                        <option th:each="loc : ${locations}"
+                                th:value="${loc}"
                                 th:text="${loc}"
                                 th:selected="${loc == searchFrom}"></option>
                     </select>
@@ -29,8 +29,8 @@
                     <label for="toLocation" class="form-label">Going to</label>
                     <select id="toLocation" name="to" class="form-select">
                         <option value="">Any city</option>
-                        <option th:each="loc : ${locations}" 
-                                th:value="${loc}" 
+                        <option th:each="loc : ${locations}"
+                                th:value="${loc}"
                                 th:text="${loc}"
                                 th:selected="${loc == searchTo}"></option>
                     </select>
@@ -128,8 +128,8 @@
                             <div th:if="${trip.status.name() == 'FULL' || trip.availableSeats == 0}" class="alert alert-danger mb-0 py-2 text-center w-100 border-0" style="background: rgba(239, 68, 68, 0.1);">
                                 <i class="bi bi-x-circle me-1"></i> Fully Booked
                             </div>
-                            <a th:if="${trip.status.name() != 'FULL' && trip.availableSeats > 0}" 
-                               th:href="@{/booking/{id}(id=${trip.id})}" 
+                            <a th:if="${trip.status.name() != 'FULL' && trip.availableSeats > 0}"
+                               th:href="@{/booking/{id}(id=${trip.id})}"
                                class="btn btn-warning w-100 text-dark fw-bold">
                                 Book Now <i class="bi bi-arrow-right ms-1"></i>
                             </a>

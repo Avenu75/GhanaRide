@@ -140,12 +140,10 @@ public class ProfileController {
             return "redirect:/profile";
         }
 
-        // Validate phone format (Ghana numbers)
-        if (!phoneNumber.matches(
-                "^[\\+]?[(]?[0-9]{3}[)]?[-\\s\\.]?" +
-                        "[0-9]{3}[-\\s\\.]?[0-9]{4,6}$")) {
+        // v5.2 GHANA ONLY – strict +233 / 0XX validation
+        if (!com.ghanaride.config.GhanaOnlyConfig.isValidGhanaPhone(phoneNumber)) {
             redirectAttributes.addFlashAttribute("error",
-                    "Please enter a valid phone number.");
+                    "Please enter a valid Ghana phone number – e.g. 0244123456 or +233244123456. Ghana only.");
             return "redirect:/profile";
         }
 

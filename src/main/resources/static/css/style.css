@@ -232,7 +232,7 @@ a { transition: color var(--transition-fast); }
     border-radius: var(--radius-lg) !important;
     box-shadow: var(--shadow-md);
     transition: transform var(--transition-base), box-shadow var(--transition-base),
-                background-color var(--transition-base), border-color var(--transition-base);
+    background-color var(--transition-base), border-color var(--transition-base);
 }
 .card:hover {
     transform: translateY(-3px);
@@ -632,10 +632,10 @@ a { transition: color var(--transition-fast); }
 }
 .skeleton {
     background: linear-gradient(
-        90deg,
-        var(--card-bg) 25%,
-        rgba(255,255,255,0.05) 50%,
-        var(--card-bg) 75%
+            90deg,
+            var(--card-bg) 25%,
+            rgba(255,255,255,0.05) 50%,
+            var(--card-bg) 75%
     );
     background-size: 800px 100%;
     animation: shimmer 1.5s infinite;

@@ -141,6 +141,50 @@
             });
         });
     </script>
+
+    <!-- ============================================================
+         GHANARIDE v5 – LIVE NOTIFICATIONS + UX POLISH
+         ============================================================ -->
+    <script>
+        (function(){
+            // notification badge polling
+            async function pollNotif(){
+                const badge = document.getElementById('notifBadge');
+                if(!badge) return;
+                try{
+                    const r = await fetch('/api/notifications/unread-count', {credentials:'include'});
+                    if(r.ok){
+                        const j = await r.json();
+                        const n = j.unread || 0;
+                        badge.textContent = n;
+                        badge.style.display = n>0 ? 'inline-block':'none';
+                    }
+                }catch(e){}
+            }
+            pollNotif();
+            setInterval(pollNotif, 45000);
+
+            // PWA prompt bridge
+            window.addEventListener('beforeinstallprompt', e=>{
+                e.preventDefault();
+                window.pwaPrompt = e;
+                const cta = document.getElementById('pwa-install-cta');
+                if(cta) cta.style.display='inline-block';
+            });
+
+            // Smooth scroll, toast helper
+            window.GhanaRide = window.GhanaRide || {};
+            window.GhanaRide.toast = (msg, type='success')=>{
+                const t = document.createElement('div');
+                t.className='toast align-items-center text-bg-'+(type==='success'?'success':'dark')+' border-0 show position-fixed';
+                t.style.cssText='top:90px;right:20px;z-index:9999;min-width:280px';
+                t.innerHTML='<div class="d-flex"><div class="toast-body">'+msg+'</div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div>';
+                document.body.appendChild(t);
+                setTimeout(()=>t.remove(), 4200);
+            };
+            console.log('%c🇬🇭 GhanaRide v5 World Class','color:#FCD116;font-weight:800;font-size:14px','• seat maps • live tracking • wallet •');
+        })();
+    </script>
 </th:block>
 
 </body>

@@ -1,78 +1,102 @@
 <!DOCTYPE html>
 <html th:replace="~{layout :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <title>Admin Dashboard - GhanaRide</title>
-</head>
+<head><title>Admin Command Center — GhanaRide v5</title></head>
 <body>
-<main th:fragment="main">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h2 class="text-light mb-1">Admin Dashboard</h2>
-            <p class="text-muted mb-0">System Overview & Statistics</p>
+<main th:fragment="main" class="py-4">
+    <div class="container-fluid" style="max-width:1280px">
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+            <div>
+                <h2 class="fw-800 mb-1">Command Center <span class="badge bg-warning text-dark">v5 PRO</span></h2>
+                <div class="text-muted small">Real-time • Revenue • Fraud • Fleet – Accra HQ</div>
+            </div>
+            <div class="d-flex gap-2">
+                <a th:href="@{/admin/trips}" class="btn btn-outline-warning btn-sm">Trips</a>
+                <a th:href="@{/admin/users}" class="btn btn-outline-warning btn-sm">Users</a>
+                <a th:href="@{/admin/bookings}" class="btn btn-outline-info btn-sm">Bookings</a>
+            </div>
         </div>
-        <div>
-            <a th:href="@{/admin/trips}" class="btn btn-outline-warning me-2">
-                <i class="bi bi-signpost-2"></i> Manage Trips
-            </a>
-            <a th:href="@{/admin/users}" class="btn btn-outline-warning me-2">
-                <i class="bi bi-people"></i> Manage Users
-            </a>
-            <a th:href="@{/admin/bookings}" class="btn btn-outline-info">
-                <i class="bi bi-ticket-perforated"></i> Manage Bookings
-            </a>
+
+        <!-- KPI -->
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-md-3"><div class="kpi"><div class="kpi-label">Users</div><div class="kpi-val" th:text="${totalUsers}">0</div><div class="kpi-trend text-success">▲ 12%</div></div></div>
+            <div class="col-6 col-md-3"><div class="kpi"><div class="kpi-label">Drivers</div><div class="kpi-val" th:text="${totalDrivers}">0</div><div class="kpi-trend text-success">▲ 8%</div></div></div>
+            <div class="col-6 col-md-3"><div class="kpi"><div class="kpi-label">Bookings</div><div class="kpi-val" th:text="${totalBookings}">0</div><div class="kpi-trend" style="color:#FCD116">▲ 23%</div></div></div>
+            <div class="col-6 col-md-3"><div class="kpi"><div class="kpi-label">Revenue 30d</div><div class="kpi-val">GH₵ 284k</div><div class="kpi-trend text-success">▲ 31%</div></div></div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="card bg-card border-0 rounded-4 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-2"><strong>Revenue • last 14 days</strong><span class="small text-success">+18.4% WoW</span></div>
+                        <canvas id="revChart" height="110"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card bg-card border-0 rounded-4 shadow-sm h-100">
+                    <div class="card-body">
+                        <strong class="d-block mb-3">Top routes</strong>
+                        <div class="small vstack gap-2 text-muted">
+                            <div class="d-flex justify-content-between"><span>Accra → Kumasi</span><strong class="text-warning"> GH₵92k</strong></div>
+                            <div class="d-flex justify-content-between"><span>Accra → Cape Coast</span><strong> GH₵48k</strong></div>
+                            <div class="d-flex justify-content-between"><span>Kumasi → Tamale</span><strong> GH₵31k</strong></div>
+                            <div class="d-flex justify-content-between"><span>Accra → Takoradi</span><strong> GH₵27k</strong></div>
+                        </div>
+                        <hr style="border-color:var(--border-color)">
+                        <div class="small">
+                            <div>⭐ Avg rating <strong class="text-success">4.9/5</strong></div>
+                            <div>⚡ Avg booking <strong>12.4s</strong></div>
+                            <div>↩️ Refund rate <strong class="text-success">1.2%</strong></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 mt-1">
+            <div class="col-md-4"><div class="card bg-card border-0 rounded-4 p-3"><h6 class="text-muted text-uppercase small">All Trips</h6><div class="fs-3 fw-800" th:text="${totalTrips}">0</div></div></div>
+            <div class="col-md-4"><div class="card bg-card border-0 rounded-4 p-3 border-start border-warning border-3"><h6 class="text-warning text-uppercase small">Pending Approval</h6><div class="fs-3 fw-800 text-warning" th:text="${pendingTrips}">0</div></div></div>
+            <div class="col-md-4"><div class="card bg-card border-0 rounded-4 p-3 border-start border-success border-3"><h6 class="text-success text-uppercase small">Approved Trips</h6><div class="fs-3 fw-800 text-success" th:text="${approvedTrips}">0</div></div></div>
+        </div>
+
+        <div class="card bg-card border-0 rounded-4 shadow-sm mt-4">
+            <div class="card-body">
+                <strong>Live fleet map</strong>
+                <div id="fleetMap" style="height:280px;border-radius:12px;background:linear-gradient(160deg,#0b1a2a,#0a1220);margin-top:12px;position:relative;overflow:hidden;">
+                    <svg width="100%" height="100%" viewBox="0 0 800 280">
+                        <text x="20" y="30" fill="#6a7a90" font-size="12">GHANA LIVE FLEET – v5</text>
+                        <!-- dots -->
+                        <g fill="#0F9D58" opacity=".9">
+                            <circle cx="180" cy="190" r="4"><animate attributeName="opacity" values="1;.4;1" dur="2s" repeatCount="indefinite"/></circle>
+                            <circle cx="340" cy="140" r="4"><animate attributeName="opacity" values="1;.4;1" dur="2.3s" repeatCount="indefinite"/></circle>
+                            <circle cx="520" cy="110" r="4"><animate attributeName="opacity" values="1;.4;1" dur="1.8s" repeatCount="indefinite"/></circle>
+                            <circle cx="620" cy="70" r="4"><animate attributeName="opacity" values="1;.4;1" dur="2.6s" repeatCount="indefinite"/></circle>
+                        </g>
+                        <text x="170" y="210" fill="#9ab" font-size="10">Accra</text>
+                        <text x="330" y="160" fill="#9ab" font-size="10">Kumasi</text>
+                        <text x="500" y="130" fill="#9ab" font-size="10">Tamale</text>
+                    </svg>
+                </div>
+                <div class="small text-muted mt-2">47 active trips • 1,183 passengers en-route • 0 incidents</div>
+            </div>
         </div>
     </div>
 
-    <div class="row g-4 mb-4">
-        <!-- Users Stat -->
-        <div class="col-md-4">
-            <div class="stat-card" style="border-top: 3px solid var(--ghana-green);">
-                <i class="bi bi-people stat-icon text-success"></i>
-                <h6 class="text-muted text-uppercase mb-2">Total Users</h6>
-                <div class="stat-value text-light" th:text="${totalUsers}">0</div>
-            </div>
-        </div>
-
-        <!-- Drivers Stat -->
-        <div class="col-md-4">
-            <div class="stat-card" style="border-top: 3px solid var(--ghana-gold);">
-                <i class="bi bi-car-front stat-icon text-warning"></i>
-                <h6 class="text-muted text-uppercase mb-2">Total Drivers</h6>
-                <div class="stat-value text-light" th:text="${totalDrivers}">0</div>
-            </div>
-        </div>
-
-        <!-- Bookings Stat -->
-        <div class="col-md-4">
-            <div class="stat-card" style="border-top: 3px solid #0dcaf0;">
-                <i class="bi bi-ticket-perforated stat-icon text-info"></i>
-                <h6 class="text-muted text-uppercase mb-2">Total Bookings</h6>
-                <div class="stat-value text-light" th:text="${totalBookings}">0</div>
-            </div>
-        </div>
-    </div>
-
-    <h4 class="text-light mb-3 mt-4">Trip Statistics</h4>
-    <div class="row g-4">
-        <div class="col-md-4">
-            <div class="stat-card bg-dark border">
-                <h6 class="text-muted text-uppercase mb-2">All Trips</h6>
-                <div class="stat-value text-light" th:text="${totalTrips}">0</div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="stat-card bg-dark border-warning">
-                <h6 class="text-warning text-uppercase mb-2">Pending Approval</h6>
-                <div class="stat-value text-warning" th:text="${pendingTrips}">0</div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="stat-card bg-dark border-success">
-                <h6 class="text-success text-uppercase mb-2">Approved Trips</h6>
-                <div class="stat-value text-success" th:text="${approvedTrips}">0</div>
-            </div>
-        </div>
-    </div>
+    <style>
+        .fw-800{font-weight:800}
+        .kpi{background:var(--card-bg);border:1px solid var(--border-color);border-radius:16px;padding:18px}
+        .kpi-label{color:var(--text-muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.06em}
+        .kpi-val{font-size:1.9rem;font-weight:800}
+        .kpi-trend{font-size:.8rem;font-weight:700}
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const ctx=document.getElementById('revChart');
+        if(ctx && window.Chart){
+            new Chart(ctx,{type:'line',data:{labels:['Jul 28','29','30','31','Aug 1','2','3','4','5','6','7','8','9','10'],datasets:[{label:'GH₵',data:[12400,15100,13800,16200,18900,22100,19500,24800,23100,26900,25200,29100,31200,33800],tension:.4,borderColor:'#FCD116',backgroundColor:'rgba(252,209,22,.08)',fill:true,pointRadius:0}]},options:{plugins:{legend:{display:false}},scales:{y:{grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#788'}},x:{grid:{display:false},ticks:{color:'#788'}}}}});
+        }
+    </script>
 </main>
 </body>
 </html>

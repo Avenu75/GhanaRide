@@ -643,6 +643,51 @@ public class EmailService {
     }
 
     // =========================================================
+    // NOTIFICATION EMAIL – v5 WORLD CLASS
+    // Generic in-app notification mirror to email
+    // =========================================================
+    @Async
+    public void sendNotificationEmail(String toEmail, String title, String message, String actionUrl) {
+        if (toEmail == null || toEmail.isBlank()) return;
+        String cta = (actionUrl != null && !actionUrl.isBlank())
+                ? "<div style=\"text-align:center;margin:28px 0;\"><a href=\"" + baseUrl + actionUrl + "\" style=\"background:#FCD116;color:#111;padding:13px 28px;border-radius:10px;text-decoration:none;font-weight:700;display:inline-block;\">Open in GhanaRide →</a></div>"
+                : "";
+        String html = """
+            <!DOCTYPE html>
+            <html><body style="font-family:Inter,Arial,sans-serif;background:#0c0c18;padding:20px;margin:0;color:#e8e8f0;">
+              <div style="max-width:560px;margin:0 auto;background:#16162a;border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);">
+                <div style="background:linear-gradient(135deg,#0F9D58,#0a7a44);padding:26px 28px;">
+                  <div style="font-weight:800;font-size:20px;color:#FCD116;">🇬🇭 GhanaRide</div>
+                  <div style="color:rgba(255,255,255,0.8);font-size:13px;margin-top:4px;">Instant notification</div>
+                </div>
+                <div style="padding:32px 28px;">
+                  <h2 style="margin:0 0 10px;color:#fff;">%s</h2>
+                  <p style="color:#a0a0c0;line-height:1.7;font-size:15px;">%s</p>
+                  %s
+                  <p style="color:#6a6a90;font-size:12px;margin-top:22px;">You’re receiving this because you have GhanaRide notifications enabled.<br>Manage in Profile → Notifications.</p>
+                </div>
+                %s
+              </div>
+            </body></html>
+            """.formatted(escapeHtml(title), escapeHtml(message), cta, buildFooterDark());
+        sendEmail(toEmail, title + " | GhanaRide", html, "Notification email");
+    }
+
+    private String escapeHtml(String s) {
+        if (s == null) return "";
+        return s.replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\"","&quot;");
+    }
+
+    private String buildFooterDark() {
+        return """
+            <div style="background:#111124;padding:18px 28px;text-align:center;border-top:1px solid rgba(255,255,255,0.06);">
+              <p style="color:#7878a0;font-size:12px;margin:0;">© 2026 GhanaRide • Accra, Ghana • <a href="https://ghanaride.me" style="color:#FCD116;text-decoration:none;">ghanaride.me</a></p>
+              <p style="color:#4a4a6a;font-size:11px;margin:6px 0 0;">The smartest way to travel Ghana</p>
+            </div>
+            """;
+    }
+
+    // =========================================================
     // CORE SEND METHOD
     // Single place for all email sending logic
     // All exceptions caught here — never propagate

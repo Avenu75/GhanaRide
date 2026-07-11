@@ -11,9 +11,14 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebConfig implements WebMvcConfigurer {
 
     private final ProfileCompletionInterceptor profileCompletionInterceptor;
+    private final GhanaOnlyInterceptor ghanaOnlyInterceptor;
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+        // v5.2 GHANA ONLY – runs first, adds GH headers, timezone Africa/Accra
+        registry.addInterceptor(ghanaOnlyInterceptor).addPathPatterns("/**")
+                .excludePathPatterns("/css/**","/js/**","/images/**","/uploads/**","/actuator/**","/error/**");
+
         registry.addInterceptor(profileCompletionInterceptor)
                 .addPathPatterns("/booking/**", "/payment/**", "/reviews/**")
                 .excludePathPatterns(

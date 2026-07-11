@@ -268,7 +268,10 @@ public class SecurityConfig {
                                 "/booking/**",
                                 "/my-bookings/**",
                                 "/profile/**",
-                                "/reviews/**"
+                                "/reviews/**",
+                                "/wallet/**",
+                                "/notifications/**",
+                                "/track/**"
                         ).hasAnyRole("USER", "DRIVER", "COMPANY", "ADMIN")
 
                         .requestMatchers("/driver/**")
@@ -281,6 +284,8 @@ public class SecurityConfig {
                         .hasRole("ADMIN")
 
                         // API endpoints (JWT authenticated)
+                        // v5 WORLD CLASS – public read endpoints
+                        .requestMatchers(HttpMethod.GET, "/api/trips/**").permitAll()
                         .requestMatchers("/api/v1/public/**").permitAll()
                         .requestMatchers("/api/**").authenticated()
 
