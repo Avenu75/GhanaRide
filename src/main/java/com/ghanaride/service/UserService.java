@@ -141,12 +141,14 @@ public class UserService {
 
         String normalizedEmail = email.toLowerCase().trim();
 
-        // Prevent duplicate race condition
-        userRepository.findByEmail(normalizedEmail).ifPresent(existing -> {
+        // v3.1 HOTFIX: if user already exists, return existing immediately
+        // – prevents DataIntegrityViolationException → OAuth 400
+        // Previous version threw here, causing Google sign-in 400 on 2nd login
+        Optional<User> existingOpt = userRepository.findByEmail(normalizedEmail);
+        if (existingOpt.isPresent()) {
             log.info("OAuth user already exists, returning existing: {}", normalizedEmail);
-            // Throw to trigger caller fallback to findByEmail
-            throw new org.springframework.dao.DataIntegrityViolationException("User already exists: " + normalizedEmail);
-        });
+            return existingOpt.get();
+        }
 
         User user = new User();
         user.setEmail(normalizedEmail);

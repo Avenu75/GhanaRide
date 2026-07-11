@@ -23,6 +23,8 @@ import java.util.Map;
  * Loads (or auto-registers) a Google user and returns
  * a CustomOAuth2User that carries ROLE_USER etc.,
  * fixing the 500 / 403 after "Continue with Google".
+ *
+ * v3.1a – 2026-07-10 – lambda final capture fix
  */
 @Slf4j
 @Service
@@ -43,24 +45,25 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 
         Map<String, Object> attributes = oauth2User.getAttributes();
 
-        String email = (String) attributes.get("email");
+        String emailRaw = (String) attributes.get("email");
         String name = (String) attributes.get("name");
-        String googleId = (String) attributes.get("sub");
+        String googleIdRaw = (String) attributes.get("sub");
 
-        if (email == null || email.isBlank()) {
+        if (emailRaw == null || emailRaw.isBlank()) {
             log.error("OAuth2 login failed ({}): no email in profile attributes={}", registrationId, attributes.keySet());
             throw new OAuth2AuthenticationException(new OAuth2Error("no_email"), "Email not found from OAuth2 provider");
         }
 
-        email = email.toLowerCase().trim();
-        String displayName = (name != null && !name.isBlank()) ? name.trim() : email.split("@")[0];
+        // Make everything final / effectively final for lambda capture
+        final String email = emailRaw.toLowerCase().trim();
+        final String displayName = (name != null && !name.isBlank()) ? name.trim() : email.split("@")[0];
+        final String googleId = googleIdRaw;
 
-        // find or create
-        String finalEmail = email;
+        // find or create – variables inside lambda are now final
         User user = userService.findByEmail(email)
                 .orElseGet(() -> {
-                    log.info("Auto-registering new OAuth user: {} via {}", finalEmail, registrationId);
-                    return userService.registerOAuthUser(finalEmail, displayName, googleId);
+                    log.info("Auto-registering new OAuth user: {} via {}", email, registrationId);
+                    return userService.registerOAuthUser(email, displayName, googleId);
                 });
 
         if (!user.isEnabled()) {

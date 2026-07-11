@@ -75,11 +75,27 @@ public class SecurityConfig {
     private String appBaseUrl;
 
     // =========================================================
-    // AUTHENTICATION PROVIDER & MANAGER
-    // Spring Boot auto-configures DaoAuthenticationProvider 
-    // and AuthenticationManager automatically since we have
-    // UserDetailsService and PasswordEncoder beans.
+    // AUTHENTICATION PROVIDER
+    // Wires together UserDetailsService + PasswordEncoder
     // =========================================================
+    @Bean
+    public DaoAuthenticationProvider daoAuthenticationProvider(PasswordEncoder passwordEncoder) {
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(userDetailsService);
+        authProvider.setPasswordEncoder(passwordEncoder);
+        // Show "bad credentials" instead of "user not found"
+        // (prevents username enumeration attacks)
+        authProvider.setHideUserNotFoundExceptions(true);
+        return authProvider;
+    }
+
+    // =========================================================
+    // AUTHENTICATION MANAGER
+    // =========================================================
+    @Bean
+    public AuthenticationManager authenticationManager(DaoAuthenticationProvider daoAuthenticationProvider) {
+        return new ProviderManager(daoAuthenticationProvider);
+    }
 
     // =========================================================
     // SESSION EVENT PUBLISHER
@@ -332,7 +348,8 @@ public class SecurityConfig {
                 // Limits concurrent sessions per user
                 // -------------------------------------------------
                 .sessionManagement(session -> session
-                        // Change session ID on login (prevents fixation without dropping OAuth request)
+                        // Change session ID on login (prevents fixation without dropping OAuth2AuthorizationRequest)
+                        // FIX for Google OAuth 400 "invalid_state" – migrateSession() was dropping the OAuth2 state
                         .sessionFixation(
                                 sf -> sf.changeSessionId()
                         )
