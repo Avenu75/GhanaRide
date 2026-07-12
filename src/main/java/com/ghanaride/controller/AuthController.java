@@ -1,28 +1,28 @@
 package com.ghanaride.controller;
 
-import com.ghanaride.dto.RegisterDTO;
-import com.ghanaride.entity.User;
-import com.ghanaride.service.UserService;
+import com.ghanaride.dto.*;
+import com.ghanaride.entity.*;
+import com.ghanaride.service.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.security.Principal;
+import java.util.List;
+
 /**
- * Handles user authentication:
- * - Login page display
- * - Registration (Passenger, Driver, Company)
- * - Password reset flow
+ * Authentication Controller - Handles login, registration, password reset.
  */
 @Slf4j
 @Controller
@@ -30,200 +30,234 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class AuthController {
 
     private final UserService userService;
+    private final PasswordEncoder passwordEncoder;
+    private final FileStorageService fileStorageService;
+    private final EmailService emailService;
 
     // =========================================================
-    // LOGIN PAGE
+    // LOGIN
     // =========================================================
+
     @GetMapping("/login")
-    public String loginPage(
-            @RequestParam(required = false) String error,
-            @RequestParam(required = false) String registered,
-            @RequestParam(required = false) String session,
+    public String showLoginPage(
             @RequestParam(required = false) String redirect,
-            Model model,
-            Authentication authentication
+            @RequestParam(required = false) String error,
+            @RequestParam(required = false) String logout,
+            @RequestParam(required = false) String session,
+            Model model
     ) {
-        // Already logged in? Redirect to dashboard
-        if (authentication != null && authentication.isAuthenticated()) {
+        // If already authenticated, redirect to dashboard
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated() && !(auth instanceof AnonymousAuthenticationToken)) {
             return "redirect:/dashboard";
         }
 
-        // Handle error messages
-        if ("too_many_attempts".equals(error)) {
-            model.addAttribute("loginError",
-                    "Too many failed login attempts. " +
-                            "Please wait 15 minutes before trying again.");
-        } else if ("oauth_failed".equals(error)) {
-            model.addAttribute("loginError",
-                    "Google sign-in failed. Please try again " +
-                            "or use email/password.");
-        } else if ("disabled".equals(error)) {
-            model.addAttribute("loginError",
-                    "Account is disabled or email is not verified. " +
-                            "Please contact support.");
-        } else if ("locked".equals(error)) {
-            model.addAttribute("loginError",
-                    "Your account has been locked due to too many failed attempts. " +
-                            "Please try again in 15 minutes.");
-        } else if (error != null) {
-            // Generic error — don't reveal specific reason
-            // (prevents username enumeration)
-            model.addAttribute("loginError",
-                    "Invalid email or password. Please try again.");
-        }
+        model.addAttribute("pageTitle", "Login — GhanaRide");
+        model.addAttribute("pageDescription", "Sign in to your GhanaRide account to book rides, manage bookings, and access your wallet.");
 
-        if ("true".equals(registered)) {
-            model.addAttribute("successMessage",
-                    "Account created successfully! Please log in.");
+        if (redirect != null) {
+            model.addAttribute("redirect", redirect);
         }
-
-        if ("expired".equals(session)) {
-            model.addAttribute("loginError",
-                    "Your session has expired. Please log in again.");
+        if (error != null) {
+            model.addAttribute("error", "Invalid username/email or password. Please try again.");
         }
-
-        // Store redirect URL for post-login navigation
-        if (redirect != null && !redirect.isBlank()) {
-            model.addAttribute("redirectUrl", redirect);
+        if (logout != null) {
+            model.addAttribute("success", "You have been logged out successfully.");
         }
-
-        // SEO
-        model.addAttribute("pageTitle",
-                "Login — GhanaRide");
-        model.addAttribute("pageDescription",
-                "Login to GhanaRide to book intercity and campus " +
-                        "rides across Ghana.");
+        if (session != null) {
+            model.addAttribute("error", "Your session has expired. Please log in again.");
+        }
 
         return "login";
     }
 
     // =========================================================
-    // REGISTRATION PAGE
+    // REGISTER
     // =========================================================
+
     @GetMapping("/register")
-    public String registerPage(
-            Model model,
-            Authentication authentication
+    public String showRegisterPage(
+            @RequestParam(required = false) String tab,
+            Model model
     ) {
-        // Already logged in? Redirect
-        if (authentication != null && authentication.isAuthenticated()) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated() && !(auth instanceof AnonymousAuthenticationToken)) {
             return "redirect:/dashboard";
         }
 
-        if (!model.containsAttribute("registerDTO")) {
-            model.addAttribute("registerDTO", new RegisterDTO());
-        }
+        model.addAttribute("pageTitle", "Create Account — GhanaRide");
+        model.addAttribute("pageDescription", "Join thousands of travelers across Ghana. Book rides, become a driver, or manage your fleet.");
 
-        // SEO
-        model.addAttribute("pageTitle",
-                "Register — Join GhanaRide");
-        model.addAttribute("pageDescription",
-                "Join GhanaRide as a passenger, driver, or company. " +
-                        "Book safe, affordable intercity and campus rides " +
-                        "across Ghana.");
+        // Preserve tab selection from query param
+        String activeTab = (tab != null ? tab.toUpperCase() : "PASSENGER");
+        model.addAttribute("activeTab", activeTab);
+
+        // Add empty DTO for form binding
+        if (!model.containsAttribute("registerForm")) {
+            model.addAttribute("registerForm", new RegisterRequestDTO());
+        }
 
         return "register";
     }
 
-    // =========================================================
-    // REGISTRATION HANDLER
-    // =========================================================
     @PostMapping("/register")
-    public String registerUser(
-            @Valid @ModelAttribute("registerDTO") RegisterDTO registerDTO,
+    public String register(
+            @Valid @ModelAttribute("registerForm") RegisterRequestDTO dto,
             BindingResult bindingResult,
+            @RequestParam(required = false) MultipartFile licenseFile,
+            @RequestParam(required = false) MultipartFile idFile,
+            @RequestParam(required = false) MultipartFile registrationCertificate,
             RedirectAttributes redirectAttributes,
-            Model model,
-            HttpServletRequest request
+            Model model
     ) {
-        // Step 1: Check validation annotations
+        // Validate password match
+        if (!dto.isPasswordMatching()) {
+            bindingResult.rejectValue("confirmPassword", "error.confirmPassword", "Passwords do not match");
+        }
+
+        // Role-specific validation
+        String role = dto.getRole() != null ? dto.getRole().toUpperCase() : "PASSENGER";
+
+        if ("DRIVER".equals(role)) {
+            if (licenseFile == null || licenseFile.isEmpty()) {
+                bindingResult.rejectValue("licenseFile", "error.licenseFile", "Driver license is required");
+            }
+            if (idFile == null || idFile.isEmpty()) {
+                bindingResult.rejectValue("idFile", "error.idFile", "ID document is required");
+            }
+        }
+
+        if ("COMPANY".equals(role)) {
+            if (dto.getCompanyName() == null || dto.getCompanyName().isBlank()) {
+                bindingResult.rejectValue("companyName", "error.companyName", "Company name is required");
+            }
+            if (registrationCertificate == null || registrationCertificate.isEmpty()) {
+                bindingResult.rejectValue("registrationCertificate", "error.registrationCertificate", "Registration certificate is required");
+            }
+        }
+
         if (bindingResult.hasErrors()) {
-            model.addAttribute("pageTitle", "Register — GhanaRide");
-            model.addAttribute("pageDescription",
-                    "Join GhanaRide as a passenger, driver, or company.");
-            model.addAttribute("error", "Please fix the highlighted errors below.");
+            model.addAttribute("activeTab", role);
+            model.addAttribute("pageTitle", "Create Account — GhanaRide");
             return "register";
         }
 
-        // Step 2: Password confirmation check
-        if (!registerDTO.getPassword().equals(
-                registerDTO.getConfirmPassword())) {
-            bindingResult.rejectValue(
-                    "confirmPassword",
-                    "error.registerDTO",
-                    "Passwords do not match"
-            );
-            model.addAttribute("pageTitle", "Register — GhanaRide");
-            model.addAttribute("error", "Passwords do not match. Please verify.");
-            return "register";
-        }
-
-        // Step 3: Check for existing username
-        // Use same error message for username/email taken
-        // (prevents user enumeration via registration form)
-        boolean hasConflict = false;
-
-        if (userService.existsByUsername(registerDTO.getUsername())) {
-            bindingResult.rejectValue(
-                    "username",
-                    "error.registerDTO",
-                    "This username is already taken"
-            );
-            hasConflict = true;
-        }
-
-        if (userService.existsByEmail(registerDTO.getEmail())) {
-            bindingResult.rejectValue(
-                    "email",
-                    "error.registerDTO",
-                    "An account with this email already exists"
-            );
-            hasConflict = true;
-        }
-
-        if (hasConflict) {
-            model.addAttribute("pageTitle", "Register — GhanaRide");
-            model.addAttribute("error", "Registration failed. Username or email already exists.");
-            return "register";
-        }
-
-        // Step 4: Register the user
         try {
-            User savedUser = userService.registerUser(
-                    registerDTO.toUser(),
-                    registerDTO.getCompanyName(),
-                    registerDTO.getCompanyEmail(),
-                    registerDTO.getCompanyPhone(),
-                    registerDTO.getCompanyLocation(),
-                    registerDTO.getCompanyDescription(),
-                    registerDTO.getRegistrationNumber()
-            );
+            User user;
+            switch (role) {
+                case "DRIVER" -> user = userService.registerDriver(dto, licenseFile, idFile);
+                case "COMPANY" -> user = userService.registerCompany(dto, registrationCertificate);
+                default -> user = userService.registerPassenger(dto);
+            }
 
-            log.info("New user registered: {} ({}) role={}",
-                    savedUser.getUsername(),
-                    savedUser.getEmail(),
-                    savedUser.getRole()
-            );
+            log.info("User registered: {} ({})", user.getEmail(), user.getRole());
 
-            // Success — redirect to login with message
             redirectAttributes.addFlashAttribute("success",
-                    "Account created successfully! " +
-                            "Please check your email to verify your account, " +
-                            "then log in.");
+                "Account created successfully! Welcome to GhanaRide, " + user.getFullName() + ".");
+
             return "redirect:/login?registered=true";
 
+        } catch (IllegalArgumentException e) {
+            log.warn("Registration failed: {}", e.getMessage());
+            bindingResult.rejectValue("email", "error.email", e.getMessage());
+            model.addAttribute("activeTab", role);
+            model.addAttribute("pageTitle", "Create Account — GhanaRide");
+            return "register";
         } catch (Exception e) {
-            // Log the real error
-            log.error("Registration failed for email: {}",
-                    registerDTO.getEmail(), e);
-
-            // Show generic error — don't expose internal details
-            model.addAttribute("pageTitle", "Register — GhanaRide");
-            model.addAttribute("error",
-                    "Registration failed. Please try again. " +
-                            "If the problem persists, contact support.");
+            log.error("Registration error", e);
+            bindingResult.rejectValue("email", "error.email", "Registration failed. Please try again.");
+            model.addAttribute("activeTab", role);
+            model.addAttribute("pageTitle", "Create Account — GhanaRide");
             return "register";
         }
     }
 
+    // =========================================================
+    // FORGOT PASSWORD
+    // =========================================================
+
+    @GetMapping("/forgot-password")
+    public String showForgotPasswordPage(Model model) {
+        model.addAttribute("pageTitle", "Forgot Password — GhanaRide");
+        model.addAttribute("pageDescription", "Enter your email or username and we'll send you a password reset link.");
+        return "forgot-password";
+    }
+
+    @PostMapping("/forgot-password")
+    public String processForgotPassword(
+            @RequestParam String emailOrUsername,
+            RedirectAttributes redirectAttributes
+    ) {
+        try {
+            userService.sendPasswordResetEmail(emailOrUsername);
+            redirectAttributes.addFlashAttribute("success",
+                "If the account exists, a password reset link has been sent to your email.");
+        } catch (Exception e) {
+            log.error("Password reset request failed", e);
+            // Don't reveal if email exists
+            redirectAttributes.addFlashAttribute("success",
+                "If the account exists, a password reset link has been sent to your email.");
+        }
+        return "redirect:/forgot-password";
+    }
+
+    @GetMapping("/reset-password")
+    public String showResetPasswordPage(
+            @RequestParam String token,
+            Model model,
+            RedirectAttributes redirectAttributes
+    ) {
+        if (!userService.isValidPasswordResetToken(token)) {
+            redirectAttributes.addFlashAttribute("error", "Invalid or expired reset token.");
+            return "redirect:/forgot-password";
+        }
+
+        model.addAttribute("pageTitle", "Reset Password — GhanaRide");
+        model.addAttribute("token", token);
+        model.addAttribute("resetForm", new ResetPasswordDTO());
+        return "reset-password";
+    }
+
+    @PostMapping("/reset-password")
+    public String processResetPassword(
+            @Valid @ModelAttribute("resetForm") ResetPasswordDTO dto,
+            BindingResult bindingResult,
+            @RequestParam String token,
+            RedirectAttributes redirectAttributes,
+            Model model
+    ) {
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("pageTitle", "Reset Password — GhanaRide");
+            model.addAttribute("token", token);
+            return "reset-password";
+        }
+
+        if (!dto.getNewPassword().equals(dto.getConfirmPassword())) {
+            bindingResult.rejectValue("confirmPassword", "error.confirmPassword", "Passwords do not match");
+            model.addAttribute("pageTitle", "Reset Password — GhanaRide");
+            model.addAttribute("token", token);
+            return "reset-password";
+        }
+
+        try {
+            userService.resetPassword(token, dto.getNewPassword());
+            redirectAttributes.addFlashAttribute("success", "Password has been reset. You can now log in with your new password.");
+            return "redirect:/login";
+        } catch (Exception e) {
+            log.error("Password reset failed", e);
+            bindingResult.rejectValue("newPassword", "error.newPassword", "Failed to reset password. Token may be expired.");
+            model.addAttribute("pageTitle", "Reset Password — GhanaRide");
+            model.addAttribute("token", token);
+            return "reset-password";
+        }
+    }
+
+    // =========================================================
+    // LOGOUT SUCCESS
+    // =========================================================
+
+    @GetMapping("/logout-success")
+    public String logoutSuccess(Model model) {
+        return "redirect:/?logged_out=true";
+    }
 }

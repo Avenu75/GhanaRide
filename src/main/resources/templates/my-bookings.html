@@ -1,515 +1,571 @@
 <!DOCTYPE html>
-<html th:replace="~{layout :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" th:replace="~{layout :: layout(~{::title}, ~{::main})}">
 <head>
-    <title>My Bookings - GhanaRide</title>
+    <title>My Bookings — GhanaRide</title>
+    <meta name="description" content="View and manage all your GhanaRide bookings. Access receipts, boarding passes, and trip history.">
+    
+    <style th:inline="css">
+        .bookings-layout {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: var(--space-6);
+            align-items: start;
+        }
+        
+        @media (max-width: 992px) {
+            .bookings-layout { grid-template-columns: 1fr; }
+        }
+        
+        .bookings-main { min-width: 0; }
+        .bookings-sidebar { position: sticky; top: calc(var(--header-height) + var(--space-6)); }
+        
+        /* Filter Tabs */
+        .filter-tabs {
+            display: flex;
+            gap: var(--space-1);
+            background: var(--color-surface-hover);
+            border-radius: var(--radius);
+            padding: var(--space-1);
+            margin-bottom: var(--space-4);
+            flex-wrap: wrap;
+        }
+        
+        .filter-tab {
+            padding: var(--space-2) var(--space-4);
+            border: none;
+            background: transparent;
+            border-radius: var(--radius-sm);
+            font-weight: 500;
+            color: var(--color-text-secondary);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            white-space: nowrap;
+        }
+        
+        .filter-tab:hover { color: var(--color-text); }
+        .filter-tab.active {
+            background: var(--gold);
+            color: var(--black);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        /* Booking Card */
+        .booking-card {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            margin-bottom: var(--space-4);
+            transition: all var(--transition);
+        }
+        
+        .booking-card:hover {
+            box-shadow: var(--shadow);
+            border-color: var(--color-border-strong);
+        }
+        
+        .booking-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--space-4);
+            border-bottom: 1px solid var(--color-border);
+            background: var(--color-surface-hover);
+        }
+        
+        .booking-ref {
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--gold-dark);
+        }
+        
+        .booking-status {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-1);
+            padding: 0.375rem 0.875rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: var(--radius-full);
+            white-space: nowrap;
+        }
+        
+        .status-active { background: var(--color-success-bg); color: var(--color-success); }
+        .status-confirmed { background: var(--color-info-bg); color: var(--color-info); }
+        .status-completed { background: var(--color-surface-hover); color: var(--color-text-muted); }
+        .status-cancelled { background: var(--color-error-bg); color: var(--color-error); }
+        .status-pending { background: var(--color-warning-bg); color: var(--color-warning); }
+        
+        .booking-body { padding: var(--space-4); }
+        
+        .booking-route {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--space-3);
+            margin-bottom: var(--space-4);
+        }
+        
+        .booking-route-line {
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--space-1);
+        }
+        
+        .booking-route-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            z-index: 1;
+        }
+        
+        .booking-route-dot:first-child { background: var(--green); }
+        .booking-route-dot:last-child { background: var(--red); }
+        
+        .booking-route-line::before {
+            content: '';
+            width: 2px;
+            height: 32px;
+            background: var(--color-border);
+            flex-shrink: 0;
+        }
+        
+        .booking-route-info { flex: 1; min-width: 0; }
+        .booking-route-from { font-weight: 600; font-size: 1.125rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .booking-route-to { font-weight: 600; font-size: 1.125rem; color: var(--color-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        .booking-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: var(--space-3);
+            padding-top: var(--space-3);
+            border-top: 1px solid var(--color-border);
+            margin-bottom: var(--space-4);
+        }
+        
+        .booking-meta-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            font-size: 0.875rem;
+            color: var(--color-text-secondary);
+        }
+        
+        .booking-meta-item i {
+            color: var(--gold);
+            width: 18px;
+            text-align: center;
+        }
+        
+        .booking-actions {
+            display: flex;
+            gap: var(--space-2);
+            flex-wrap: wrap;
+        }
+        
+        .booking-actions .btn { flex: 1; min-width: 120px; }
+        
+        /* Empty State */
+        .empty-bookings {
+            text-align: center;
+            padding: var(--space-12) var(--space-6);
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+        }
+        
+        .empty-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--color-surface-hover);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: var(--space-4);
+            font-size: 2rem;
+            color: var(--color-text-muted);
+        }
+        
+        /* Sidebar: Upcoming Trip */
+        .upcoming-card {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-xl);
+            padding: var(--space-5);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .upcoming-trip {
+            border: 2px solid var(--gold);
+            position: relative;
+        }
+        
+        .upcoming-trip::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            border-radius: var(--radius-xl);
+            background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+            z-index: -1;
+        }
+        
+        .upcoming-countdown {
+            display: flex;
+            gap: var(--space-2);
+            margin: var(--space-4) 0;
+        }
+        
+        .countdown-item {
+            flex: 1;
+            text-align: center;
+            background: var(--color-surface);
+            padding: var(--space-3);
+            border-radius: var(--radius);
+        }
+        
+        .countdown-value {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--gold-dark);
+        }
+        
+        .countdown-label {
+            font-size: 0.6875rem;
+            text-transform: uppercase;
+            color: var(--color-text-muted);
+        }
+        
+        /* Stats Sidebar */
+        .stat-mini {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            padding: var(--space-3);
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius);
+            margin-bottom: var(--space-2);
+        }
+        
+        .stat-mini-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+        
+        .stat-mini-info { flex: 1; min-width: 0; }
+        .stat-mini-value { font-weight: 700; color: var(--color-text); }
+        .stat-mini-label { font-size: 0.75rem; color: var(--color-text-muted); }
+    </style>
 </head>
 <body>
-<main th:fragment="main" class="py-4">
-    <div class="container">
+<main th:fragment="main">
+    <div class="container py-4">
         <!-- Header -->
-        <div class="card border-0 rounded-4 shadow-sm mb-4 position-relative overflow-hidden bg-card text-white" style="background: linear-gradient(135deg, rgba(15, 157, 88, 0.95) 0%, rgba(0, 77, 45, 0.95) 100%);">
-            <div class="position-absolute top-0 end-0 h-100 w-50 d-none d-md-block" style="background: url('https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800&q=80') center/cover; opacity: 0.2; mix-blend-mode: overlay;"></div>
-            <div class="card-body p-4 p-md-5 position-relative z-1">
-                <div class="row align-items-center">
-                    <div class="col-md-8">
-                        <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3 shadow-sm bg-body" style="width: 50px; height: 50px; color: #0F9D58;">
-                            <i class="bi bi-ticket-perforated-fill fs-3"></i>
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-5">
+            <div>
+                <h1 style="font-family: 'Outfit', sans-serif;">My Bookings</h1>
+                <p class="text-muted mb-0">View and manage all your trips</p>
+            </div>
+            <a th:href="@{/rides}" class="btn btn-primary btn-pill">
+                <i class="bi bi-plus-circle me-2"></i> Book New Ride
+            </a>
+        </div>
+        
+        <!-- Filter Tabs -->
+        <div class="filter-tabs" role="tablist" aria-label="Booking status filters">
+            <button class="filter-tab active" role="tab" data-filter="all" aria-selected="true">All</button>
+            <button class="filter-tab" role="tab" data-filter="ACTIVE" aria-selected="false"><i class="bi bi-ticket-perforated me-1"></i> Active</button>
+            <button class="filter-tab" role="tab" data-filter="CONFIRMED" aria-selected="false"><i class="bi bi-check-circle me-1"></i> Confirmed</button>
+            <button class="filter-tab" role="tab" data-filter="COMPLETED" aria-selected="false"><i class="bi bi-check2-all me-1"></i> Completed</button>
+            <button class="filter-tab" role="tab" data-filter="CANCELLED" aria-selected="false"><i class="bi bi-x-circle me-1"></i> Cancelled</button>
+        </div>
+        
+        <div class="bookings-layout">
+            <!-- Main: Bookings List -->
+            <div class="bookings-main">
+                <div th:if="${bookings == null or bookings.isEmpty()}" class="empty-bookings">
+                    <div class="empty-icon"><i class="bi bi-ticket-perforated"></i></div>
+                    <h4 class="fw-bold">No bookings yet</h4>
+                    <p class="text-muted">Your booking history will appear here once you start traveling with GhanaRide.</p>
+                    <a th:href="@{/rides}" class="btn btn-primary mt-3">
+                        <i class="bi bi-bus-front me-2"></i> Find Your First Ride
+                    </a>
+                </div>
+                
+                <div th:unless="${bookings == null or bookings.isEmpty()}">
+                    <div th:each="booking : ${bookings}" 
+                         class="booking-card animate-fade-up"
+                         data-status="[[${booking.status}]]"
+                         data-ref="[[${booking.bookingReference}]]">
+                        <div class="booking-header">
+                            <span class="booking-ref" th:text="${booking.bookingReference}">GR-XXXXXX</span>
+                            <span class="booking-status" 
+                                  th:classappend="|status-${#strings.toLowerCase(booking.status.name())}|"
+                                  th:text="${booking.status}">Active</span>
                         </div>
-                        <h2 class="fw-bold mb-2 text-white">My Bookings</h2>
-                        <p class="fs-5 mb-0 text-white-50">View and manage your ride bookings</p>
+                        
+                        <div class="booking-body">
+                            <div class="booking-route">
+                                <div class="booking-route-line">
+                                    <div class="booking-route-dot"></div>
+                                    <div class="booking-route-dot"></div>
+                                </div>
+                                <div class="booking-route-info">
+                                    <div class="booking-route-from" th:text="${booking.trip.fromLocation}">Accra</div>
+                                    <div class="booking-route-to" th:text="${booking.trip.toLocation}">Kumasi</div>
+                                </div>
+                            </div>
+                            
+                            <div class="booking-meta">
+                                <div class="booking-meta-item">
+                                    <i class="bi bi-calendar3"></i>
+                                    <span th:text="${#temporals.format(booking.trip.departureTime, 'MMM dd, yyyy \'at\' HH:mm')}">Date & Time</span>
+                                </div>
+                                <div class="booking-meta-item">
+                                    <i class="bi bi-car-front"></i>
+                                    <span th:text="${booking.trip.car != null ? booking.trip.car.model : 'Standard'}">Car Model</span>
+                                </div>
+                                <div class="booking-meta-item">
+                                    <i class="bi bi-123"></i>
+                                    <span th:text="'Seat ' + ${booking.seatNumber}">Seat</span>
+                                </div>
+                                <div class="booking-meta-item">
+                                    <i class="bi bi-cash-stack"></i>
+                                    <span th:text="'GH₵' + ${#numbers.formatDecimal(booking.totalAmount, 1, 2, 'COMMA')}">Amount</span>
+                                </div>
+                                <div class="booking-meta-item">
+                                    <i class="bi bi-credit-card"></i>
+                                    <span th:text="${booking.paymentMethod != null ? booking.paymentMethod.name() : '—'}">Payment</span>
+                                </div>
+                                <div class="booking-meta-item">
+                                    <i class="bi bi-clock"></i>
+                                    <span th:text="${#temporals.format(booking.bookingDate, 'MMM dd, yyyy HH:mm')}">Booked</span>
+                                </div>
+                            </div>
+                            
+                            <div class="booking-actions">
+                                <a th:href="@{/booking/receipt/{id}(id=${booking.id})}" class="btn btn-secondary btn-pill">
+                                    <i class="bi bi-receipt me-1"></i> Receipt
+                                </a>
+                                <a th:href="@{/boarding-pass/{id}(id=${booking.id})}" class="btn btn-primary btn-pill">
+                                    <i class="bi bi-qr-code me-1"></i> Boarding Pass
+                                </a>
+                                <button th:if="${booking.status.name() == 'ACTIVE' or booking.status.name() == 'CONFIRMED'}" 
+                                        class="btn btn-danger btn-pill" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#cancelModal"
+                                        th:data-booking-id="${booking.id}"
+                                        th:data-booking-ref="${booking.bookingReference}">
+                                    <i class="bi bi-x-circle me-1"></i> Cancel
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                    <div class="col-md-4 text-md-end mt-4 mt-md-0">
-                        <a th:href="@{/dashboard}" class="btn btn-warning btn-lg fw-bold shadow-sm rounded-pill px-4" style="background-color: #FCD116; border: none;">
-                            <i class="bi bi-plus-circle-fill me-2"></i>Book a Ride
+                </div>
+            </div>
+            
+            <!-- Sidebar: Upcoming Trip + Stats -->
+            <div class="bookings-sidebar">
+                <!-- Upcoming Trip Card -->
+                <div th:if="${upcomingBooking != null}" class="upcoming-card upcoming-trip mb-4">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <span class="badge badge-warning"><i class="bi bi-clock me-1"></i> Departing Soon</span>
+                        <span class="booking-ref" th:text="${upcomingBooking.bookingReference}">GR-XXXXXX</span>
+                    </div>
+                    
+                    <div class="booking-route mb-3">
+                        <div class="booking-route-line">
+                            <div class="booking-route-dot"></div>
+                            <div class="booking-route-dot"></div>
+                        </div>
+                        <div class="booking-route-info">
+                            <div class="booking-route-from" th:text="${upcomingBooking.trip.fromLocation}">From</div>
+                            <div class="booking-route-to" th:text="${upcomingBooking.trip.toLocation}">To</div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="booking-meta-item mb-0">
+                            <i class="bi bi-calendar3"></i>
+                            <span th:text="${#temporals.format(upcomingBooking.trip.departureTime, 'MMM dd, yyyy \'at\' HH:mm')}">Date</span>
+                        </div>
+                        <a th:href="@{/boarding-pass/{id}(id=${upcomingBooking.id})}" class="btn btn-primary btn-pill btn-sm">
+                            <i class="bi bi-qr-code me-1"></i> Boarding Pass
                         </a>
                     </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Flash Messages -->
-        <div th:if="${success}" class="alert alert-success alert-dismissible fade show rounded-3 shadow-sm d-flex align-items-center mb-4" role="alert">
-            <i class="bi bi-check-circle-fill fs-5 me-3"></i>
-            <span th:text="${success}"></span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show rounded-3 shadow-sm d-flex align-items-center mb-4" role="alert">
-            <i class="bi bi-exclamation-triangle-fill fs-5 me-3"></i>
-            <span th:text="${error}"></span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-
-        <!-- Empty State -->
-        <div th:if="${#lists.isEmpty(upcomingBookings) and #lists.isEmpty(pastBookings)}" class="text-center py-5 bg-card rounded-4 shadow-sm border border-secondary-subtle">
-            <div class="rounded-circle bg-body d-inline-flex align-items-center justify-content-center mb-3 shadow-sm" style="width: 80px; height: 80px; color: #0F9D58;">
-                <i class="bi bi-journal-x fs-1"></i>
-            </div>
-            <h4 class="fw-bold">No bookings yet</h4>
-            <p class="text-muted">You haven't booked any trips yet. <a th:href="@{/dashboard}" class="fw-bold" style="color: #0F9D58; text-decoration: none;">Browse available trips</a> to get started!</p>
-        </div>
-
-        <!-- Upcoming Bookings Section -->
-        <div th:if="${not #lists.isEmpty(upcomingBookings)}" class="mb-5">
-            <h4 class="fw-bold mb-3 d-flex align-items-center">
-                <i class="bi bi-calendar2-check-fill me-2" style="color: #0F9D58;"></i>Upcoming Trips
-            </h4>
-
-            <div class="row g-4">
-                <div class="col-md-6 col-xl-4" th:each="booking : ${upcomingBookings}">
-                    <div class="card border-0 rounded-4 shadow-sm bg-card h-100 position-relative overflow-hidden">
-                        <!-- Status Ribbon -->
-                        <div class="position-absolute top-0 start-0 w-100" style="height: 4px;" th:styleappend="${booking.paymentStatus != null and booking.paymentStatus.name() == 'PAID' ? 'background-color: #0F9D58;' : 'background-color: #FCD116;'}"></div>
-
-                        <div class="card-body p-4 d-flex flex-column">
-                            <div class="d-flex justify-content-between align-items-start mb-3">
-                                <div>
-                                    <span class="badge rounded-pill bg-body text-body border border-secondary-subtle px-2 py-1 mb-2 font-monospace shadow-sm" th:text="${booking.bookingReference}">REF</span>
-                                </div>
-                                <div class="text-end">
-                                    <span class="fw-bold fs-5 text-success d-block">GH₵ <span th:text="${booking.totalAmount}">0.00</span></span>
-                                    <span th:if="${booking.paymentStatus != null and booking.paymentStatus.name() == 'PAID'}" class="badge bg-success rounded-pill small">PAID</span>
-                                    <span th:if="${booking.paymentStatus == null or booking.paymentStatus.name() == 'PENDING'}" class="badge bg-warning text-dark rounded-pill small">PENDING PAY</span>
-                                </div>
-                            </div>
-
-                            <div class="d-flex align-items-center justify-content-between mb-3">
-                                <div class="text-center" style="flex: 1;">
-                                    <h5 class="fw-bold text-body mb-0 text-truncate" th:text="${booking.trip.fromLocation}" th:title="${booking.trip.fromLocation}">From</h5>
-                                </div>
-                                <div class="px-2 position-relative text-center text-muted" style="flex: 0 0 auto;">
-                                    <hr class="border-secondary-subtle my-0 position-absolute w-100 top-50 start-0 translate-middle-y">
-                                    <i class="bi bi-arrow-right position-relative bg-card px-1"></i>
-                                </div>
-                                <div class="text-center" style="flex: 1;">
-                                    <h5 class="fw-bold text-body mb-0 text-truncate" th:text="${booking.trip.toLocation}" th:title="${booking.trip.toLocation}">To</h5>
-                                </div>
-                            </div>
-
-                            <div class="bg-body rounded-3 p-3 mb-3 flex-grow-1 border border-secondary-subtle">
-                                <div class="d-flex align-items-center mb-2 text-muted small">
-                                    <i class="bi bi-calendar-event-fill me-2" style="color: #FCD116;"></i>
-                                    <span class="fw-medium text-body" th:text="${#temporals.format(booking.trip.departureTime, 'dd MMM yyyy, h:mm a')}">Date</span>
-                                </div>
-                                <div class="d-flex align-items-center mb-2 text-muted small">
-                                    <i class="bi bi-person-badge-fill me-2 text-primary"></i>
-                                    <span class="text-truncate" th:text="${booking.trip.driver != null ? booking.trip.driver.fullName : 'To Be Assigned'}">Driver Name</span>
-                                </div>
-                                <div class="d-flex align-items-center text-muted small">
-                                    <i class="bi bi-segmented-nav me-2 text-info"></i>
-                                    <span class="fw-medium" th:text="'Seat ' + ${booking.seatNumber}">Seat X</span>
-                                </div>
-                            </div>
-
-                            <div class="mt-auto d-flex gap-2">
-                                <a th:if="${booking.paymentStatus != null and booking.paymentStatus.name() == 'PAID'}" th:href="@{/booking/receipt/{id}(id=${booking.id})}" class="btn btn-outline-success flex-grow-1 rounded-3 fw-bold shadow-sm">
-                                    <i class="bi bi-receipt me-1"></i>Receipt
-                                </a>
-                                <a th:if="${booking.paymentStatus == null or booking.paymentStatus.name() == 'PENDING'}" th:href="@{/payment/{id}(id=${booking.id})}" class="btn btn-warning flex-grow-1 rounded-3 fw-bold shadow-sm" style="background-color: #FCD116; border: none;">
-                                    <i class="bi bi-credit-card me-1"></i>Pay Now
-                                </a>
-
-                                <div th:if="${cancelEligibility[booking.id]}">
-                                    <button type="button" class="btn btn-danger rounded-3 shadow-sm px-3 cancel-timer-btn h-100"
-                                            th:data-id="${booking.id}"
-                                            th:data-ref="${booking.bookingReference}"
-                                            th:data-expiry="${booking.trip.departureTime.minusHours(2)}"
-                                            onclick="confirmCancelBooking(this)">
-                                        <i class="bi bi-x-circle"></i> <span class="cancel-timer-text d-none d-sm-inline">Cancel</span>
-                                    </button>
-                                </div>
-
-                                <!-- Real-time Actions -->
-                                <a th:href="@{/track/{id}(id=${booking.id})}" class="btn btn-info text-white rounded-3 shadow-sm px-3 h-100" title="Live track – Google Maps Bolt style – Ghana only">
-                                    <i class="bi bi-geo-alt-fill"></i> <span class="d-none d-sm-inline">Track</span>
-                                </a>
-                                <button type="button" class="btn btn-primary rounded-3 shadow-sm px-3 h-100"
-                                        th:data-trip="${booking.trip.id}" th:data-driver="${booking.trip.driver != null ? booking.trip.driver.fullName : 'To Be Assigned'}"
-                                        onclick="openChatModal(this)">
-                                    <i class="bi bi-chat-dots-fill"></i> <span class="d-none d-sm-inline">Chat</span>
-                                </button>
-
-                                <!-- Hidden Cancel Form -->
-                                <form th:id="'cancelForm-' + ${booking.id}" th:action="@{/booking/{id}/cancel(id=${booking.id})}" method="post" style="display:none;"></form>
-                            </div>
+                    
+                    <!-- Countdown Timer -->
+                    <div class="upcoming-countdown" id="countdownTimer">
+                        <div class="countdown-item">
+                            <div class="countdown-value" id="daysLeft">00</div>
+                            <div class="countdown-label">Days</div>
+                        </div>
+                        <div class="countdown-item">
+                            <div class="countdown-value" id="hoursLeft">00</div>
+                            <div class="countdown-label">Hours</div>
+                        </div>
+                        <div class="countdown-item">
+                            <div class="countdown-value" id="minutesLeft">00</div>
+                            <div class="countdown-label">Min</div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <!-- Past Bookings Section -->
-        <div th:if="${not #lists.isEmpty(pastBookings)}">
-            <h5 class="fw-bold mb-3 d-flex align-items-center text-muted">
-                <i class="bi bi-clock-history me-2"></i>Past Bookings
-            </h5>
-
-            <div class="card border-0 rounded-4 shadow-sm bg-card overflow-hidden">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0 text-muted">
-                        <thead class="bg-body border-bottom border-secondary-subtle">
-                        <tr>
-                            <th class="py-3 ps-4 border-0">Reference</th>
-                            <th class="py-3 border-0">Route</th>
-                            <th class="py-3 border-0">Date</th>
-                            <th class="py-3 border-0">Status</th>
-                            <th class="py-3 pe-4 border-0 text-end">Action</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr th:each="booking : ${pastBookings}">
-                            <td class="ps-4">
-                                <span class="font-monospace small fw-medium text-body" th:text="${booking.bookingReference}">REF</span>
-                            </td>
-                            <td>
-                                <div class="fw-medium text-body small">
-                                    <span th:text="${booking.trip.fromLocation}">From</span> <i class="bi bi-arrow-right mx-1"></i> <span th:text="${booking.trip.toLocation}">To</span>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="small" th:text="${#temporals.format(booking.trip.departureTime, 'dd MMM yyyy')}">Date</span>
-                            </td>
-                            <td>
-                                <span th:if="${booking.status.name() == 'CANCELLED'}" class="badge bg-danger rounded-pill shadow-sm"><i class="bi bi-x-circle me-1"></i>Cancelled</span>
-                                <span th:if="${booking.status.name() == 'COMPLETED'}" class="badge bg-success rounded-pill shadow-sm"><i class="bi bi-check-circle me-1"></i>Completed</span>
-                                <span th:if="${booking.status.name() == 'EXPIRED'}" class="badge bg-secondary rounded-pill shadow-sm"><i class="bi bi-clock me-1"></i>Expired</span>
-                                <span th:if="${booking.status.name() != 'CANCELLED' and booking.status.name() != 'COMPLETED' and booking.status.name() != 'EXPIRED'}" class="badge bg-secondary rounded-pill shadow-sm" th:text="${booking.status}">Status</span>
-                            </td>
-                            <td class="pe-4 text-end">
-                                <button th:if="${booking.status.name() == 'COMPLETED'}" type="button" class="btn btn-sm btn-warning rounded-pill shadow-sm me-1" th:attr="onclick=|openReview(${booking.id})|" title="Rate ride">
-                                    <i class="bi bi-star-fill"></i>
-                                </button>
-                                <a th:if="${booking.paymentStatus != null and booking.paymentStatus.name() == 'PAID'}" th:href="@{/booking/receipt/{id}(id=${booking.id})}" class="btn btn-sm btn-outline-secondary rounded-pill shadow-sm" title="View Receipt">
-                                    <i class="bi bi-receipt"></i>
-                                </a>
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Cancel Booking Modal -->
-    <div class="modal fade" id="cancelBookingModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 rounded-4 shadow-lg bg-card">
-                <div class="modal-header border-bottom border-secondary-subtle">
-                    <h5 class="modal-title fw-bold text-danger">
-                        <i class="bi bi-exclamation-triangle-fill me-2"></i>Cancel Booking
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body p-4">
-                    <p class="text-body fw-medium mb-3">Are you sure you want to cancel this booking?</p>
-                    <div class="bg-body p-3 rounded-3 border border-secondary-subtle mb-4">
-                        <small class="text-muted fw-bold d-block mb-1 text-uppercase" style="letter-spacing: 0.5px;">Booking Reference</small>
-                        <div class="fs-5 fw-bold font-monospace text-body" id="cancelBookingRef">REF</div>
+                
+                <!-- Stats Mini Cards -->
+                <div class="mb-4">
+                    <h6 class="fw-bold mb-3">Your Stats</h6>
+                    <div class="stat-mini">
+                        <div class="stat-mini-icon" style="background: var(--gold-muted); color: var(--gold-dark);"><i class="bi bi-ticket-perforated"></i></div>
+                        <div class="stat-mini-info">
+                            <div class="stat-mini-value" th:text="${totalBookings != null ? #numbers.formatInteger(totalBookings) : '0'}">0</div>
+                            <div class="stat-mini-label">Total Bookings</div>
+                        </div>
                     </div>
-                    <p class="text-muted small mb-0">
-                        <i class="bi bi-info-circle-fill me-1 text-primary"></i>
-                        If you have already paid, your refund will be processed according to our cancellation policy. Your seat will be released immediately.
-                    </p>
+                    <div class="stat-mini">
+                        <div class="stat-mini-icon" style="background: var(--color-success-bg); color: var(--color-success);"><i class="bi bi-check-circle"></i></div>
+                        <div class="stat-mini-info">
+                            <div class="stat-mini-value" th:text="${completedBookings != null ? #numbers.formatInteger(completedBookings) : '0'}">0</div>
+                            <div class="stat-mini-label">Completed Rides</div>
+                        </div>
+                    </div>
+                    <div class="stat-mini">
+                        <div class="stat-mini-icon" style="background: var(--gold-muted); color: var(--gold-dark);"><i class="bi bi-star"></i></div>
+                        <div class="stat-mini-info">
+                            <div class="stat-mini-value" th:text="${totalPoints != null ? #numbers.formatInteger(totalPoints) : '0'}">0</div>
+                            <div class="stat-mini-label">Loyalty Points</div>
+                        </div>
+                    </div>
+                    <div class="stat-mini">
+                        <div class="stat-mini-icon" style="background: var(--color-info-bg); color: var(--color-info);"><i class="bi bi-cash-stack"></i></div>
+                        <div class="stat-mini-info">
+                            <div class="stat-mini-value" th:text="'GH₵' + ${#numbers.formatDecimal(totalSpent ?: 0, 1, 0, 'COMMA')}">GH₵0</div>
+                            <div class="stat-mini-label">Total Spent</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="modal-footer border-top border-secondary-subtle p-3">
-                    <button type="button" class="btn btn-outline-secondary rounded-3 px-4 fw-bold shadow-sm" data-bs-dismiss="modal">
-                        Keep Booking
-                    </button>
-                    <button type="button" class="btn btn-danger rounded-3 px-4 fw-bold shadow-sm" id="confirmCancelBtn">
-                        Yes, Cancel
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        let bookingIdToCancel = null;
-
-        function confirmCancelBooking(btn) {
-            bookingIdToCancel = btn.getAttribute('data-id');
-            document.getElementById('cancelBookingRef').textContent = btn.getAttribute('data-ref');
-
-            // Do not append the modal to document.body, let it stay where it is.
-            const cancelModal = new bootstrap.Modal(document.getElementById('cancelBookingModal'));
-            cancelModal.show();
-        }
-
-        document.getElementById('confirmCancelBtn').addEventListener('click', function () {
-            if (bookingIdToCancel) {
-                // Disable the button to prevent multiple clicks
-                this.disabled = true;
-                this.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Cancelling...';
-                document.getElementById('cancelForm-' + bookingIdToCancel).submit();
-            }
-        });
-
-        // Countdown timer for cancel buttons (2 hours before departure)
-        function updateCancelTimers() {
-            const buttons = document.querySelectorAll('.cancel-timer-btn');
-            buttons.forEach(btn => {
-                const expiryStr = btn.getAttribute('data-expiry');
-                if (!expiryStr) return;
-
-                // Keep the 'T' to ensure cross-browser parsing (e.g. Safari)
-                const expiryDate = new Date(expiryStr);
-                const now = new Date();
-                const diffMs = expiryDate - now;
-
-                if (diffMs <= 0) {
-                    btn.disabled = true;
-                    btn.classList.remove('btn-danger');
-                    btn.classList.add('btn-secondary');
-                    // Hide the button entirely when expired or change text
-                    btn.style.display = 'none';
-                }
-            });
-        }
-
-        setInterval(updateCancelTimers, 60000); // Check every minute
-        updateCancelTimers();
-    </script>
-
-    <!-- REAL-TIME MAP & CHAT MODALS -->
-
-    <!-- Track Modal -->
-    <div class="modal fade" id="trackModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content border-0 rounded-4 shadow-lg bg-card">
-                <div class="modal-header border-bottom border-secondary-subtle">
-                    <h5 class="modal-title fw-bold text-body">
-                        <i class="bi bi-geo-alt-fill me-2" style="color: #0F9D58;"></i>Track <span id="trackDriverName">Driver</span>
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body p-0">
-                    <div id="trackingMap" style="height: 400px; width: 100%;"></div>
-                </div>
-                <div class="modal-footer p-2 text-center d-block">
-                    <small class="text-muted" id="trackStatus">Connecting to live location...</small>
+                
+                <!-- Quick Actions -->
+                <div>
+                    <h6 class="fw-bold mb-3">Quick Actions</h6>
+                    <div class="d-grid gap-2">
+                        <a th:href="@{/rides}" class="btn btn-primary btn-pill"><i class="bi bi-plus-circle me-2"></i> Book a Ride</a>
+                        <a th:href="@{/wallet}" class="btn btn-secondary btn-pill"><i class="bi bi-wallet2 me-2"></i> My Wallet</a>
+                        <a th:href="@{/reviews}" class="btn btn-secondary btn-pill"><i class="bi bi-star me-2"></i> Leave a Review</a>
+                        <a th:href="@{/profile}" class="btn btn-secondary btn-pill"><i class="bi bi-gear me-2"></i> Settings</a>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- Chat Modal -->
-    <div class="modal fade" id="chatModal" tabindex="-1" aria-hidden="true">
+    
+    <!-- Cancel Modal -->
+    <div class="modal fade" id="cancelModal" tabindex="-1" aria-labelledby="cancelModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 rounded-4 shadow-lg bg-card">
-                <div class="modal-header border-bottom border-secondary-subtle">
-                    <h5 class="modal-title fw-bold text-body">
-                        <i class="bi bi-chat-dots-fill me-2 text-primary"></i>Chat: <span id="chatDriverName">Driver</span>
-                    </h5>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cancelModalLabel">Cancel Booking</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body p-3" style="height: 350px; overflow-y: auto;" id="chatMessages">
-                    <!-- Messages go here -->
+                <div class="modal-body">
+                    <p class="mb-3">Are you sure you want to cancel booking <strong id="cancelBookingRef"></strong>?</p>
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>Cancellation Policy:</strong> Cancellations made at least 2 hours before departure are eligible for a refund. Refunds are processed to your GhanaRide Wallet instantly.
+                    </div>
+                    <p class="text-muted small mb-0">This action cannot be undone.</p>
                 </div>
-                <div class="modal-footer p-3 border-top border-secondary-subtle">
-                    <form id="chatForm" class="w-100 d-flex m-0">
-                        <input type="text" id="chatInput" class="form-control rounded-pill me-2" placeholder="Type a message..." required autocomplete="off">
-                        <button type="submit" class="btn btn-primary rounded-circle shadow-sm" style="width: 40px; height: 40px; padding: 0;">
-                            <i class="bi bi-send-fill"></i>
-                        </button>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Keep Booking</button>
+                    <form id="cancelForm" th:action="@{/booking/__/{id}/cancel(id=${0})}" method="post">
+                        <input type="hidden" name="_csrf" th:value="${_csrf.token}"/>
+                        <button type="submit" class="btn btn-danger">Yes, Cancel Booking</button>
                     </form>
                 </div>
             </div>
         </div>
     </div>
+</main>
 
-    <!-- Leaflet & STOMP JS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
-
-    <script th:inline="javascript">
-        /*<![CDATA[*/
-        const currentUserFullName = /*[[${currentUser.fullName != null ? currentUser.fullName : currentUser.username}]]*/ 'Passenger';
-        /*]]>*/
-
-        let stompClient = null;
-        let currentTripId = null;
-        let map = null;
-        let driverMarker = null;
-
-        // Ensure Leaflet map is resized correctly when modal opens
-        const trackModalEl = document.getElementById('trackModal');
-        trackModalEl.addEventListener('shown.bs.modal', function () {
-            if (map) { map.invalidateSize(); }
+<script th:inline="javascript">
+    // Filter Tabs
+    document.addEventListener('DOMContentLoaded', function() {
+        const tabs = document.querySelectorAll('.filter-tab');
+        const cards = document.querySelectorAll('.booking-card');
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                tabs.forEach(t => {
+                    t.classList.remove('active');
+                    t.setAttribute('aria-selected', 'false');
+                });
+                this.classList.add('active');
+                this.setAttribute('aria-selected', 'true');
+                
+                const filter = this.dataset.filter;
+                cards.forEach(card => {
+                    if (filter === 'all' || card.dataset.status === filter) {
+                        card.style.display = '';
+                        card.classList.add('animate-fade-in');
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
         });
-        trackModalEl.addEventListener('hidden.bs.modal', function () {
-            disconnectStomp();
-        });
-
-        const chatModalEl = document.getElementById('chatModal');
-        chatModalEl.addEventListener('hidden.bs.modal', function () {
-            disconnectStomp();
-        });
-
-        function connectStomp(tripId, callback) {
-            if (stompClient && stompClient.connected) {
-                if (currentTripId === tripId) {
-                    callback();
+        
+        // Cancel Modal - Update form action and ref
+        const cancelModal = document.getElementById('cancelModal');
+        if (cancelModal) {
+            cancelModal.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                const bookingId = button.getAttribute('data-booking-id');
+                const bookingRef = button.getAttribute('data-booking-ref');
+                
+                document.getElementById('cancelBookingRef').textContent = bookingRef;
+                document.getElementById('cancelForm').action = `/booking/${bookingId}/cancel`;
+            });
+        }
+        
+        // Countdown Timer for Upcoming Trip
+        const departureTimeStr = /*[[${upcomingBooking != null ? upcomingBooking.trip.departureTime : null}]]*/ null;
+        if (departureTimeStr) {
+            const departureTime = new Date(departureTimeStr).getTime();
+            
+            function updateCountdown() {
+                const now = new Date().getTime();
+                const diff = departureTime - now;
+                
+                if (diff <= 0) {
+                    document.getElementById('countdownTimer').innerHTML = '<div class="text-center text-warning"><i class="bi bi-bus-front me-2"></i> Departing now!</div>';
                     return;
                 }
-                disconnectStomp(); // Switching trips
+                
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                
+                document.getElementById('daysLeft').textContent = String(days).padStart(2, '0');
+                document.getElementById('hoursLeft').textContent = String(hours).padStart(2, '0');
+                document.getElementById('minutesLeft').textContent = String(minutes).padStart(2, '0');
             }
-            currentTripId = tripId;
-            const socket = new SockJS('/ws-ghanaride');
-            stompClient = Stomp.over(socket);
-            stompClient.debug = null; // Disable excessive console logging
-
-            stompClient.connect({}, function (frame) {
-                callback();
-            });
+            
+            updateCountdown();
+            setInterval(updateCountdown, 60000); // Update every minute
         }
-
-        function disconnectStomp() {
-            if (stompClient !== null && stompClient.connected) {
-                stompClient.disconnect();
-            }
-            currentTripId = null;
-        }
-
-        // ====== TRACKING ======
-        function openTrackModal(btn) {
-            const tripId = btn.getAttribute('data-trip');
-            const driverName = btn.getAttribute('data-driver');
-            document.getElementById('trackDriverName').innerText = driverName;
-            document.getElementById('trackStatus').innerText = 'Connecting to live location...';
-
-            const modal = new bootstrap.Modal(document.getElementById('trackModal'));
-            modal.show();
-
-            // Initialize Map if not already
-            if (!map) {
-                map = L.map('trackingMap').setView([5.6037, -0.1870], 12); // Default Accra
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    maxZoom: 19, attribution: '© OpenStreetMap'
-                }).addTo(map);
-
-                // Custom car icon
-                const carIcon = L.divIcon({
-                    html: '<div style="background-color: #0F9D58; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; color: white; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"><i class="bi bi-car-front-fill" style="font-size: 12px;"></i></div>',
-                    className: 'custom-car-icon',
-                    iconSize: [24, 24],
-                    iconAnchor: [12, 12]
-                });
-                driverMarker = L.marker([5.6037, -0.1870], {icon: carIcon}).addTo(map);
-            }
-
-            connectStomp(tripId, function() {
-                document.getElementById('trackStatus').innerText = 'Connected. Waiting for driver location...';
-                stompClient.subscribe('/topic/location/' + tripId, function(message) {
-                    const loc = JSON.parse(message.body);
-                    const latlng = [loc.latitude, loc.longitude];
-                    driverMarker.setLatLng(latlng);
-                    map.setView(latlng);
-                    document.getElementById('trackStatus').innerText = 'Live Location Updated';
-                });
-            });
-        }
-
-        // ====== CHAT ======
-        function openChatModal(btn) {
-            const tripId = btn.getAttribute('data-trip');
-            const driverName = btn.getAttribute('data-driver');
-            document.getElementById('chatDriverName').innerText = driverName;
-            document.getElementById('chatMessages').innerHTML = ''; // Clear old messages
-
-            const modal = new bootstrap.Modal(document.getElementById('chatModal'));
-            modal.show();
-
-            connectStomp(tripId, function() {
-                stompClient.subscribe('/topic/chat/' + tripId, function(message) {
-                    const chat = JSON.parse(message.body);
-                    appendMessage(chat.senderName, chat.content, chat.senderName === currentUserFullName);
-                });
-            });
-        }
-
-        document.getElementById('chatForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const input = document.getElementById('chatInput');
-            const msgText = input.value.trim();
-            if (msgText && stompClient && stompClient.connected && currentTripId) {
-                const chatMessage = {
-                    tripId: currentTripId,
-                    senderName: currentUserFullName,
-                    content: msgText,
-                    type: 'CHAT'
-                };
-                stompClient.send("/app/chat", {}, JSON.stringify(chatMessage));
-                input.value = '';
-            }
-        });
-
-        function appendMessage(sender, text, isMe) {
-            const messagesDiv = document.getElementById('chatMessages');
-            const msgHtml = isMe
-                ? `<div class="d-flex justify-content-end mb-2">
-                     <div class="bg-primary text-white rounded-3 px-3 py-2 shadow-sm" style="max-width: 80%; border-bottom-right-radius: 0 !important;">
-                        ${text}
-                     </div>
-                   </div>`
-                : `<div class="d-flex justify-content-start mb-2">
-                     <div class="bg-body border border-secondary-subtle rounded-3 px-3 py-2 shadow-sm text-body" style="max-width: 80%; border-bottom-left-radius: 0 !important;">
-                        <small class="text-muted fw-bold d-block mb-1" style="font-size: 0.75rem;">${sender}</small>
-                        ${text}
-                     </div>
-                   </div>`;
-            messagesDiv.insertAdjacentHTML('beforeend', msgHtml);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        }
-    </script>
-
-    <!-- v5.1 REVIEW MODAL -->
-    <div class="modal fade" id="reviewModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content bg-card border-0 rounded-4">
-                <form method="post" action="/reviews">
-                    <div class="modal-header border-secondary">
-                        <h5 class="modal-title fw-800">⭐ Rate your ride</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <input type="hidden" name="bookingId" id="reviewBookingId">
-                        <input type="hidden" name="_csrf" th:value="${_csrf?.token}">
-                        <div class="text-center mb-3">
-                            <div id="starPick" style="font-size:2rem; cursor:pointer; letter-spacing:6px;">☆☆☆☆☆</div>
-                            <input type="hidden" name="rating" id="ratingInput" value="5" required>
-                            <div class="small text-muted mt-1" id="ratingLabel">Tap stars – 5 = Excellent</div>
-                        </div>
-                        <textarea name="comment" class="form-control bg-body" rows="3" maxlength="500" placeholder="How was your GhanaRide? Driver, comfort, punctuality… (optional)"></textarea>
-                        <div class="small text-muted mt-2">Verified reviews only • helps drivers earn priority</div>
-                    </div>
-                    <div class="modal-footer border-secondary">
-                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Later</button>
-                        <button class="btn btn-warning fw-bold">Submit 5★ review</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-    <script>
-        function openReview(bookingId){
-            document.getElementById('reviewBookingId').value=bookingId;
-            document.getElementById('ratingInput').value=5;
-            document.getElementById('starPick').textContent='★★★★★';
-            new bootstrap.Modal(document.getElementById('reviewModal')).show();
-        }
-        const starEl=document.getElementById('starPick');
-        if(starEl){ starEl.addEventListener('click', e=>{
-            const rect=starEl.getBoundingClientRect(); const x=e.clientX-rect.left;
-            const stars=Math.max(1,Math.min(5,Math.ceil(x/rect.width*5)));
-            document.getElementById('ratingInput').value=stars;
-            starEl.textContent='★★★★★'.slice(0,stars)+'☆☆☆☆☆'.slice(stars);
-            document.getElementById('ratingLabel').textContent=['','Poor','Fair','Good','Very good','Excellent'][stars] + ' • ' + stars + '/5';
-        });}
-    </script>
-    <!-- /v5.1 REVIEW -->
-
-</main>
+    });
+</script>
 </body>
 </html>

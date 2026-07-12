@@ -72,7 +72,7 @@ public class PaymentService {
         );
 
         // Send confirmation email
-        emailService.sendBookingConfirmation(booking);
+        emailService.sendBookingConfirmationEmail(booking);
     }
 
     // =========================================================
@@ -183,7 +183,7 @@ public class PaymentService {
         );
 
         // Send payment confirmation email (async)
-        emailService.sendBookingConfirmation(saved);
+        emailService.sendBookingConfirmationEmail(saved);
 
         return saved;
     }

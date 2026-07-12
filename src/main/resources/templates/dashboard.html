@@ -1,203 +1,446 @@
 <!DOCTYPE html>
-<html th:replace="~{layout :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<html th:replace="~{layout :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
-    <title>Dashboard - GhanaRide</title>
+    <title th:text="${pageTitle}">Dashboard — GhanaRide</title>
+    
+    <style th:inline="css">
+        .dashboard-main {
+            background: var(--color-bg);
+            min-height: calc(100vh - var(--header-height));
+            padding: var(--space-6) 0;
+        }
+        
+        .welcome-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: var(--space-4);
+            margin-bottom: var(--space-6);
+        }
+        
+        .welcome-text h1 { margin-bottom: var(--space-1); }
+        .welcome-text p { color: var(--color-text-muted); margin: 0; }
+        
+        /* Stat Cards Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: var(--space-4);
+            margin-bottom: var(--space-6);
+        }
+        
+        /* Wallet Card */
+        .wallet-card {
+            background: linear-gradient(135deg, var(--black) 0%, var(--black-light) 100%);
+            color: white;
+            border: none;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .wallet-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(252, 209, 22, 0.15) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        
+        .wallet-balance {
+            font-family: var(--font-display);
+            font-size: clamp(2rem, 5vw, 3rem);
+            font-weight: 800;
+            color: var(--gold);
+        }
+        
+        .wallet-actions { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-top: var(--space-4); }
+        
+        /* Section Header */
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: var(--space-3);
+            margin-bottom: var(--space-4);
+        }
+        
+        .section-title { margin: 0; font-size: 1.25rem; }
+        
+        /* Trips Grid */
+        .trips-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: var(--space-4);
+        }
+        
+        @media (max-width: 576px) {
+            .trips-grid { grid-template-columns: 1fr; }
+        }
+        
+        /* Trip Card */
+        .trip-card {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            transition: all var(--transition);
+        }
+        
+        .trip-card:hover {
+            box-shadow: var(--shadow);
+            border-color: var(--color-border-strong);
+        }
+        
+        .trip-card-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            padding: var(--space-4);
+            border-bottom: 1px solid var(--color-border);
+        }
+        
+        .trip-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-1);
+            padding: 0.25rem 0.625rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: var(--radius-full);
+            white-space: nowrap;
+        }
+        
+        .badge-company { background: var(--color-success-bg); color: var(--color-success); }
+        .badge-independent { background: var(--color-info-bg); color: var(--color-info); }
+        .badge-full { background: var(--color-error-bg); color: var(--color-error); }
+        
+        .trip-price {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--color-text);
+            white-space: nowrap;
+        }
+        
+        .trip-route {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--space-3);
+            padding: var(--space-4);
+        }
+        
+        .trip-route-line {
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--space-1);
+        }
+        
+        .trip-route-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            z-index: 1;
+        }
+        
+        .trip-route-dot:first-child { background: var(--green); }
+        .trip-route-dot:last-child { background: var(--red); }
+        
+        .trip-route-line::before {
+            content: '';
+            width: 2px;
+            height: 24px;
+            background: var(--color-border);
+            flex-shrink: 0;
+        }
+        
+        .trip-route-info { flex: 1; min-width: 0; }
+        .trip-route-from, .trip-route-to {
+            font-weight: 600;
+            font-size: 1rem;
+            line-height: 1.4;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .trip-route-to { color: var(--color-text-secondary); }
+        
+        .trip-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--space-2);
+            padding: var(--space-3) var(--space-4) 0;
+        }
+        
+        .trip-detail {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            font-size: 0.8125rem;
+            color: var(--color-text-secondary);
+        }
+        
+        .trip-detail i {
+            font-size: 1rem;
+            color: var(--gold);
+            width: 18px;
+            text-align: center;
+        }
+        
+        .trip-footer {
+            margin-top: auto;
+            padding: var(--space-4);
+            border-top: 1px solid var(--color-border);
+        }
+        
+        .trip-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-2);
+            padding: 0.75rem;
+            font-weight: 600;
+            border-radius: var(--radius);
+            background: var(--color-error-bg);
+            color: var(--color-error);
+        }
+        
+        .btn-book {
+            width: 100%;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+            border: none;
+            color: var(--black);
+            font-weight: 700;
+        }
+        
+        .btn-book:hover:not(:disabled) {
+            background: linear-gradient(135deg, var(--gold-light) 0%, var(--gold) 100%);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow);
+        }
+        
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: var(--space-12) var(--space-6);
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+        }
+        
+        .empty-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--color-surface-hover);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: var(--space-4);
+            font-size: 2rem;
+            color: var(--color-text-muted);
+        }
+        
+        /* Upcoming Bookings */
+        .booking-card {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+            padding: var(--space-4);
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius);
+            transition: all var(--transition-fast);
+        }
+        
+        .booking-card:hover { box-shadow: var(--shadow-sm); }
+        
+        .booking-route {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .booking-route-name { font-weight: 600; color: var(--color-text); }
+        .booking-route-meta { font-size: 0.8125rem; color: var(--color-text-muted); }
+        
+        .booking-status {
+            padding: 0.375rem 0.875rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: var(--radius-full);
+            white-space: nowrap;
+        }
+        
+        .status-active { background: var(--color-success-bg); color: var(--color-success); }
+        .status-confirmed { background: var(--color-info-bg); color: var(--color-info); }
+        .status-completed { background: var(--color-surface-hover); color: var(--color-text-muted); }
+        .status-cancelled { background: var(--color-error-bg); color: var(--color-error); }
+        
+        .booking-actions { display: flex; gap: var(--space-2); }
+    </style>
 </head>
 <body>
-<main th:fragment="main" class="py-4">
+<main th:fragment="main" class="dashboard-main">
     <div class="container">
-        <!-- Hero Banner -->
-        <div class="card border-0 rounded-4 shadow-sm mb-5 position-relative overflow-hidden bg-card text-white" style="background: linear-gradient(135deg, rgba(15, 157, 88, 0.95) 0%, rgba(0, 77, 45, 0.95) 100%);">
-            <div class="position-absolute top-0 end-0 h-100 w-50 d-none d-md-block" style="background: url('https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800&q=80') center/cover; opacity: 0.2; mix-blend-mode: overlay;"></div>
-            <div class="card-body p-4 p-md-5 position-relative z-1">
-                <div class="row align-items-center">
-                    <div class="col-md-8">
-                        <h2 class="fw-bold mb-2 text-white">Welcome back,
-                            <span style="color: #FCD116;" th:text="${currentUser.fullName}">User</span>!
-                        </h2>
-                        <p class="fs-5 mb-0 text-white-50">Find and book your next comfortable ride across Ghana.</p>
+        <!-- Welcome Header -->
+        <div class="welcome-header">
+            <div class="welcome-text">
+                <h1 style="font-family: 'Outfit', sans-serif;">Welcome back, <span th:text="${currentUser.fullName}">Traveler</span>!</h1>
+                <p>Find and book your next comfortable ride across Ghana.</p>
+            </div>
+            <a th:href="@{/rides}" class="btn btn-primary btn-pill">
+                <i class="bi bi-plus-circle me-2"></i> Book a Ride
+            </a>
+        </div>
+        
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <!-- Wallet Card -->
+            <div class="stat-card wallet-card">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="text-muted small">Wallet Balance</div>
+                        <div class="wallet-balance" th:text="'GH₵' + ${#numbers.formatDecimal(wallet.balance, 1, 2, 'COMMA')}">GH₵0.00</div>
                     </div>
-                    <div class="col-md-4 text-md-end mt-4 mt-md-0">
-                        <a th:href="@{/my-bookings}" class="btn btn-warning btn-lg fw-bold shadow-sm rounded-pill px-4" style="background-color: #FCD116; border: none;">
-                            <i class="bi bi-ticket-perforated-fill me-2"></i>My Bookings
+                    <div class="avatar avatar-lg" style="background: var(--gold); color: var(--black);">
+                        <i class="bi bi-wallet2"></i>
+                    </div>
+                </div>
+                <div class="wallet-actions">
+                    <a th:href="@{/wallet/topup}" class="btn btn-sm btn-primary">Top Up</a>
+                    <a th:href="@{/wallet}" class="btn btn-sm btn-secondary">History</a>
+                </div>
+            </div>
+            
+            <!-- Upcoming Trips -->
+            <div class="stat-card">
+                <div class="stat-icon stat-icon-primary"><i class="bi bi-calendar-event"></i></div>
+                <div class="stat-value" th:text="${upcomingCount}">0</div>
+                <div class="stat-label">Upcoming Trips</div>
+            </div>
+            
+            <!-- Completed Trips -->
+            <div class="stat-card">
+                <div class="stat-icon stat-icon-success"><i class="bi bi-check-circle"></i></div>
+                <div class="stat-value" th:text="${completedCount}">0</div>
+                <div class="stat-label">Completed Rides</div>
+            </div>
+            
+            <!-- Loyalty Points -->
+            <div class="stat-card">
+                <div class="stat-icon stat-icon-warning"><i class="bi bi-star"></i></div>
+                <div class="stat-value" th:text="${#numbers.formatDecimal(wallet.loyaltyPoints, 1, 0, 'COMMA')}">0</div>
+                <div class="stat-label">Loyalty Points</div>
+            </div>
+        </div>
+        
+        <!-- Upcoming Bookings -->
+        <div th:if="${myBookings != null and !myBookings.isEmpty()}" class="mb-5">
+            <div class="section-header">
+                <h2 class="section-title">Your Upcoming Bookings</h2>
+                <a th:href="@{/my-bookings}" class="btn btn-sm btn-ghost">View All</a>
+            </div>
+            
+            <div class="d-flex flex-column gap-3" style="max-height: 400px; overflow-y: auto;">
+                <div th:each="booking : ${myBookings}" 
+                     th:if="${booking != null and booking.status != 'CANCELLED' and booking.trip != null and booking.trip.departureTime != null and booking.trip.departureTime.isAfter(#dates.createNow())}"
+                     class="booking-card">
+                    <div class="booking-route">
+                        <div class="booking-route-name" th:text="${booking.trip.fromLocation} + ' → ' + ${booking.trip.toLocation}">Route</div>
+                        <div class="booking-route-meta">
+                            <span th:text="${#temporals.format(booking.trip.departureTime, 'MMM dd, yyyy \'at\' HH:mm')}">Date</span>
+                            <span class="mx-2">•</span>
+                            <span th:text="${booking.trip.car != null ? booking.trip.car.model : 'Standard'}">Car</span>
+                        </div>
+                    </div>
+                    <span class="booking-status status-active" th:classappend="${booking.status == 'ACTIVE' ? 'status-active' : (booking.status == 'CONFIRMED' ? 'status-confirmed' : '')}"
+                          th:text="${booking.status}">Active</span>
+                    <div class="booking-actions">
+                        <a th:href="@{/booking/receipt/{id}(id=${booking.id})}" class="btn btn-sm btn-ghost">
+                            <i class="bi bi-ticket-perforated"></i> Receipt
+                        </a>
+                        <a th:href="@{/boarding-pass/{id}(id=${booking.id})}" class="btn btn-sm btn-primary">
+                            <i class="bi bi-qr-code"></i> Boarding Pass
                         </a>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- Error Message -->
-        <div th:if="${param.error}" class="alert alert-danger alert-dismissible fade show rounded-3 shadow-sm d-flex align-items-center mb-4" role="alert">
-            <i class="bi bi-exclamation-triangle-fill fs-5 me-3"></i>
-            <span th:text="${param.error}">An error occurred.</span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        
+        <!-- Available Trips -->
+        <div class="section-header">
+            <h2 class="section-title" th:text="${isSearchResult ? 'Search Results' : 'Available Trips'}">Available Trips</h2>
+            <a th:if="${isSearchResult}" th:href="@{/rides}" class="btn btn-sm btn-outline-secondary">Clear Search</a>
         </div>
-
-        <!-- Section Title & Search Form -->
-        <div class="card border-0 rounded-4 shadow-sm mb-4 bg-card">
-            <div class="card-body p-4">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <div>
-                        <h3 class="fw-bold text-body mb-1" th:text="${isSearchResult ? 'Search Results' : 'Available Trips'}">Available Trips</h3>
-                        <p class="text-muted small mb-0">Browse and book from our verified drivers</p>
+        
+        <div th:if="${trips == null or trips.isEmpty()}" class="empty-state">
+            <div class="empty-icon"><i class="bi bi-search"></i></div>
+            <h4 class="fw-bold">No rides found</h4>
+            <p class="text-muted">We couldn't find any trips matching your search criteria. Try different cities or dates.</p>
+            <a th:href="@{/rides}" class="btn btn-primary mt-2">View All Rides</a>
+        </div>
+        
+        <div th:unless="${trips == null or trips.isEmpty()}" class="trips-grid">
+            <div th:each="trip : ${trips}" class="trip-card animate-fade-up">
+                <div class="trip-card-header">
+                    <span class="trip-badge" 
+                          th:classappend="${trip.company != null ? 'badge-company' : 'badge-independent'}"
+                          th:text="${trip.company != null ? trip.company.companyName : 'Independent'}">Independent</span>
+                    <div class="trip-price">GH₵ <span th:text="${#numbers.formatDecimal(trip.tripAmount, 1, 2, 'COMMA')}">0.00</span></div>
+                </div>
+                
+                <div class="trip-route">
+                    <div class="trip-route-line">
+                        <div class="trip-route-dot"></div>
+                        <div class="trip-route-dot"></div>
                     </div>
-                    <a th:if="${isSearchResult}" th:href="@{/dashboard}" class="btn btn-outline-secondary btn-sm rounded-pill">
-                        <i class="bi bi-x-circle me-1"></i>Clear Search
+                    <div class="trip-route-info">
+                        <div class="trip-route-from" th:text="${trip.fromLocation}">From</div>
+                        <div class="trip-route-to" th:text="${trip.toLocation}">To</div>
+                    </div>
+                </div>
+                
+                <div class="trip-details">
+                    <div class="trip-detail">
+                        <i class="bi bi-calendar3"></i>
+                        <span th:text="${#temporals.format(trip.departureTime, 'MMM dd, yyyy')}">Date</span>
+                    </div>
+                    <div class="trip-detail">
+                        <i class="bi bi-clock"></i>
+                        <span th:text="${#temporals.format(trip.departureTime, 'HH:mm')}">Time</span>
+                    </div>
+                    <div class="trip-detail">
+                        <i class="bi bi-car-front"></i>
+                        <span th:text="${trip.car != null ? trip.car.model : 'Standard'}">Car</span>
+                    </div>
+                    <div class="trip-detail">
+                        <i class="bi bi-people"></i>
+                        <span th:text="${trip.availableSeats} + ' seats left'">0 seats left</span>
+                    </div>
+                </div>
+                
+                <div class="trip-footer">
+                    <div th:if="${trip.status.name() == 'FULL' || trip.availableSeats == 0}" class="trip-status">
+                        <i class="bi bi-x-circle"></i> Fully Booked
+                    </div>
+                    <a th:unless="${trip.status.name() == 'FULL' || trip.availableSeats == 0}"
+                       th:href="@{/booking/{id}(id=${trip.id})}"
+                       class="btn btn-book">
+                        Book Now <i class="bi bi-arrow-right ms-1"></i>
                     </a>
                 </div>
-
-                <form th:action="@{/dashboard}" method="get" class="row g-3">
-                    <div class="col-md-4">
-                        <label class="form-label fw-medium text-muted small">From</label>
-                        <select class="form-select bg-body border-secondary-subtle shadow-sm" name="from">
-                            <option value="">Any Location</option>
-                            <option th:each="loc : ${locations}" th:value="${loc}" th:text="${loc}" th:selected="${loc == searchFrom}"></option>
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label fw-medium text-muted small">To</label>
-                        <select class="form-select bg-body border-secondary-subtle shadow-sm" name="to">
-                            <option value="">Any Location</option>
-                            <option th:each="loc : ${locations}" th:value="${loc}" th:text="${loc}" th:selected="${loc == searchTo}"></option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label fw-medium text-muted small">Date</label>
-                        <input type="date" class="form-control bg-body border-secondary-subtle shadow-sm text-muted" name="date" th:value="${searchDate}">
-                    </div>
-                    <div class="col-md-1 d-flex align-items-end">
-                        <button type="submit" class="btn btn-warning w-100 shadow-sm fw-bold" style="background-color: #FCD116; border: none;">
-                            <i class="bi bi-search"></i>
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- No Trips -->
-        <div th:if="${#lists.isEmpty(trips)}" class="text-center py-5 bg-card rounded-4 shadow-sm border border-secondary-subtle">
-            <div class="rounded-circle bg-body d-inline-flex align-items-center justify-content-center mb-3 shadow-sm" style="width: 80px; height: 80px; color: #0F9D58;">
-                <i class="bi bi-bus-front fs-1"></i>
-            </div>
-            <h4 class="fw-bold">No trips found</h4>
-            <p class="text-muted">There are currently no available trips matching your criteria. Please check back later.</p>
-        </div>
-
-        <!-- Trips Grid -->
-        <div class="row g-4" th:if="${not #lists.isEmpty(trips)}">
-            <div class="col-md-6 col-lg-4" th:each="trip : ${trips}">
-
-                <!-- FULL Trip Card -->
-                <div th:if="${trip.status.name() == 'FULL'}" class="card h-100 border-0 rounded-4 shadow-sm bg-card hover-lift" style="opacity: 0.75; filter: grayscale(50%);">
-                    <div class="card-body p-4 d-flex flex-column">
-                        <div class="d-flex justify-content-between align-items-start mb-3">
-                            <span class="badge rounded-pill bg-body text-muted border border-secondary-subtle px-3 py-2 shadow-sm">
-                                <i class="bi bi-slash-circle-fill me-1 text-danger"></i>Full
-                            </span>
-                            <span class="fw-bold fs-5 text-muted">
-                                GH₵ <span th:text="${trip.tripAmount}">0.00</span>
-                            </span>
-                        </div>
-
-                        <div class="d-flex align-items-center justify-content-between mb-4">
-                            <div class="text-center">
-                                <h5 class="fw-bold text-muted mb-0" th:text="${trip.fromLocation}">From</h5>
-                            </div>
-                            <div class="flex-grow-1 px-3 position-relative text-center text-muted">
-                                <hr class="border-secondary-subtle my-0 position-absolute w-100 top-50 start-0 translate-middle-y">
-                                <i class="bi bi-arrow-right position-relative bg-card px-2"></i>
-                            </div>
-                            <div class="text-center">
-                                <h5 class="fw-bold text-muted mb-0" th:text="${trip.toLocation}">To</h5>
-                            </div>
-                        </div>
-
-                        <div class="bg-body rounded-3 p-3 mb-4 flex-grow-1 border border-secondary-subtle">
-                            <div class="d-flex align-items-center mb-2 text-muted small">
-                                <i class="bi bi-calendar-event me-2"></i>
-                                <span th:text="${#temporals.format(trip.departureTime, 'dd MMM yyyy, h:mm a')}">Date</span>
-                            </div>
-                            <div class="d-flex align-items-center text-muted small">
-                                <i class="bi bi-person me-2"></i>
-                                <span th:text="${trip.driver != null ? trip.driver.fullName : 'To Be Assigned'}">Driver</span>
-                            </div>
-                        </div>
-
-                        <div class="d-flex justify-content-between align-items-center mt-auto pt-3 border-top border-secondary-subtle">
-                            <div class="text-muted small fw-medium">
-                                <i class="bi bi-people-fill me-1"></i>0 / <span th:text="${trip.totalSeats}">0</span> seats
-                            </div>
-                            <button class="btn btn-secondary rounded-pill px-4 fw-bold" disabled>
-                                Unavailable
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Available Trip Card -->
-                <div th:if="${trip.status.name() == 'APPROVED'}" class="card h-100 border-0 rounded-4 shadow-sm bg-card hover-lift">
-                    <div class="card-body p-4 d-flex flex-column">
-                        <div class="d-flex justify-content-between align-items-start mb-3">
-                            <span class="badge rounded-pill px-3 py-2 shadow-sm" style="background-color: rgba(15,157,88,0.15); color: #0F9D58; border: 1px solid rgba(15,157,88,0.3);">
-                                <i class="bi bi-check-circle-fill me-1"></i>Available
-                            </span>
-                            <span class="fw-bold fs-5 text-success">
-                                GH₵ <span th:text="${trip.tripAmount}">0.00</span>
-                            </span>
-                        </div>
-
-                        <div class="d-flex align-items-center justify-content-between mb-4">
-                            <div class="text-center" style="flex: 1;">
-                                <h5 class="fw-bold text-body mb-0 text-truncate" th:text="${trip.fromLocation}" th:title="${trip.fromLocation}">From</h5>
-                            </div>
-                            <div class="px-2 position-relative text-center text-muted" style="flex: 0 0 auto;">
-                                <hr class="border-secondary-subtle my-0 position-absolute w-100 top-50 start-0 translate-middle-y">
-                                <i class="bi bi-bus-front position-relative bg-card px-1" style="color: #FCD116;"></i>
-                            </div>
-                            <div class="text-center" style="flex: 1;">
-                                <h5 class="fw-bold text-body mb-0 text-truncate" th:text="${trip.toLocation}" th:title="${trip.toLocation}">To</h5>
-                            </div>
-                        </div>
-
-                        <div class="bg-body rounded-3 p-3 mb-4 flex-grow-1 border border-secondary-subtle">
-                            <div class="d-flex align-items-center mb-2 text-muted small">
-                                <i class="bi bi-calendar-event-fill me-2" style="color: #FCD116;"></i>
-                                <span class="fw-medium text-body" th:text="${#temporals.format(trip.departureTime, 'dd MMM yyyy, h:mm a')}">Date</span>
-                            </div>
-                            <div class="d-flex align-items-center mb-2 text-muted small" th:if="${trip.pickupStation != null and !trip.pickupStation.isEmpty()}">
-                                <i class="bi bi-geo-alt-fill me-2 text-danger"></i>
-                                <span class="text-truncate" th:text="${trip.pickupStation}" th:title="${trip.pickupStation}">Station</span>
-                            </div>
-                            <div class="d-flex align-items-center mb-2 text-muted small">
-                                <i class="bi bi-person-badge-fill me-2 text-primary"></i>
-                                <span class="text-truncate" th:text="${trip.driver != null ? trip.driver.fullName : 'To Be Assigned'}">Driver Name</span>
-                            </div>
-                            <div class="d-flex align-items-center text-muted small">
-                                <i class="bi bi-car-front-fill me-2 text-info"></i>
-                                <span class="text-truncate" th:text="${trip.car != null ? trip.car.carBrand + ' (' + trip.car.numberPlate + ')' : 'To Be Assigned'}">Car</span>
-                            </div>
-                        </div>
-
-                        <div class="d-flex justify-content-between align-items-center mt-auto pt-3 border-top border-secondary-subtle">
-                            <div class="small fw-medium" style="color: #0F9D58;">
-                                <i class="bi bi-people-fill me-1"></i>
-                                <span th:text="${trip.availableSeats}">0</span> / <span th:text="${trip.totalSeats}">0</span> left
-                            </div>
-                            <a th:href="@{/booking/{id}(id=${trip.id})}" class="btn btn-warning rounded-pill px-4 fw-bold shadow-sm" style="background-color: #FCD116; border: none;">
-                                Book Now
-                            </a>
-                        </div>
-                    </div>
-                </div>
-
             </div>
         </div>
     </div>
-
-    <style>
-        .hover-lift { transition: transform 0.3s ease, box-shadow 0.3s ease; }
-        .hover-lift:hover { transform: translateY(-5px); box-shadow: 0 1rem 3rem rgba(0,0,0,.175)!important; }
-    </style>
 </main>
 </body>
 </html>

@@ -1,6 +1,22 @@
 package com.ghanaride.entity;
 
-// Enum for user roles: USER, DRIVER, ADMIN, COMPANY
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
+/**
+ * User roles in the system.
+ */
+@Getter
+@RequiredArgsConstructor
 public enum Role {
-    USER, DRIVER, ADMIN, COMPANY
+    USER("Passenger"),
+    DRIVER("Driver"),
+    COMPANY("Company"),
+    ADMIN("Admin");
+
+    private final String displayName;
+
+    public String toUpperCase() {
+        return "";
+    }
 }

@@ -1,36 +1,491 @@
 <!DOCTYPE html>
-<html th:replace="~{layout :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
-<head><title>Notifications — GhanaRide</title></head>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" th:replace="~{layout :: layout(~{::title}, ~{::main})}">
+<head>
+    <title>Notifications — GhanaRide</title>
+    <meta name="description" content="View all your GhanaRide notifications, booking updates, and account alerts.">
+    
+    <style th:inline="css">
+        .notifications-layout {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: var(--space-6);
+            align-items: start;
+        }
+        
+        @media (max-width: 992px) {
+            .notifications-layout { grid-template-columns: 1fr; }
+        }
+        
+        .notifications-main { min-width: 0; }
+        .notifications-sidebar { position: sticky; top: calc(var(--header-height) + var(--space-6)); }
+        
+        /* Notification List */
+        .notification-list { display: flex; flex-direction: column; gap: var(--space-2); }
+        
+        .notification-item {
+            display: flex;
+            gap: var(--space-4);
+            padding: var(--space-4);
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius);
+            transition: all var(--transition-fast);
+        }
+        
+        .notification-item:hover {
+            box-shadow: var(--shadow-sm);
+            border-color: var(--color-border-strong);
+        }
+        
+        .notification-item.unread {
+            border-left: 3px solid var(--gold);
+            background: var(--gold-muted);
+        }
+        
+        .notification-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+        
+        .notification-icon.booking { background: var(--color-info-bg); color: var(--color-info); }
+        .notification-icon.payment { background: var(--color-success-bg); color: var(--color-success); }
+        .notification-icon.system { background: var(--gold-muted); color: var(--gold-dark); }
+        .notification-icon.promo { background: var(--color-warning-bg); color: var(--color-warning); }
+        .notification-icon.warning { background: var(--color-error-bg); color: var(--color-error); }
+        
+        .notification-content { flex: 1; min-width: 0; }
+        .notification-title { font-weight: 600; color: var(--color-text); margin-bottom: var(--space-1); }
+        .notification-message { font-size: 0.875rem; color: var(--color-text-secondary); margin: 0; }
+        .notification-meta { display: flex; gap: var(--space-3); margin-top: var(--space-2); font-size: 0.75rem; color: var(--color-text-muted); }
+        
+        .notification-actions { display: flex; flex-direction: column; gap: var(--space-2); flex-shrink: 0; }
+        .notification-btn {
+            padding: var(--space-2) var(--space-3);
+            border-radius: var(--radius);
+            font-size: 0.8125rem;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        
+        /* Empty State */
+        .empty-notifications {
+            text-align: center;
+            padding: var(--space-12) var(--space-6);
+        }
+        
+        .empty-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--color-surface-hover);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: var(--space-4);
+            font-size: 2rem;
+            color: var(--color-text-muted);
+        }
+        
+        /* Filter Tabs */
+        .filter-tabs {
+            display: flex;
+            gap: var(--space-1);
+            background: var(--color-surface-hover);
+            border-radius: var(--radius);
+            padding: var(--space-1);
+            margin-bottom: var(--space-4);
+            flex-wrap: wrap;
+        }
+        
+        .filter-tab {
+            padding: var(--space-2) var(--space-4);
+            border: none;
+            background: transparent;
+            border-radius: var(--radius-sm);
+            font-weight: 500;
+            color: var(--color-text-secondary);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            white-space: nowrap;
+        }
+        
+        .filter-tab:hover { color: var(--color-text); }
+        .filter-tab.active {
+            background: var(--gold);
+            color: var(--black);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        /* Sidebar: Quick Stats */
+        .sidebar-card {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            padding: var(--space-5);
+            margin-bottom: var(--space-4);
+        }
+        
+        .sidebar-card-title {
+            font-weight: 700;
+            margin-bottom: var(--space-4);
+            padding-bottom: var(--space-3);
+            border-bottom: 1px solid var(--color-border);
+        }
+        
+        .stat-mini {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            padding: var(--space-3);
+            background: var(--color-surface-hover);
+            border-radius: var(--radius);
+            margin-bottom: var(--space-2);
+        }
+        
+        .stat-mini-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+        
+        .stat-mini-icon.unread { background: var(--gold-muted); color: var(--gold-dark); }
+        .stat-mini-icon.today { background: var(--color-info-bg); color: var(--color-info); }
+        .stat-mini-icon.week { background: var(--color-success-bg); color: var(--color-success); }
+        .stat-mini-icon.all { background: var(--color-surface); color: var(--color-text-secondary); border: 1px solid var(--color-border); }
+        
+        .stat-mini-info { flex: 1; min-width: 0; }
+        .stat-mini-value { font-weight: 700; color: var(--color-text); font-size: 1.125rem; }
+        .stat-mini-label { font-size: 0.75rem; color: var(--color-text-muted); }
+        
+        /* Notification Settings */
+        .setting-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--space-3);
+            background: var(--color-surface-hover);
+            border-radius: var(--radius);
+            margin-bottom: var(--space-2);
+        }
+        
+        .setting-info { flex: 1; }
+        .setting-title { font-weight: 600; margin-bottom: var(--space-1); }
+        .setting-desc { font-size: 0.8125rem; color: var(--color-text-muted); margin: 0; }
+    </style>
+</head>
 <body>
-<main th:fragment="main" class="py-4">
-<div class="container" style="max-width:780px">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h3 class="fw-800">Inbox</h3>
-    <button class="btn btn-sm btn-outline-warning" onclick="markAll()">Mark all read</button>
-  </div>
-  <div class="card bg-card border-0 rounded-4 shadow-sm">
-    <div class="list-group list-group-flush">
-      <div th:each="n : ${notifications.content}" class="list-group-item bg-transparent text-body border-secondary" th:style="${!n.readFlag} ? 'background:rgba(252,209,22,.045)!important' : ''">
-        <div class="d-flex justify-content-between">
-          <div>
-            <div class="fw-bold" th:text="${n.title}">Title</div>
-            <div class="small text-muted" th:text="${n.message}">message</div>
-            <div class="small mt-1"><span class="badge bg-secondary" th:text="${n.type}">TYPE</span>
-              <span class="text-muted ms-2" th:text="${#temporals.format(n.createdAt,'dd MMM HH:mm')}">date</span></div>
-          </div>
-          <a th:if="${n.actionUrl}" th:href="${n.actionUrl}" class="btn btn-sm btn-outline-light">Open</a>
+<main th:fragment="main">
+    <div class="container py-4">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-5">
+            <div>
+                <h1 style="font-family: 'Outfit', sans-serif;">Notifications</h1>
+                <p class="text-muted mb-0">Stay updated on your bookings and account</p>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-secondary btn-pill" id="markAllReadBtn">
+                    <i class="bi bi-check-all me-2"></i> Mark All Read
+                </button>
+                <a th:href="@{/profile#notifications}" class="btn btn-primary btn-pill">
+                    <i class="bi bi-gear me-2"></i> Settings
+                </a>
+            </div>
         </div>
-      </div>
-      <div th:if="${notifications.empty}" class="p-5 text-center text-muted">No notifications yet — you’re all caught up ✨</div>
+        
+        <!-- Filter Tabs -->
+        <div class="filter-tabs" role="tablist" aria-label="Notification filters">
+            <button class="filter-tab active" role="tab" data-filter="all" aria-selected="true">All</button>
+            <button class="filter-tab" role="tab" data-filter="unread" aria-selected="false"><i class="bi bi-envelope me-1"></i> Unread <span class="badge bg-gold ms-1" id="unreadBadge">0</span></button>
+            <button class="filter-tab" role="tab" data-filter="booking" aria-selected="false"><i class="bi bi-ticket-perforated me-1"></i> Bookings</button>
+            <button class="filter-tab" role="tab" data-filter="payment" aria-selected="false"><i class="bi bi-credit-card me-1"></i> Payments</button>
+            <button class="filter-tab" role="tab" data-filter="system" aria-selected="false"><i class="bi bi-info-circle me-1"></i> System</button>
+        </div>
+        
+        <div class="notifications-layout">
+            <!-- Main: Notifications List -->
+            <div class="notifications-main">
+                <div th:if="${notifications == null or notifications.isEmpty()}" class="empty-notifications">
+                    <div class="empty-icon"><i class="bi bi-bell"></i></div>
+                    <h4 class="fw-bold">No notifications yet</h4>
+                    <p class="text-muted">Your booking confirmations, payment receipts, and updates will appear here.</p>
+                    <a th:href="@{/rides}" class="btn btn-primary mt-3"><i class="bi bi-bus-front me-2"></i> Book Your First Ride</a>
+                </div>
+                
+                <div th:unless="${notifications == null or notifications.isEmpty()}" class="notification-list">
+                    <div th:each="notif : ${notifications}" 
+                         class="notification-item animate-fade-up"
+                         data-type="[[${notif.type}]]"
+                         data-read="[[${notif.read}]]"
+                         data-id="[[${notif.id}]]">
+                        <div class="notification-icon" th:classappend="${notif.type == 'BOOKING' ? 'booking' : (notif.type == 'PAYMENT' ? 'payment' : (notif.type == 'SYSTEM' ? 'system' : (notif.type == 'PROMO' ? 'promo' : 'warning')))}">
+                            <i th:class="${notif.type == 'BOOKING' ? 'bi bi-ticket-perforated' : (notif.type == 'PAYMENT' ? 'bi bi-credit-card' : (notif.type == 'SYSTEM' ? 'bi bi-info-circle' : (notif.type == 'PROMO' ? 'bi bi-tag' : 'bi bi-exclamation-triangle')))}"></i>
+                        </div>
+                        
+                        <div class="notification-content">
+                            <div class="notification-title" th:text="${notif.title}">Notification</div>
+                            <p class="notification-message" th:text="${notif.message}">Message</p>
+                            <div class="notification-meta">
+                                <span th:text="${#temporals.format(notif.createdAt, 'MMM dd, yyyy HH:mm')}">Time</span>
+                                <span th:if="${notif.bookingRef != null}" th:text="'Booking: ' + ${notif.bookingRef}">Booking</span>
+                                <span th:if="${notif.tripRef != null}" th:text="'Trip: ' + ${notif.tripRef}">Trip</span>
+                            </div>
+                        </div>
+                        
+                        <div class="notification-actions">
+                            <button th:if="${notif.read == false}" 
+                                    class="notification-btn btn btn-sm btn-primary" 
+                                    data-action="mark-read" 
+                                    th:data-notif-id="${notif.id}">
+                                <i class="bi bi-check"></i> Mark Read
+                            </button>
+                            <a th:if="${notif.actionUrl != null}" 
+                               th:href="@{${notif.actionUrl}}" 
+                               class="notification-btn btn btn-sm btn-secondary">
+                                <i class="bi bi-arrow-right"></i> View
+                            </a>
+                            <button class="notification-btn btn btn-sm btn-outline-danger" 
+                                    data-action="delete" 
+                                    th:data-notif-id="${notif.id}">
+                                <i class="bi bi-trash"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Load More / Pagination -->
+                <div class="text-center mt-4" th:if="${notifications != null and not notifications.isEmpty()}">
+                    <button class="btn btn-secondary btn-pill" id="loadMoreBtn">Load More</button>
+                </div>
+            </div>
+            
+            <!-- Sidebar: Stats & Settings -->
+            <div class="notifications-sidebar">
+                <!-- Stats -->
+                <div class="sidebar-card">
+                    <h4 class="sidebar-card-title"><i class="bi bi-bar-chart me-2"></i> Overview</h4>
+                    <div class="stat-mini">
+                        <div class="stat-mini-icon unread"><i class="bi bi-envelope"></i></div>
+                        <div class="stat-mini-info">
+                            <div class="stat-mini-value" id="unreadCount">0</div>
+                            <div class="stat-mini-label">Unread</div>
+                        </div>
+                    </div>
+                    <div class="stat-mini">
+                        <div class="stat-mini-icon today"><i class="bi bi-calendar-day"></i></div>
+                        <div class="stat-mini-info">
+                            <div class="stat-mini-value" id="todayCount">0</div>
+                            <div class="stat-mini-label">Today</div>
+                        </div>
+                    </div>
+                    <div class="stat-mini">
+                        <div class="stat-mini-icon week"><i class="bi bi-calendar-week"></i></div>
+                        <div class="stat-mini-info">
+                            <div class="stat-mini-value" id="weekCount">0</div>
+                            <div class="stat-mini-label">This Week</div>
+                        </div>
+                    </div>
+                    <div class="stat-mini">
+                        <div class="stat-mini-icon all"><i class="bi bi-inbox"></i></div>
+                        <div class="stat-mini-info">
+                            <div class="stat-mini-value" id="totalCount">0</div>
+                            <div class="stat-mini-label">All Time</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick Settings -->
+                <div class="sidebar-card">
+                    <h4 class="sidebar-card-title"><i class="bi bi-gear me-2"></i> Quick Settings</h4>
+                    
+                    <div class="setting-toggle">
+                        <div class="setting-info">
+                            <div class="setting-title">Email Notifications</div>
+                            <p class="setting-desc">Receive all notifications via email</p>
+                        </div>
+                        <label class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="emailNotifications" checked>
+                        </label>
+                    </div>
+                    
+                    <div class="setting-toggle">
+                        <div class="setting-info">
+                            <div class="setting-title">Push Notifications</div>
+                            <p class="setting-desc">Receive real-time updates in the app</p>
+                        </div>
+                        <label class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="pushNotifications" checked>
+                        </label>
+                    </div>
+                    
+                    <div class="setting-toggle">
+                        <div class="setting-info">
+                            <div class="setting-title">SMS Alerts</div>
+                            <p class="setting-desc">Critical alerts via SMS (data rates may apply)</p>
+                        </div>
+                        <label class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="smsAlerts" checked>
+                        </label>
+                    </div>
+                    
+                    <div class="setting-toggle">
+                        <div class="setting-info">
+                            <div class="setting-title">Promotional Emails</div>
+                            <p class="setting-desc">Occasional discounts and special offers</p>
+                        </div>
+                        <label class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="promoEmails">
+                        </label>
+                    </div>
+                    
+                    <a th:href="@{/profile#notifications}" class="btn btn-secondary w-100 mt-3">Full Settings</a>
+                </div>
+                
+                <!-- Recent Activity Summary -->
+                <div class="sidebar-card">
+                    <h4 class="sidebar-card-title"><i class="bi bi-clock-history me-2"></i> Recent Activity</h4>
+                    <div class="d-flex flex-column gap-3">
+                        <div class="small">
+                            <span class="text-muted">Latest booking confirmation</span>
+                            <div class="fw-medium" th:text="${latestBookingRef ?: '—'}">GR-XXXXXX</div>
+                        </div>
+                        <div class="small">
+                            <span class="text-muted">Last payment received</span>
+                            <div class="fw-medium text-success" th:text="'GH₵' + ${#numbers.formatDecimal(latestPayment ?: 0, 1, 2, 'COMMA')}">GH₵0.00</div>
+                        </div>
+                        <div class="small">
+                            <span class="text-muted">Upcoming trip</span>
+                            <div class="fw-medium" th:text="${upcomingTrip ?: '—'}">Accra → Kumasi</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
-</div>
-<script>
-async function markAll(){
-  await fetch('/api/notifications/read-all',{method:'POST'});
-  location.reload();
-}
-</script>
 </main>
+
+<script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', function() {
+        // Filter Tabs
+        const tabs = document.querySelectorAll('.filter-tab');
+        const items = document.querySelectorAll('.notification-item');
+        
+        function updateCounts() {
+            let unread = 0, today = 0, week = 0, total = items.length;
+            const now = new Date();
+            const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const weekStart = new Date(todayStart.getTime() - 7 * 24 * 60 * 60 * 1000);
+            
+            items.forEach(item => {
+                if (item.dataset.read === 'false') unread++;
+                
+                const itemTime = new Date(item.querySelector('.notification-meta span')?.textContent);
+                if (itemTime >= todayStart) today++;
+                if (itemTime >= weekStart) week++;
+            });
+            
+            document.getElementById('unreadCount')?.textContent = unread;
+            document.getElementById('todayCount')?.textContent = today;
+            document.getElementById('weekCount')?.textContent = week;
+            document.getElementById('totalCount')?.textContent = total;
+            document.getElementById('unreadBadge')?.textContent = unread;
+            document.getElementById('unreadBadge')?.style.display = unread > 0 ? 'block' : 'none';
+        }
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                tabs.forEach(t => {
+                    t.classList.remove('active');
+                    t.setAttribute('aria-selected', 'false');
+                });
+                this.classList.add('active');
+                this.setAttribute('aria-selected', 'true');
+                
+                const filter = this.dataset.filter;
+                items.forEach(item => {
+                    let show = false;
+                    switch (filter) {
+                        case 'all': show = true; break;
+                        case 'unread': show = item.dataset.read === 'false'; break;
+                        case 'booking': show = item.dataset.type === 'BOOKING'; break;
+                        case 'payment': show = item.dataset.type === 'PAYMENT'; break;
+                        case 'system': show = item.dataset.type === 'SYSTEM'; break;
+                    }
+                    item.style.display = show ? '' : 'none';
+                });
+            });
+        });
+        
+        // Mark as Read
+        document.querySelectorAll('[data-action="mark-read"]').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const notifId = this.dataset.notifId;
+                const item = this.closest('.notification-item');
+                
+                // Optimistic UI update
+                item.classList.remove('unread');
+                item.dataset.read = 'true';
+                this.remove();
+                
+                // Send to server
+                fetch('/notifications/' + notifId + '/read', { method: 'POST' })
+                    .then(r => r.json())
+                    .then(() => updateCounts())
+                    .catch(() => {
+                        // Revert on error
+                        item.classList.add('unread');
+                        item.dataset.read = 'false';
+                    });
+            });
+        });
+        
+        // Delete Notification
+        document.querySelectorAll('[data-action="delete"]').forEach(btn => {
+            btn.addEventListener('click', function() {
+                if (!confirm('Delete this notification?')) return;
+                
+                const notifId = this.dataset.notifId;
+                const item = this.closest('.notification-item');
+                
+                item.style.opacity = '0';
+                item.style.transform = 'translateX(20px)';
+                setTimeout(() => item.remove(), 300);
+                
+                fetch('/notifications/' + notifId, { method: 'DELETE' })
+                    .then(() => updateCounts());
+            });
+        });
+        
+        // Mark All Read
+        document.getElementById('markAllReadBtn')?.addEventListener('click', function() {
+            if (!confirm('Mark all notifications as read?')) return;
+            
+            items.forEach(item => {
+                if (item.dataset.read === 'false') {
+                    item.classList.remove('unread');
+                    item.dataset.read = 'true';
+                    const markBtn = item.querySelector('[data-action="mark-read"]');
+                    if (markBtn) markBtn.remove();
+                }
+            });
+            
+            fetch('/notifications/mark-all-read', { method: 'POST' })
+                .then(() => updateCounts());
+        });
+        
+        // Initial counts
+        updateCounts();
+    });
+</script>
 </body>
 </html>

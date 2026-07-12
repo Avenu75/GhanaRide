@@ -1,8 +1,7 @@
 package com.ghanaride.service;
 
 import com.ghanaride.entity.*;
-import com.ghanaride.repository.WalletRepository;
-import com.ghanaride.repository.WalletTransactionRepository;
+import com.ghanaride.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -15,6 +14,10 @@ import java.math.RoundingMode;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Wallet Service - Handles all wallet operations including
+ * top-ups, payments, refunds, and loyalty points.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -27,18 +30,18 @@ public class WalletService {
     @Transactional
     public Wallet getOrCreateWallet(User user) {
         return walletRepository.findByUserId(user.getId())
-                .orElseGet(() -> walletRepository.save(Wallet.builder()
-                        .user(user)
-                        .balance(BigDecimal.ZERO)
-                        .loyaltyPoints(BigDecimal.ZERO)
-                        .currency("GHS")
-                        .build()));
+            .orElseGet(() -> walletRepository.save(Wallet.builder()
+                .user(user)
+                .balance(BigDecimal.ZERO)
+                .loyaltyPoints(BigDecimal.ZERO)
+                .currency("GHS")
+                .build()));
     }
 
     @Transactional(readOnly = true)
     public Wallet getWallet(Long userId) {
         return walletRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("Wallet not found"));
+            .orElseThrow(() -> new IllegalArgumentException("Wallet not found for user: " + userId));
     }
 
     @Transactional
@@ -49,15 +52,15 @@ public class WalletService {
         walletRepository.save(w);
 
         WalletTransaction tx = WalletTransaction.builder()
-                .user(user)
-                .type(WalletTransaction.TxType.TOPUP)
-                .amount(amount)
-                .balanceAfter(w.getBalance())
-                .reference(providerRef != null ? providerRef : "TOPUP-" + UUID.randomUUID().toString().substring(0,8).toUpperCase())
-                .provider(provider != null ? provider : "PAYSTACK")
-                .description("Wallet top-up")
-                .status(WalletTransaction.TxStatus.SUCCESS)
-                .build();
+            .user(user)
+            .type(WalletTransaction.TxType.TOPUP)
+            .amount(amount)
+            .balanceAfter(w.getBalance())
+            .reference(providerRef != null ? providerRef : "TOPUP-" + UUID.randomUUID().toString().substring(0,8).toUpperCase())
+            .provider(provider != null ? provider : "PAYSTACK")
+            .description("Wallet top-up")
+            .status(WalletTransaction.TxStatus.SUCCESS)
+            .build();
         return txRepository.save(tx);
     }
 
@@ -69,15 +72,15 @@ public class WalletService {
         walletRepository.save(w);
 
         txRepository.save(WalletTransaction.builder()
-                .user(user)
-                .type(WalletTransaction.TxType.PAYMENT)
-                .amount(amount.negate())
-                .balanceAfter(w.getBalance())
-                .reference(bookingRef)
-                .provider("WALLET")
-                .description(description)
-                .status(WalletTransaction.TxStatus.SUCCESS)
-                .build());
+            .user(user)
+            .type(WalletTransaction.TxType.PAYMENT)
+            .amount(amount.negate())
+            .balanceAfter(w.getBalance())
+            .reference(bookingRef)
+            .provider("WALLET")
+            .description(description)
+            .status(WalletTransaction.TxStatus.SUCCESS)
+            .build());
 
         // loyalty: 2% cashback as points
         BigDecimal points = amount.multiply(new BigDecimal("0.02")).setScale(2, RoundingMode.HALF_UP);
@@ -104,22 +107,24 @@ public class WalletService {
         w.setBalance(w.getBalance().add(amount));
         walletRepository.save(w);
         txRepository.save(WalletTransaction.builder()
-                .user(user)
-                .type(WalletTransaction.TxType.REFUND)
-                .amount(amount)
-                .balanceAfter(w.getBalance())
-                .reference(bookingRef)
-                .provider("SYSTEM")
-                .description("Instant refund - " + bookingRef)
-                .status(WalletTransaction.TxStatus.SUCCESS)
-                .build());
+            .user(user)
+            .type(WalletTransaction.TxType.REFUND)
+            .amount(amount)
+            .balanceAfter(w.getBalance())
+            .reference(bookingRef)
+            .provider("SYSTEM")
+            .description("Instant refund - " + bookingRef)
+            .status(WalletTransaction.TxStatus.SUCCESS)
+            .build());
     }
 
     public Page<WalletTransaction> history(Long userId, int page, int size) {
-        return txRepository.findByUserIdOrderByCreatedAtDesc(userId, PageRequest.of(page, size));
+        User user = userService.findById(userId).orElseThrow(() -> new IllegalArgumentException("User not found"));
+        return txRepository.findByUserOrderByCreatedAtDesc(user, PageRequest.of(page, size));
     }
 
     public List<WalletTransaction> recent(Long userId) {
-        return txRepository.findTop10ByUserIdOrderByCreatedAtDesc(userId);
+        User user = userService.findById(userId).orElseThrow(() -> new IllegalArgumentException("User not found"));
+        return txRepository.findTop10ByUserOrderByCreatedAtDesc(user);
     }
 }

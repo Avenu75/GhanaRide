@@ -2,18 +2,33 @@ package com.ghanaride.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
+
 import java.time.LocalDateTime;
 
+/**
+ * In-app notification entity.
+ */
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
+@ToString(exclude = {"user"})
 @Entity
-@Table(name = "notifications", indexes = {
-    @Index(name = "idx_notif_user_read", columnList = "user_id, readFlag")
-})
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Table(
+    name = "notifications",
+    indexes = {
+        @Index(name = "idx_notif_user", columnList = "user_id"),
+        @Index(name = "idx_notif_type", columnList = "type"),
+        @Index(name = "idx_notif_read", columnList = "read"),
+        @Index(name = "idx_notif_created", columnList = "created_at")
+    }
+)
 public class Notification {
-    public enum Type { BOOKING_CONFIRMED, TRIP_REMINDER, DRIVER_ASSIGNED, PAYMENT_SUCCESS, REFUND_PROCESSED, PROMO, SYSTEM, REVIEW_REQUEST }
-    public enum Channel { IN_APP, EMAIL, SMS, WHATSAPP, PUSH }
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -21,31 +36,52 @@ public class Notification {
     private User user;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 30)
-    private Type type;
+    @Column(name = "type", length = 50, nullable = false)
+    private NotificationType type;
 
-    @Column(nullable = false, length = 140)
+    @Column(name = "title", length = 200, nullable = false)
     private String title;
 
-    @Column(length = 500)
+    @Column(name = "message", length = 1000, nullable = false)
     private String message;
 
-    @Column(length = 255)
+    @Column(name = "action_url", length = 500)
     private String actionUrl;
 
-    @Enumerated(EnumType.STRING)
     @Builder.Default
-    private Channel channel = Channel.IN_APP;
+    @Column(name = "read")
+    private Boolean read = false;
 
-    @Builder.Default
-    @Column(nullable = false)
-    private boolean readFlag = false;
-
-    @Column(nullable = false)
-    private LocalDateTime createdAt;
-
+    @Column(name = "read_at")
     private LocalDateTime readAt;
 
+    @Builder.Default
+    @Column(name = "priority", length = 20)
+    private String priority = "NORMAL";
+
+    @Column(name = "metadata", columnDefinition = "TEXT")
+    private String metadata;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
     @PrePersist
-    protected void onCreate() { createdAt = LocalDateTime.now(); }
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        if (read == null) read = false;
+        if (priority == null) priority = "NORMAL";
+    }
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Notification other)) return false;
+        return id != null && id.equals(other.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

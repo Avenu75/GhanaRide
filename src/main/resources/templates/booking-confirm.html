@@ -1,270 +1,714 @@
 <!DOCTYPE html>
-<html th:replace="~{layout :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" th:replace="~{layout :: layout(~{::title}, ~{::main})}">
 <head>
-    <title th:text="'Book: ' + ${trip.fromLocation} + ' → ' + ${trip.toLocation} + ' — GhanaRide v5'">Confirm Booking - GhanaRide</title>
+    <title th:text="${pageTitle}">Book Your Trip — GhanaRide</title>
+    
+    <style th:inline="css">
+        .booking-layout {
+            display: grid;
+            grid-template-columns: 1fr 420px;
+            gap: var(--space-6);
+            align-items: start;
+        }
+        
+        @media (max-width: 992px) {
+            .booking-layout { grid-template-columns: 1fr; }
+        }
+        
+        .booking-sticky {
+            position: sticky;
+            top: calc(var(--header-height) + var(--space-6));
+        }
+        
+        /* Trip Summary Card */
+        .trip-summary {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-xl);
+            padding: var(--space-5);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .trip-route {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--space-3);
+            margin-bottom: var(--space-4);
+        }
+        
+        .trip-route-line {
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--space-1);
+        }
+        
+        .trip-route-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            z-index: 1;
+        }
+        
+        .trip-route-dot:first-child { background: var(--green); }
+        .trip-route-dot:last-child { background: var(--red); }
+        
+        .trip-route-line::before {
+            content: '';
+            width: 2px;
+            height: 32px;
+            background: var(--color-border);
+        }
+        
+        .trip-route-info { flex: 1; min-width: 0; }
+        .trip-route-from { font-weight: 600; font-size: 1.125rem; }
+        .trip-route-to { font-weight: 600; font-size: 1.125rem; color: var(--color-text-secondary); }
+        
+        .trip-meta {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--space-2);
+            padding-top: var(--space-3);
+            border-top: 1px solid var(--color-border);
+            margin-bottom: var(--space-4);
+        }
+        
+        .trip-meta-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            font-size: 0.875rem;
+            color: var(--color-text-secondary);
+        }
+        
+        .trip-meta-item i {
+            color: var(--gold);
+            width: 18px;
+            text-align: center;
+        }
+        
+        .trip-operator {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: var(--space-3);
+            background: var(--color-surface-hover);
+            border-radius: var(--radius);
+        }
+        
+        .operator-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: var(--radius);
+            background: var(--gold-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gold-dark);
+            font-size: 1.25rem;
+        }
+        
+        .operator-info { flex: 1; }
+        .operator-name { font-weight: 600; }
+        .operator-rating { font-size: 0.8125rem; color: var(--color-text-muted); }
+        
+        /* Seat Map */
+        .seat-map-container {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-xl);
+            padding: var(--space-5);
+            overflow-x: auto;
+        }
+        
+        .seat-map-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--space-4);
+        }
+        
+        .seat-map {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+        }
+        
+        .seat-row {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+        
+        .seat-row-label {
+            width: 40px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--color-text-muted);
+            text-align: right;
+            padding-right: var(--space-2);
+            border-right: 1px dashed var(--color-border);
+        }
+        
+        .seat {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            border-radius: var(--radius);
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            user-select: none;
+            border: 2px solid transparent;
+        }
+        
+        .seat-available {
+            background: var(--color-surface);
+            border-color: var(--color-border);
+            color: var(--color-text-secondary);
+        }
+        
+        .seat-available:hover {
+            border-color: var(--gold);
+            color: var(--gold-dark);
+            transform: scale(1.1);
+            z-index: 1;
+        }
+        
+        .seat-available:focus-visible {
+            outline: 2px solid var(--gold);
+            outline-offset: 2px;
+        }
+        
+        .seat-selected {
+            background: var(--gold);
+            border-color: var(--gold-dark);
+            color: var(--black);
+            box-shadow: var(--shadow);
+        }
+        
+        .seat-held {
+            background: var(--color-warning-bg);
+            border-color: var(--color-warning);
+            color: var(--color-warning);
+            cursor: not-allowed;
+        }
+        
+        .seat-booked {
+            background: var(--color-surface-hover);
+            border-color: var(--color-border);
+            color: var(--color-text-muted);
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        
+        .seat-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-3);
+            margin-top: var(--space-4);
+            padding-top: var(--space-4);
+            border-top: 1px solid var(--color-border);
+        }
+        
+        .seat-legend-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            font-size: 0.8125rem;
+            color: var(--color-text-secondary);
+        }
+        
+        .seat-legend-box {
+            width: 24px;
+            height: 24px;
+            border-radius: var(--radius-sm);
+            flex-shrink: 0;
+        }
+        
+        /* Booking Summary */
+        .booking-summary {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-xl);
+            padding: var(--space-5);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .summary-title {
+            font-weight: 700;
+            margin-bottom: var(--space-4);
+            padding-bottom: var(--space-3);
+            border-bottom: 1px solid var(--color-border);
+        }
+        
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: var(--space-3);
+            font-size: 0.9375rem;
+        }
+        
+        .summary-row.total {
+            font-weight: 700;
+            font-size: 1.125rem;
+            padding-top: var(--space-3);
+            margin-top: var(--space-2);
+            border-top: 1px solid var(--color-border);
+        }
+        
+        .summary-row .label { color: var(--color-text-secondary); }
+        .summary-row .value { color: var(--color-text); font-weight: 600; }
+        .summary-row.total .value { color: var(--gold-dark); font-family: var(--font-display); font-size: 1.5rem; }
+        
+        /* Payment Methods */
+        .payment-methods {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: var(--space-3);
+            margin-bottom: var(--space-5);
+        }
+        
+        .payment-option {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--space-2);
+            padding: var(--space-4);
+            border: 2px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+        
+        .payment-option input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .payment-option:hover {
+            border-color: var(--gold);
+        }
+        
+        .payment-option:has(input:checked) {
+            border-color: var(--gold);
+            background: var(--gold-muted);
+            box-shadow: var(--shadow);
+        }
+        
+        .payment-icon {
+            font-size: 2rem;
+            color: var(--color-text-muted);
+            transition: color var(--transition-fast);
+        }
+        
+        .payment-option:hover .payment-icon,
+        .payment-option:has(input:checked) .payment-icon {
+            color: var(--gold-dark);
+        }
+        
+        .payment-label {
+            font-size: 0.8125rem;
+            font-weight: 500;
+            color: var(--color-text);
+            text-align: center;
+        }
+        
+        /* Wallet Balance */
+        .wallet-balance-mini {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--space-3);
+            background: var(--gold-muted);
+            border-radius: var(--radius);
+            margin-bottom: var(--space-4);
+        }
+        
+        .wallet-balance-info { display: flex; align-items: center; gap: var(--space-2); }
+        .wallet-balance-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius);
+            background: var(--gold);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--black);
+        }
+        
+        .wallet-balance-amount {
+            font-family: var(--font-display);
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--gold-dark);
+        }
+        
+        /* Form Actions */
+        .form-actions {
+            display: flex;
+            gap: var(--space-3);
+        }
+        
+        .btn-continue {
+            flex: 1;
+        }
+        
+        .btn-back {
+            flex: 1;
+        }
+        
+        /* Seat Selection Notice */
+        .seat-notice {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--space-3);
+            padding: var(--space-3);
+            background: var(--color-info-bg);
+            border: 1px solid var(--color-info);
+            border-radius: var(--radius);
+            margin-bottom: var(--space-4);
+        }
+        
+        .seat-notice i { flex-shrink: 0; margin-top: 0.125rem; color: var(--color-info); }
+        .seat-notice p { margin: 0; font-size: 0.875rem; color: var(--color-info); }
+        
+        /* Passenger Details */
+        .passenger-section {
+            margin-top: var(--space-5);
+            padding-top: var(--space-5);
+            border-top: 1px solid var(--color-border);
+        }
+        
+        .passenger-section h4 { margin-bottom: var(--space-3); }
+        
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+        
+        @media (max-width: 576px) {
+            .form-row { grid-template-columns: 1fr; }
+        }
+    </style>
 </head>
 <body>
-<main th:fragment="main" class="py-4">
-    <div class="container">
-        <div class="row g-4">
-            <!-- LEFT: seat map + passenger -->
-            <div class="col-lg-7">
-                <div class="card bg-card border-0 rounded-4 shadow-sm mb-4">
-                    <div class="card-body p-4">
-                        <div class="d-flex justify-content-between align-items-start mb-3">
-                            <div>
-                                <div class="small text-muted">World-Class Booking • Step 1 of 2</div>
-                                <h3 class="fw-800 mb-1" th:text="${trip.fromLocation} + ' → ' + ${trip.toLocation}">Accra → Kumasi</h3>
-                                <div class="text-muted small">
-                                    <span th:text="${#temporals.format(trip.departureTime, 'EEE dd MMM, h:mm a')}">date</span>
-                                    • <span th:text="${trip.availableSeats} + ' seats left'">seats</span>
-                                    • <span th:text="${trip.driver != null ? trip.driver.fullName : 'Verified driver'}">driver</span>
-                                </div>
-                            </div>
-                            <div class="text-end">
-                                <div class="fs-3 fw-800 text-warning">GH₵<span th:text="${trip.tripAmount}">85</span></div>
-                                <div class="small text-success">✓ Instant confirmation</div>
+<main th:fragment="main">
+    <div class="container py-4">
+        <!-- Breadcrumb -->
+        <nav aria-label="Breadcrumb" class="mb-4">
+            <ol class="breadcrumb mb-0" style="background: transparent; padding: 0;">
+                <li class="breadcrumb-item"><a th:href="@{/}">Home</a></li>
+                <li class="breadcrumb-item"><a th:href="@{/rides}">Rides</a></li>
+                <li class="breadcrumb-item active" aria-current="page" th:text="'Book ' + ${trip.fromLocation} + ' → ' + ${trip.toLocation}">Book Trip</li>
+            </ol>
+        </nav>
+        
+        <div class="booking-layout">
+            <!-- Left Column: Trip Details & Seat Map -->
+            <div>
+                <!-- Trip Summary -->
+                <div class="trip-summary mb-4">
+                    <div class="trip-route">
+                        <div class="trip-route-line">
+                            <div class="trip-route-dot"></div>
+                            <div class="trip-route-dot"></div>
+                        </div>
+                        <div class="trip-route-info">
+                            <div class="trip-route-from" th:text="${trip.fromLocation}">Accra</div>
+                            <div class="trip-route-to" th:text="${trip.toLocation}">Kumasi</div>
+                        </div>
+                    </div>
+                    
+                    <div class="trip-meta">
+                        <div class="trip-meta-item">
+                            <i class="bi bi-calendar3"></i>
+                            <span th:text="${#temporals.format(trip.departureTime, 'MMM dd, yyyy')}">Date</span>
+                        </div>
+                        <div class="trip-meta-item">
+                            <i class="bi bi-clock"></i>
+                            <span th:text="${#temporals.format(trip.departureTime, 'HH:mm')}">Time</span>
+                        </div>
+                        <div class="trip-meta-item">
+                            <i class="bi bi-car-front"></i>
+                            <span th:text="${trip.car != null ? trip.car.model : 'Standard'}">Car</span>
+                        </div>
+                        <div class="trip-meta-item">
+                            <i class="bi bi-people"></i>
+                            <span th:text="${trip.availableSeats} + ' seats left'">Seats</span>
+                        </div>
+                    </div>
+                    
+                    <div class="trip-operator">
+                        <div class="operator-avatar">
+                            <i th:if="${trip.company != null}" class="bi bi-building"></i>
+                            <i th:unless="${trip.company != null}" class="bi bi-person"></i>
+                        </div>
+                        <div class="operator-info">
+                            <div class="operator-name" th:text="${trip.company != null ? trip.company.companyName : (trip.driver != null ? trip.driver.fullName : 'Independent Driver')}">Operator</div>
+                            <div class="operator-rating">
+                                <i class="bi bi-star-fill text-warning"></i>
+                                <span th:text="${trip.company != null ? '4.9' : '4.7'} + ' • Verified'">4.9 • Verified</span>
                             </div>
                         </div>
-
-                        <!-- SEAT MAP v5 -->
-                        <div class="seatmap-wrap p-3 rounded-4" style="background:var(--bg-secondary); border:1px solid var(--border-color);">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <strong>Choose your seat</strong>
-                                <div class="small d-flex gap-3">
-                                    <span><span class="seat-dot available"></span> Available</span>
-                                    <span><span class="seat-dot selected"></span> Selected</span>
-                                    <span><span class="seat-dot booked"></span> Booked</span>
-                                </div>
-                            </div>
-
-                            <div id="seatGrid" class="seat-grid mx-auto" style="max-width:360px;">
-                                <div class="text-center text-muted py-4">Loading seat map…</div>
-                            </div>
-
-                            <div class="text-center small text-muted mt-2">Front of bus →</div>
-                        </div>
-
-                        <!-- passenger type -->
-                        <form th:action="@{/booking/{id}(id=${trip.id})}" method="post" id="bookingForm" class="mt-4">
-                            <input type="hidden" name="seatNumber" id="seatNumberInput">
-                            <h6 class="fw-bold mb-3">Who is travelling?</h6>
-                            <div class="row g-2 mb-3">
-                                <div class="col-6">
-                                    <label class="pro-choice w-100">
-                                        <input type="radio" name="bookingType" value="self" checked class="d-none" onchange="toggleRel(false)">
-                                        <div class="pro-choice-inner">
-                                            <div class="fw-bold">🧍 Myself</div>
-                                            <div class="small text-muted" th:text="${currentUser.fullName}">You</div>
-                                        </div>
-                                    </label>
-                                </div>
-                                <div class="col-6">
-                                    <label class="pro-choice w-100">
-                                        <input type="radio" name="bookingType" value="relative" class="d-none" onchange="toggleRel(true)">
-                                        <div class="pro-choice-inner">
-                                            <div class="fw-bold">👥 Someone else</div>
-                                            <div class="small text-muted">Friend / family</div>
-                                        </div>
-                                    </label>
-                                </div>
-                            </div>
-
-                            <div id="relBox" style="display:none" class="border rounded-3 p-3 mb-3 bg-body">
-                                <div class="row g-2">
-                                    <div class="col-md-6"><input name="passengerName" class="form-control" placeholder="Passenger full name" id="pName"></div>
-                                    <div class="col-md-6"><input name="passengerPhone" class="form-control" placeholder="024 / 054 / 020…" id="pPhone"></div>
-                                </div>
-                            </div>
-
-                            <!-- extras + v5.1 wallet + coupon -->
-                            <div class="border rounded-3 p-3 mb-3 bg-body">
-                                <div class="d-flex gap-3 flex-wrap mb-2 small">
-                                    <label class="form-check"><input class="form-check-input" type="checkbox" name="insurance" value="true" id="insCheck"> <span>Trip insurance GH₵2</span></label>
-                                    <label class="form-check"><input class="form-check-input" type="checkbox" checked> <span>WhatsApp boarding pass</span></label>
-                                    <label class="form-check"><input class="form-check-input" type="checkbox" checked> <span>SMS reminder</span></label>
-                                </div>
-                                <div class="row g-2 align-items-center">
-                                    <div class="col-md-6">
-                                        <div class="input-group input-group-sm">
-                                            <span class="input-group-text bg-transparent text-muted border-secondary">🎟️</span>
-                                            <input name="couponCode" class="form-control bg-card border-secondary" placeholder="Coupon code – WELCOME50">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="d-flex align-items-center gap-2 small p-2 rounded-3" style="background:rgba(15,157,88,.07);border:1px solid rgba(15,157,88,.22);cursor:pointer;">
-                                            <input type="checkbox" name="useWallet" value="true" class="form-check-input m-0" id="walletCheck">
-                                            <span>💳 Pay with <strong>GhanaRide Pay</strong>
-                      <span th:if="${wallet != null}" class="text-success" th:text="' • GH₵' + ${#numbers.formatDecimal(wallet.balance,1,2)} + ' available'">• GH₵0</span>
-                      <span th:if="${wallet == null}" class="text-muted">• top-up in wallet</span>
-                    </span>
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="small text-muted mt-2">Wallet pay = instant confirmation • 2% cashback • skip Paystack redirect</div>
-                            </div>
-
-                            <div class="d-grid">
-                                <button id="payBtn" class="btn btn-warning btn-lg fw-800 rounded-3 py-3" disabled>
-                                    Select a seat to continue →
-                                </button>
-                            </div>
-                            <div class="text-center small text-muted mt-2">Secure • 256-bit SSL • Paystack • MoMo</div>
-                        </form>
                     </div>
                 </div>
-
-                <!-- trust -->
-                <div class="d-flex gap-4 small text-muted flex-wrap px-1">
-                    <span>🔒 Paystack secured</span>
-                    <span>↩️ Free cancel 2h before</span>
-                    <span>💬 24/7 support</span>
-                    <span>⭐ 4.9/5 rated</span>
+                
+                <!-- Seat Map -->
+                <div class="seat-map-container mb-4">
+                    <div class="seat-map-title">
+                        <h3 class="mb-0">Choose Your Seat</h3>
+                        <span class="badge badge-primary" th:text="${trip.totalSeats} + ' seats total'">18 seats total</span>
+                    </div>
+                    
+                    <div class="seat-notice">
+                        <i class="bi bi-info-circle"></i>
+                        <p>Click a seat to select. <strong>Selected seats are held for 7 minutes</strong> while you complete booking.</p>
+                    </div>
+                    
+                    <div class="seat-map" id="seatMap">
+                        <div th:each="row : ${seatMap}" class="seat-row">
+                            <div class="seat-row-label" th:text="${row[0].rowNumber}">1</div>
+                            <div th:each="seat : ${row}" 
+                                 class="seat"
+                                 th:classappend="${seat.status == 'AVAILABLE' ? 'seat-available' : (seat.status == 'HELD' ? 'seat-held' : 'seat-booked')}"
+                                 th:data-seat="${seat.seatNumber}"
+                                 th:data-type="${seat.seatType}"
+                                 th:data-row="${seat.rowNumber}"
+                                 th:data-column="${seat.columnLabel}"
+                                 tabindex="0"
+                                 role="button"
+                                 th:aria-label="${seat.seatNumber} + ' ' + ${seat.seatType} + ', ' + (${seat.status == 'AVAILABLE' ? 'Available' : 'Unavailable'})">
+                                <span th:text="${seat.seatNumber}">1A</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="seat-legend">
+                        <div class="seat-legend-item">
+                            <div class="seat-legend-box seat-available" style="border: 2px solid var(--color-border);"></div>
+                            Available
+                        </div>
+                        <div class="seat-legend-item">
+                            <div class="seat-legend-box seat-selected"></div>
+                            Selected
+                        </div>
+                        <div class="seat-legend-item">
+                            <div class="seat-legend-box seat-held"></div>
+                            Held (7 min)
+                        </div>
+                        <div class="seat-legend-item">
+                            <div class="seat-legend-box seat-booked"></div>
+                            Booked
+                        </div>
+                    </div>
                 </div>
             </div>
-
-            <!-- RIGHT: summary -->
-            <div class="col-lg-5">
-                <div class="card bg-card border-0 rounded-4 shadow-sm sticky-top" style="top:90px;">
-                    <div class="card-body p-4">
-                        <h6 class="fw-800 mb-3">Trip summary</h6>
-                        <div class="vstack gap-2 small">
-                            <div class="d-flex justify-content-between"><span class="text-muted">Route</span><strong th:text="${trip.fromLocation}+' → '+${trip.toLocation}">A → K</strong></div>
-                            <div class="d-flex justify-content-between"><span class="text-muted">Date</span><span th:text="${#temporals.format(trip.departureTime,'dd MMM yyyy, HH:mm')}">date</span></div>
-                            <div class="d-flex justify-content-between"><span class="text-muted">Pickup</span><span th:text="${trip.pickupStation != null ? trip.pickupStation : 'Main station'}">station</span></div>
-                            <div class="d-flex justify-content-between"><span class="text-muted">Driver</span><span th:text="${trip.driver != null ? trip.driver.fullName : 'Verified'}">driver</span></div>
-                            <div class="d-flex justify-content-between"><span class="text-muted">Vehicle</span><span th:text="${trip.car != null ? trip.car.carBrand+' • '+trip.car.numberPlate : 'AC Bus'}">car</span></div>
-                            <div class="d-flex justify-content-between"><span class="text-muted">Seat</span><strong id="sumSeat" class="text-warning">— select —</strong></div>
-                            <hr>
-                            <div class="d-flex justify-content-between"><span>Base fare</span><span>GH₵ <span th:text="${trip.tripAmount}" id="baseFare">85</span></span></div>
-                            <div class="d-flex justify-content-between text-muted"><span>Service fee</span><span>GH₵ 0.00</span></div>
-                            <div class="d-flex justify-content-between text-muted"><span>Insurance</span><span id="insFee">GH₵ 0.00</span></div>
-                            <div class="d-flex justify-content-between fs-5 fw-800 border-top pt-2"><span>Total</span><span class="text-success">GH₵ <span id="totalAmt" th:text="${trip.tripAmount}">85</span></span></div>
+            
+            <!-- Right Column: Booking Summary & Payment -->
+            <div class="booking-sticky">
+                <div class="booking-summary">
+                    <h3 class="summary-title">Booking Summary</h3>
+                    
+                    <div class="summary-row">
+                        <span class="label">Trip</span>
+                        <span class="value" th:text="${trip.fromLocation} + ' → ' + ${trip.toLocation}">Route</span>
+                    </div>
+                    
+                    <div class="summary-row">
+                        <span class="label">Departure</span>
+                        <span class="value" th:text="${#temporals.format(trip.departureTime, 'MMM dd, yyyy \'at\' HH:mm')}">Date & Time</span>
+                    </div>
+                    
+                    <div class="summary-row" id="seatSummary" style="display: none;">
+                        <span class="label">Seat</span>
+                        <span class="value" id="selectedSeatDisplay">—</span>
+                    </div>
+                    
+                    <div class="summary-row">
+                        <span class="label">Price per seat</span>
+                        <span class="value" th:text="'GH₵' + ${#numbers.formatDecimal(trip.tripAmount, 1, 2, 'COMMA')}">GH₵0.00</span>
+                    </div>
+                    
+                    <div class="summary-row total">
+                        <span class="label">Total</span>
+                        <span class="value" id="totalAmount" th:text="'GH₵' + ${#numbers.formatDecimal(trip.tripAmount, 1, 2, 'COMMA')}">GH₵0.00</span>
+                    </div>
+                    
+                    <!-- Wallet Balance -->
+                    <div class="wallet-balance-mini">
+                        <div class="wallet-balance-info">
+                            <div class="wallet-balance-icon"><i class="bi bi-wallet2"></i></div>
+                            <div>
+                                <div class="small text-muted">Wallet Balance</div>
+                                <div class="wallet-balance-amount" th:text="'GH₵' + ${#numbers.formatDecimal(wallet.balance, 1, 2, 'COMMA')}">GH₵0.00</div>
+                            </div>
                         </div>
-
-                        <div class="alert alert-success mt-3 small mb-0" style="background:rgba(15,157,88,.08); border-color:rgba(15,157,88,.22); color:#4ade80;">
-                            ✓ 2% loyalty cashback → GhanaRide Wallet<br>
-                            ✓ Instant QR boarding pass<br>
-                            ✓ Live GPS tracking link
+                        <a th:href="@{/wallet/topup}" class="btn btn-sm btn-primary" target="_blank">Top Up</a>
+                    </div>
+                    
+                    <!-- Payment Methods -->
+                    <h4 class="mb-3">Payment Method</h4>
+                    <div class="payment-methods">
+                        <label class="payment-option">
+                            <input type="radio" name="paymentMethod" value="WALLET" id="payWallet" th:checked="${wallet.balance.compareTo(trip.tripAmount) >= 0}">
+                            <i class="payment-icon bi bi-wallet2"></i>
+                            <span class="payment-label">GhanaRide Pay</span>
+                        </label>
+                        
+                        <label class="payment-option">
+                            <input type="radio" name="paymentMethod" value="PAYSTACK" id="payPaystack" checked>
+                            <i class="payment-icon"><img src="https://js.paystack.co/v1/inline/gh/logo.png" alt="Paystack" height="32"></i>
+                            <span class="payment-label">Paystack (Card/MoMo)</span>
+                        </label>
+                        
+                        <label class="payment-option">
+                            <input type="radio" name="paymentMethod" value="CASH" id="payCash">
+                            <i class="payment-icon bi bi-cash"></i>
+                            <span class="payment-label">Cash at Pickup</span>
+                        </label>
+                    </div>
+                    
+                    <!-- Passenger Details (for relative bookings) -->
+                    <div class="passenger-section" id="passengerSection" style="display: none;">
+                        <h4>Passenger Details</h4>
+                        <p class="text-muted small mb-3">Booking for someone else? Enter their details.</p>
+                        <div class="form-row">
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="passengerName" name="passengerName" placeholder="Passenger Name" autocomplete="name">
+                                <label for="passengerName">Passenger Name</label>
+                            </div>
+                            <div class="form-floating">
+                                <input type="tel" class="form-control" id="passengerPhone" name="passengerPhone" placeholder="Phone Number" autocomplete="tel">
+                                <label for="passengerPhone">Phone Number</label>
+                            </div>
                         </div>
                     </div>
-                </div>
-
-                <!-- live map teaser -->
-                <div class="card bg-card border-0 rounded-4 shadow-sm mt-3">
-                    <div class="card-body p-3">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <strong class="small">Live trip preview</strong>
-                            <span class="badge bg-success-subtle text-success">simulation</span>
-                        </div>
-                        <div id="miniMap" style="height:160px; background: radial-gradient(circle at 30% 40%, rgba(15,157,88,.18), transparent 55%), linear-gradient(160deg,#0f172a,#0b1220); border-radius:12px; position:relative; overflow:hidden;">
-                            <svg width="100%" height="100%" viewBox="0 0 400 160" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M20 120 Q 120 40 200 90 T 380 70" stroke="#FCD116" stroke-width="2" fill="none" stroke-dasharray="5 5" opacity=".5"/>
-                                <circle cx="20" cy="120" r="5" fill="#0F9D58"/><text x="10" y="140" fill="#9aa" font-size="10">Accra</text>
-                                <circle cx="380" cy="70" r="5" fill="#FCD116"/><text x="350" y="60" fill="#9aa" font-size="10">Kumasi</text>
-                                <g id="busDot"><circle cx="120" cy="78" r="6" fill="#FCD116"/><circle cx="120" cy="78" r="12" fill="none" stroke="#FCD116" opacity=".35"><animate attributeName="r" values="6;16;6" dur="2s" repeatCount="indefinite"/></circle></g>
-                            </svg>
-                        </div>
-                        <div class="small text-muted mt-2">After booking you’ll get a live GPS tracking link.</div>
+                    
+                    <!-- Form Actions -->
+                    <div class="form-actions mt-4">
+                        <a th:href="@{/rides}" class="btn btn-secondary btn-back">
+                            <i class="bi bi-arrow-left"></i> Back
+                        </a>
+                        <button type="submit" id="confirmBookingBtn" class="btn btn-primary btn-continue" disabled>
+                            <span class="btn-text">Continue to Payment</span>
+                            <span class="btn-loading d-none"><i class="bi bi-arrow-clockwise spin me-2"></i>Processing...</span>
+                        </button>
                     </div>
+                    
+                    <form id="bookingForm" th:action="@{/booking/{tripId}(tripId=${trip.id})}" method="post" style="display: none;">
+                        <input type="hidden" name="seatNumber" id="seatNumberInput">
+                        <input type="hidden" name="paymentMethod" id="paymentMethodInput">
+                        <input type="hidden" name="passengerName" id="passengerNameInput">
+                        <input type="hidden" name="passengerPhone" id="passengerPhoneInput">
+                    </form>
                 </div>
             </div>
         </div>
     </div>
-
-    <style>
-        .fw-800{font-weight:800}
-        .pro-choice input:checked + .pro-choice-inner{ border-color:#FCD116; background:rgba(252,209,22,.06); box-shadow:0 0 0 1px #FCD116 inset;}
-        .pro-choice-inner{ border:1.5px solid var(--border-color); border-radius:14px; padding:14px; background:var(--bg-secondary); transition:.2s; cursor:pointer;}
-        .seat-grid{ display:grid; grid-template-columns: 44px 44px 22px 44px 44px; gap:10px; justify-content:center;}
-        .seat{
-            width:44px; height:44px; border-radius:10px; display:flex; align-items:center; justify-content:center;
-            font-size:.75rem; font-weight:700; cursor:pointer; transition:.15s;
-            border:1.5px solid var(--border-color); background:rgba(255,255,255,.03); color:var(--text-muted);
-        }
-        .seat.available:hover{ border-color:#FCD116; transform:translateY(-2px);}
-        .seat.selected{ background:#FCD116; color:#111; border-color:#FCD116; box-shadow:0 4px 16px rgba(252,209,22,.28);}
-        .seat.booked{ background:rgba(255,255,255,.05); color:#555; cursor:not-allowed; text-decoration:line-through; opacity:.55;}
-        .seat.vip{ border-color: rgba(15,157,88,.55);}
-        .seat-dot{ display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:4px; vertical-align:middle;}
-        .seat-dot.available{ background:rgba(255,255,255,.09); border:1px solid var(--border-color);}
-        .seat-dot.selected{ background:#FCD116;}
-        .seat-dot.booked{ background:#444;}
-    </style>
-
-    <script th:inline="javascript">
-        /*<![CDATA[*/
-        const tripId = /*[[${trip.id}]]*/ 0;
-        const serverBaseFare = /*[[${trip.tripAmount}]]*/ 0;
-        let baseFare = serverBaseFare;
-        let selectedSeat = null;
-
-        // DOM ready safe baseFare fallback
-        document.addEventListener('DOMContentLoaded', function() {
-            const bfEl = document.getElementById('baseFare');
-            if (bfEl) {
-                const parsed = parseFloat(bfEl.textContent);
-                if (!isNaN(parsed) && parsed > 0) { baseFare = parsed; }
-            }
-        });
-        /*]]>*/
-
-        function toggleRel(show){
-            document.getElementById('relBox').style.display = show ? 'block':'none';
-            document.getElementById('pName').required = show;
-            document.getElementById('pPhone').required = show;
-        }
-        document.querySelector('input[name="insurance"]')?.addEventListener('change', e=>{
-            document.getElementById('insFee').textContent = e.target.checked ? 'GH₵ 2.00' : 'GH₵ 0.00';
-            document.getElementById('totalAmt').textContent = (baseFare + (e.target.checked?2:0)).toFixed(2);
-        });
-
-        async function loadSeats(){
-            const grid = document.getElementById('seatGrid');
-            try{
-                const res = await fetch('/api/trips/'+tripId+'/seats');
-                const data = await res.json();
-                grid.innerHTML='';
-                const aisleAfter = 2;
-                data.seats.forEach((s,idx)=>{
-                    const d = document.createElement('div');
-                    d.className = 'seat ' + (s.status==='AVAILABLE' ? 'available' : 'booked') + (s.extraLegroom?' vip':'');
-                    d.textContent = s.seatNumber;
-                    d.title = s.type + (s.extraLegroom ? ' • Extra legroom':'');
-                    if(s.status==='AVAILABLE'){
-                        d.onclick = ()=> selectSeat(s.seatNumber, d);
-                    }
-                    grid.appendChild(d);
-                    // insert aisle gap is handled by CSS grid columns
-                });
-            }catch(e){
-                grid.innerHTML = '<div class="text-warning small">Seat map API offline – you can still book, seat auto-assigned.</div>';
-                document.getElementById('payBtn').disabled=false;
-                document.getElementById('payBtn').textContent='Continue to Payment →';
-            }
-        }
-        function selectSeat(seatNum, el){
-            document.querySelectorAll('.seat.selected').forEach(x=>x.classList.remove('selected'));
-            el.classList.add('selected');
-            selectedSeat = seatNum;
-            document.getElementById('seatNumberInput').value = seatNum;
-            document.getElementById('sumSeat').textContent = seatNum;
-            const btn = document.getElementById('payBtn');
-            btn.disabled=false;
-            btn.textContent='Pay GH₵ '+document.getElementById('totalAmt').textContent+' →';
-        }
-        loadSeats();
-        // animate bus
-        let bx=120, dir=1;
-        setInterval(()=>{
-            bx += dir*1.6;
-            if(bx>300||bx<60) dir*=-1;
-            const g=document.getElementById('busDot');
-            if(g) g.setAttribute('transform','translate('+(bx-120)+',0)');
-        },55);
-        // end live bus animation
-        /*]]>*/
-    </script>
 </main>
+
+<script th:inline="javascript">
+    // Seat Map Interaction
+    (function() {
+        const seats = document.querySelectorAll('.seat-available');
+        const confirmBtn = document.getElementById('confirmBookingBtn');
+        const seatSummary = document.getElementById('seatSummary');
+        const selectedSeatDisplay = document.getElementById('selectedSeatDisplay');
+        const totalAmount = document.getElementById('totalAmount');
+        const seatNumberInput = document.getElementById('seatNumberInput');
+        const paymentMethodInput = document.getElementById('paymentMethodInput');
+        const passengerNameInput = document.getElementById('passengerNameInput');
+        const passengerPhoneInput = document.getElementById('passengerPhoneInput');
+        const passengerSection = document.getElementById('passengerSection');
+        const bookingForm = document.getElementById('bookingForm');
+        
+        let selectedSeat = null;
+        const basePrice = /*[[${trip.tripAmount}]]*/ 0;
+        
+        seats.forEach(seat => {
+            seat.addEventListener('click', function() {
+                // Deselect previous
+                if (selectedSeat) {
+                    selectedSeat.classList.remove('seat-selected');
+                    selectedSeat.classList.add('seat-available');
+                }
+                
+                // Select new
+                if (selectedSeat === this) {
+                    selectedSeat = null;
+                } else {
+                    this.classList.remove('seat-available');
+                    this.classList.add('seat-selected');
+                    selectedSeat = this;
+                }
+                
+                updateUI();
+            });
+            
+            // Keyboard support
+            seat.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    this.click();
+                }
+            });
+        });
+        
+        function updateUI() {
+            if (selectedSeat) {
+                const seatNum = selectedSeat.dataset.seat;
+                const seatType = selectedSeat.dataset.type;
+                
+                seatNumberInput.value = seatNum;
+                seatSummary.style.display = 'flex';
+                selectedSeatDisplay.textContent = seatNum + ' (' + seatType + ')';
+                totalAmount.textContent = 'GH₵' + basePrice.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                confirmBtn.disabled = false;
+                confirmBtn.querySelector('.btn-text').textContent = 'Continue to Payment';
+            } else {
+                seatNumberInput.value = '';
+                seatSummary.style.display = 'none';
+                totalAmount.textContent = 'GH₵' + basePrice.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                confirmBtn.disabled = true;
+                confirmBtn.querySelector('.btn-text').textContent = 'Select a seat to continue';
+            }
+        }
+        
+        // Payment method change
+        document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                paymentMethodInput.value = this.value;
+                
+                // Show passenger section for wallet payments (relative bookings)
+                if (this.value === 'WALLET') {
+                    // Could add relative booking toggle here
+                }
+            });
+        });
+        
+        // Form submission
+        confirmBtn.addEventListener('click', function() {
+            if (!selectedSeat) return;
+            
+            // Show loading
+            this.disabled = true;
+            this.querySelector('.btn-text').classList.add('d-none');
+            this.querySelector('.btn-loading').classList.remove('d-none');
+            
+            // Collect payment method
+            const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || 'PAYSTACK';
+            paymentMethodInput.value = paymentMethod;
+            
+            // Submit form
+            setTimeout(() => {
+                bookingForm.submit();
+            }, 100);
+        });
+    })();
+</script>
 </body>
 </html>

@@ -1,259 +1,450 @@
 <!DOCTYPE html>
-<html th:replace="~{layout :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<html th:replace="~{layout :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
-    <title>GhanaRide — Ghana's Premium Intercity Booking Super-App</title>
+    <title>GhanaRide — Ghana's Trusted Transport Platform</title>
+    <meta name="description" content="Book affordable intercity and campus rides with trusted drivers. Safe, timely, and easy. Accra, Kumasi, Cape Coast, Tamale and more.">
+    <meta name="theme-color" content="#FCD116">
+    
+    <style th:inline="css">
+        /* Hero Section */
+        .hero {
+            position: relative;
+            padding: var(--space-16) 0 var(--space-12);
+            background: linear-gradient(180deg, var(--color-bg) 0%, var(--color-surface) 100%);
+            overflow: hidden;
+        }
+        
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120%;
+            height: 80%;
+            background: radial-gradient(ellipse at center, var(--gold-muted) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        
+        .hero-content { position: relative; z-index: 1; }
+        
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: var(--space-2) var(--space-4);
+            background: var(--gold-muted);
+            border: 1px solid var(--gold);
+            border-radius: var(--radius-full);
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--gold-dark);
+            margin-bottom: var(--space-4);
+        }
+        
+        .hero h1 {
+            font-size: clamp(2.5rem, 6vw, 4rem);
+            line-height: 1.1;
+            margin-bottom: var(--space-4);
+        }
+        
+        .hero .lead {
+            font-size: clamp(1.125rem, 2.5vw, 1.375rem);
+            color: var(--color-text-secondary);
+            max-width: 60ch;
+            margin-bottom: var(--space-6);
+        }
+        
+        .hero-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-bottom: var(--space-8); }
+        
+        /* Stats Bar */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: var(--space-4);
+            margin-top: var(--space-8);
+            padding: var(--space-6);
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .stat-item { text-align: center; }
+        .stat-value { font-family: var(--font-display); font-size: 2rem; font-weight: 800; color: var(--color-text); }
+        .stat-label { font-size: 0.8125rem; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+        
+        /* Search Card */
+        .search-card {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-xl);
+            padding: var(--space-6);
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            z-index: 10;
+        }
+        
+        .search-fields { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: var(--space-3); align-items: end; }
+        
+        @media (max-width: 992px) {
+            .search-fields { grid-template-columns: 1fr 1fr; }
+            .search-fields > *:last-child { grid-column: span 2; }
+        }
+        
+        @media (max-width: 576px) {
+            .search-fields { grid-template-columns: 1fr; }
+            .search-fields > *:last-child { grid-column: span 1; }
+        }
+        
+        /* Features */
+        .feature-card {
+            padding: var(--space-6);
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            height: 100%;
+            transition: all var(--transition);
+        }
+        
+        .feature-card:hover {
+            border-color: var(--gold);
+            box-shadow: var(--shadow);
+            transform: translateY(-4px);
+        }
+        
+        .feature-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: var(--radius);
+            background: var(--gold-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: var(--space-4);
+            font-size: 1.5rem;
+            color: var(--gold-dark);
+        }
+        
+        /* Popular Routes */
+        .route-card {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+            padding: var(--space-4);
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius);
+            transition: all var(--transition);
+            text-decoration: none;
+        }
+        
+        .route-card:hover {
+            border-color: var(--gold);
+            box-shadow: var(--shadow);
+            transform: translateX(4px);
+        }
+        
+        .route-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: var(--radius);
+            background: var(--gold-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            color: var(--gold-dark);
+            flex-shrink: 0;
+        }
+        
+        .route-info { flex: 1; min-width: 0; }
+        .route-name { font-weight: 600; color: var(--color-text); margin-bottom: var(--space-1); }
+        .route-meta { display: flex; gap: var(--space-3); font-size: 0.8125rem; color: var(--color-text-muted); }
+        .route-price { font-family: var(--font-display); font-size: 1.25rem; font-weight: 800; color: var(--color-text); }
+        
+        /* Trust Badges */
+        .trust-badges {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: var(--space-4);
+            margin-top: var(--space-8);
+        }
+        
+        .trust-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: var(--space-2) var(--space-4);
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-full);
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--color-text-secondary);
+        }
+        
+        .trust-badge i { color: var(--gold); }
+        
+        /* Install App Banner */
+        .install-banner {
+            background: linear-gradient(135deg, var(--black) 0%, var(--black-light) 100%);
+            color: white;
+            border-radius: var(--radius-xl);
+            padding: var(--space-8);
+            text-align: center;
+            margin-top: var(--space-12);
+        }
+        
+        .install-banner h2 { color: white; }
+        
+        .app-buttons { display: flex; justify-content: center; gap: var(--space-3); flex-wrap: wrap; margin-top: var(--space-4); }
+        
+        .app-btn {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: var(--space-3) var(--space-5);
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: var(--radius);
+            color: white;
+            font-weight: 600;
+            transition: all var(--transition-fast);
+        }
+        
+        .app-btn:hover { background: var(--gold); border-color: var(--gold); color: var(--black); transform: translateY(-2px); }
+        
+        /* Animations */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .animate-fade-up { animation: fadeUp 0.6s ease forwards; }
+        .delay-1 { animation-delay: 0.1s; opacity: 0; }
+        .delay-2 { animation-delay: 0.2s; opacity: 0; }
+        .delay-3 { animation-delay: 0.3s; opacity: 0; }
+        .delay-4 { animation-delay: 0.4s; opacity: 0; }
+    </style>
 </head>
 <body>
 <main th:fragment="main">
-
-    <!-- WORLD CLASS HERO -->
-    <section class="hero-world position-relative overflow-hidden">
-        <div class="hero-bg"></div>
-        <div class="container position-relative" style="z-index:2; padding: 90px 0 60px;">
-            <div class="row align-items-center g-5">
-                <div class="col-lg-6">
-                    <div class="badge rounded-pill px-3 py-2 mb-3" style="background:rgba(252,209,22,.12); color:#FCD116; border:1px solid rgba(252,209,22,.3); font-weight:600; font-size:.8rem;">
-                        🇬🇭 #1 Intercity Booking in Ghana • v5 World Class
-                    </div>
-                    <h1 class="display-3 fw-800 mb-3" style="font-family:Outfit,sans-serif; line-height:1.05;">
-                        Your Journey,<br>
-                        <span style="background:linear-gradient(135deg,#FCD116,#0F9D58);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Perfectly Booked.</span>
-                    </h1>
-                    <p class="lead mb-4" style="color:#b8b8d0; max-width:520px;">
-                        Instant seat maps • Live GPS tracking • MTN MoMo, Paystack, Apple Pay • QR boarding • 2% loyalty cashback.
-                        Book Accra ⇄ Kumasi ⇄ Cape Coast in 12 seconds.
-                    </p>
-                    <div class="d-flex flex-wrap gap-3 mb-4">
-                        <a href="/register" class="btn btn-warning btn-lg px-4 rounded-pill fw-bold shadow-gold">
-                            Start Booking — Free
-                        </a>
-                        <a href="/rides" class="btn btn-outline-light btn-lg px-4 rounded-pill">
-                            Browse Live Trips
-                        </a>
-                    </div>
-                    <div class="d-flex align-items-center gap-4 small text-muted flex-wrap">
-                        <div><strong class="text-success">4.9★</strong> 12,400+ rides</div>
-                        <div>⚡ 12s avg booking</div>
-                        <div>🔒 Paystack secured</div>
-                        <div>📱 PWA installable</div>
-                    </div>
+    <!-- Hero Section -->
+    <section class="hero" aria-labelledby="hero-title">
+        <div class="container hero-content">
+            <div class="hero-badge animate-fade-up">
+                <i class="bi bi-award-fill"></i> 🇬🇭 Ghana's #1 Intercity Booking Platform
+            </div>
+            
+            <h1 id="hero-title" class="animate-fade-up delay-1" style="font-family: 'Outfit', sans-serif;">
+                Your Journey, <span class="text-gold">Perfectly Booked.</span>
+            </h1>
+            
+            <p class="lead animate-fade-up delay-2">
+                Instant seat maps • Live GPS tracking • MTN MoMo, Paystack, Apple Pay • QR boarding • 2% loyalty cashback.
+                Book Accra ⇄ Kumasi ⇄ Cape Coast in 12 seconds.
+            </p>
+            
+            <div class="hero-actions animate-fade-up delay-3">
+                <a th:href="@{/rides}" class="btn btn-primary btn-lg btn-pill" aria-label="Start booking a ride">
+                    <i class="bi bi-bus-front"></i> Start Booking — Free
+                </a>
+                <a th:href="@{/rides}" class="btn btn-secondary btn-lg btn-pill" aria-label="Browse live trips">
+                    <i class="bi bi-map"></i> Browse Live Trips
+                </a>
+            </div>
+            
+            <!-- Stats Bar -->
+            <div class="stats-bar animate-fade-up delay-4">
+                <div class="stat-item">
+                    <div class="stat-value">47,291+</div>
+                    <div class="stat-label">Bookings Completed</div>
                 </div>
-
-                <div class="col-lg-6">
-                    <!-- LIVE SEARCH CARD -->
-                    <div class="search-super-card">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h5 class="fw-bold mb-0">Find your ride</h5>
-                            <span class="badge bg-success-subtle text-success border border-success-subtle">LIVE</span>
-                        </div>
-                        <form action="/rides" method="get" class="vstack gap-3">
-                            <div class="row g-2">
-                                <div class="col-6">
-                                    <label class="form-label small text-muted">From</label>
-                                    <select name="from" class="form-select form-select-lg search-input">
-                                        <option value="">Any city</option>
-                                        <option>Accra</option><option>Kumasi</option><option>Cape Coast</option>
-                                        <option>Takoradi</option><option>Tamale</option><option>Sunyani</option>
-                                        <option>Ho</option><option>Koforidua</option><option>Tema</option>
-                                        <option>Winneba</option><option>Techiman</option>
-                                    </select>
-                                </div>
-                                <div class="col-6">
-                                    <label class="form-label small text-muted">To</label>
-                                    <select name="to" class="form-select form-select-lg search-input">
-                                        <option value="">Any city</option>
-                                        <option>Kumasi</option><option>Accra</option><option>Cape Coast</option>
-                                        <option>Takoradi</option><option>Tamale</option><option>Sunyani</option>
-                                        <option>Ho</option><option>Koforidua</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="row g-2 align-items-end">
-                                <div class="col-6">
-                                    <label class="form-label small text-muted">Date</label>
-                                    <input type="date" name="date" class="form-control form-control-lg search-input">
-                                </div>
-                                <div class="col-6">
-                                    <label class="form-label small text-muted">Passengers</label>
-                                    <select class="form-select form-select-lg search-input">
-                                        <option>1 passenger</option><option>2 passengers</option><option>3 passengers</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <button class="btn btn-warning btn-lg w-100 fw-800 rounded-3" style="height:56px;">
-                                🔍 Search 247 live trips
-                            </button>
-                            <div class="d-flex justify-content-between small text-muted px-1">
-                                <span>✓ Instant confirmation</span>
-                                <span>✓ Free cancellation 2h</span>
-                                <span>✓ MoMo / Card</span>
-                            </div>
-                        </form>
-                    </div>
-
-                    <!-- trust strip -->
-                    <div class="d-flex gap-3 mt-3 flex-wrap small">
-                        <span class="trust-pill">MTN MoMo</span>
-                        <span class="trust-pill">Vodafone Cash</span>
-                        <span class="trust-pill">Paystack</span>
-                        <span class="trust-pill">Visa</span>
-                        <span class="trust-pill">Apple Pay</span>
-                        <span class="trust-pill">GhanaRide Pay</span>
-                    </div>
+                <div class="stat-item">
+                    <div class="stat-value">1,240+</div>
+                    <div class="stat-label">Verified Drivers</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">4.9/5</div>
+                    <div class="stat-label">Average Rating</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">12s</div>
+                    <div class="stat-label">Avg Book Time</div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- SOCIAL PROOF BAR -->
-    <section class="py-4 border-top border-bottom" style="border-color:var(--border-color)!important; background:rgba(255,255,255,.012);">
-        <div class="container">
-            <div class="row text-center g-3 small">
-                <div class="col-6 col-md-3"><div class="fw-800 fs-4 text-warning">47,291</div><div class="text-muted">Bookings completed</div></div>
-                <div class="col-6 col-md-3"><div class="fw-800 fs-4 text-success">1,240</div><div class="text-muted">Verified drivers</div></div>
-                <div class="col-6 col-md-3"><div class="fw-800 fs-4" style="color:#60a5fa;">4.9/5</div><div class="text-muted">Average rating</div></div>
-                <div class="col-6 col-md-3"><div class="fw-800 fs-4 text-warning">12s</div><div class="text-muted">Avg book time</div></div>
-            </div>
+    <!-- Search Card -->
+    <section class="container" style="margin-top: calc(var(--space-10) * -1); z-index: 10; position: relative;">
+        <div class="search-card" th:fragment="search-form">
+            <h2 class="visually-hidden">Find Your Ride</h2>
+            <form th:action="@{/rides}" method="get" class="search-fields" role="search" aria-label="Search rides">
+                <div class="form-floating">
+                    <select th:field="*{from}" class="form-select" id="fromLocation" aria-label="Departure city">
+                        <option value="">Any city</option>
+                        <option th:each="loc : ${locations}" th:value="${loc}" th:text="${loc}">Accra</option>
+                    </select>
+                    <label for="fromLocation"><i class="bi bi-geo-alt me-2"></i>Leaving from</label>
+                </div>
+                
+                <div class="form-floating">
+                    <select th:field="*{to}" class="form-select" id="toLocation" aria-label="Destination city">
+                        <option value="">Any city</option>
+                        <option th:each="loc : ${locations}" th:value="${loc}" th:text="${loc}">Kumasi</option>
+                    </select>
+                    <label for="toLocation"><i class="bi bi-geo-alt-fill me-2"></i>Going to</label>
+                </div>
+                
+                <div class="form-floating">
+                    <input type="date" th:field="*{date}" class="form-control" id="date" aria-label="Travel date">
+                    <label for="date"><i class="bi bi-calendar3 me-2"></i>Date (Optional)</label>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-lg btn-pill btn-block" style="height: 56px;">
+                    <i class="bi bi-search"></i> Search <span class="d-none d-sm-inline">247 live trips</span>
+                </button>
+            </form>
         </div>
     </section>
 
-    <!-- FEATURE GRID WORLD CLASS -->
-    <section class="py-5">
-        <div class="container py-4">
-            <div class="text-center mb-5">
-                <h2 class="fw-800 display-6">Why Ghana chooses GhanaRide</h2>
-                <p class="text-muted">Built in Accra. Loved nationwide. World-class tech.</p>
-            </div>
-            <div class="row g-4">
-                <div class="col-md-4">
-                    <div class="feature-pro h-100">
-                        <div class="feature-icon">🪑</div>
-                        <h5>Visual Seat Map</h5>
-                        <p class="text-muted small">Pick window, aisle, or extra legroom — just like an airline. Real-time seat hold for 7 minutes.</p>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="feature-pro h-100">
-                        <div class="feature-icon">📡</div>
-                        <h5>Live GPS Tracking</h5>
-                        <p class="text-muted small">See your bus moving in real-time. ETA, speed, next stop. Share live link with family.</p>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="feature-pro h-100">
-                        <div class="feature-icon">💳</div>
-                        <h5>Africa-First Payments</h5>
-                        <p class="text-muted small">MTN MoMo • Vodafone Cash • Paystack • Visa • Apple Pay • GhanaRide Wallet + 2% cashback.</p>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="feature-pro h-100">
-                        <div class="feature-icon">🎟️</div>
-                        <h5>QR Boarding Pass</h5>
-                        <p class="text-muted small">Instant QR after payment. Apple Wallet & Google Wallet ready. Driver scans in 0.4s.</p>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="feature-pro h-100">
-                        <div class="feature-icon">⚡</div>
-                        <h5>Instant Refunds</h5>
-                        <p class="text-muted small">Cancel up to 2h before departure. Money back in your GhanaRide Wallet in 45 seconds.</p>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="feature-pro h-100">
-                        <div class="feature-icon">⭐</div>
-                        <h5>Verified Reviews</h5>
-                        <p class="text-muted small">Only real passengers review. 5-star drivers get priority. Full transparency.</p>
-                    </div>
-                </div>
-            </div>
+    <!-- Payment Methods -->
+    <section class="container my-5" aria-labelledby="payments-title">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 id="payments-title" class="mb-0" style="font-family: 'Outfit', sans-serif;">Africa-First Payments</h3>
+            <span class="badge badge-primary">Secure & Instant</span>
+        </div>
+        <div class="d-flex flex-wrap justify-content-center gap-3">
+            <div class="d-flex align-items-center gap-2 px-3 py-2 bg-gold-muted border border-gold rounded-pill"><i class="bi bi-phone text-success"></i> <span class="fw-medium">MTN MoMo</span></div>
+            <div class="d-flex align-items-center gap-2 px-3 py-2 bg-gold-muted border border-gold rounded-pill"><i class="bi bi-phone text-primary"></i> <span class="fw-medium">Vodafone Cash</span></div>
+            <div class="d-flex align-items-center gap-2 px-3 py-2 bg-gold-muted border border-gold rounded-pill"><img src="https://js.paystack.co/v1/inline/gh/logo.png" alt="Paystack" height="24"></div>
+            <div class="d-flex align-items-center gap-2 px-3 py-2 bg-gold-muted border border-gold rounded-pill"><i class="bi bi-credit-card text-gold-dark"></i> <span class="fw-medium">Visa / Mastercard</span></div>
+            <div class="d-flex align-items-center gap-2 px-3 py-2 bg-gold-muted border border-gold rounded-pill"><i class="bi bi-apple text-dark"></i> <span class="fw-medium">Apple Pay</span></div>
+            <div class="d-flex align-items-center gap-2 px-3 py-2 bg-gold-muted border border-gold rounded-pill"><i class="bi bi-wallet2 text-gold-dark"></i> <span class="fw-medium">GhanaRide Pay</span></div>
         </div>
     </section>
 
-    <!-- POPULAR ROUTES -->
-    <section class="py-5" style="background:var(--bg-secondary);">
-        <div class="container">
-            <h3 class="fw-800 mb-4">Popular routes • live prices</h3>
-            <div class="row g-3">
-                <div class="col-md-6 col-lg-4" th:each="r,i : ${#lists.toList({'Accra → Kumasi|GH₵85|3h 45m|142 left today','Kumasi → Accra|GH₵85|3h 50m|118 left','Accra → Cape Coast|GH₵45|2h 10m|67 left','Cape Coast → Accra|GH₵45|2h 05m|54 left','Accra → Takoradi|GH₵70|3h 30m|39 left','Kumasi → Tamale|GH₵120|6h 15m|21 left'})}">
-                    <a th:href="@{/rides(from=${#strings.substringBefore(r,' → ')}, to=${#strings.substringBefore(#strings.substringAfter(r,' → '),'|')})}"
-                       class="route-card text-decoration-none d-block">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <div class="fw-bold text-body" th:text="${#strings.substringBefore(r,'|')}">Accra → Kumasi</div>
-                                <div class="small text-muted" th:text="${#strings.arraySplit(r,'\\|')[2]}">3h 45m</div>
-                            </div>
-                            <div class="text-end">
-                                <div class="fw-800 text-warning" th:text="${#strings.arraySplit(r,'\\|')[1]}">GH₵85</div>
-                                <div class="small" style="color:#0F9D58" th:text="${#strings.arraySplit(r,'\\|')[3]}">142 left</div>
-                            </div>
-                        </div>
-                    </a>
-                </div>
-            </div>
+    <!-- Why GhanaRide -->
+    <section class="container my-5" aria-labelledby="why-title">
+        <div class="text-center mb-5">
+            <h2 id="why-title" style="font-family: 'Outfit', sans-serif;">Why Ghana Chooses GhanaRide</h2>
+            <p class="lead text-muted">Built in Accra. Loved nationwide. World-class tech.</p>
+        </div>
+        
+        <div class="grid grid-3">
+            <article class="feature-card">
+                <div class="feature-icon"><i class="bi bi-grid-3x3-gap-fill"></i></div>
+                <h3>Visual Seat Map</h3>
+                <p class="text-muted">Pick window, aisle, or extra legroom — just like an airline. Real-time seat hold for 7 minutes.</p>
+            </article>
+            
+            <article class="feature-card">
+                <div class="feature-icon"><i class="bi bi-satellite"></i></div>
+                <h3>Live GPS Tracking</h3>
+                <p class="text-muted">See your bus moving in real-time. ETA, speed, next stop. Share live link with family.</p>
+            </article>
+            
+            <article class="feature-card">
+                <div class="feature-icon"><i class="bi bi-credit-card-2-front"></i></div>
+                <h3>Africa-First Payments</h3>
+                <p class="text-muted">MTN MoMo • Vodafone Cash • Paystack • Visa • Apple Pay • GhanaRide Wallet + 2% cashback.</p>
+            </article>
+            
+            <article class="feature-card">
+                <div class="feature-icon"><i class="bi bi-qr-code"></i></div>
+                <h3>QR Boarding Pass</h3>
+                <p class="text-muted">Instant QR after payment. Apple Wallet & Google Wallet ready. Driver scans in 0.4s.</p>
+            </article>
+            
+            <article class="feature-card">
+                <div class="feature-icon"><i class="bi bi-arrow-counterclockwise"></i></div>
+                <h3>Instant Refunds</h3>
+                <p class="text-muted">Cancel up to 2h before departure. Money back in your GhanaRide Wallet in 45 seconds.</p>
+            </article>
+            
+            <article class="feature-card">
+                <div class="feature-icon"><i class="bi bi-star-fill"></i></div>
+                <h3>Verified Reviews</h3>
+                <p class="text-muted">Only real passengers review. 5-star drivers get priority. Full transparency.</p>
+            </article>
         </div>
     </section>
 
-    <!-- APP BANNER -->
-    <section class="py-5">
-        <div class="container">
-            <div class="app-banner rounded-4 p-4 p-md-5 d-md-flex align-items-center justify-content-between">
-                <div class="mb-3 mb-md-0">
-                    <h3 class="fw-800 text-white mb-2">Get the GhanaRide App</h3>
-                    <p class="text-white-50 mb-0">Install our PWA in 1 tap. Offline search. Push notifications. 67% faster.</p>
+    <!-- Popular Routes -->
+    <section class="container my-5" aria-labelledby="routes-title">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 id="routes-title" style="font-family: 'Outfit', sans-serif;">Popular Routes · Live Prices</h2>
+            <a th:href="@{/routes}" class="btn btn-ghost">View All Routes <i class="bi bi-arrow-right"></i></a>
+        </div>
+        
+        <div class="grid grid-auto" style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));">
+            <a th:href="@{/rides(from=Accra,to=Kumasi)}" class="route-card">
+                <div class="route-icon"><i class="bi bi-arrow-left-right"></i></div>
+                <div class="route-info">
+                    <div class="route-name">Accra → Kumasi</div>
+                    <div class="route-meta"><span>3h 45m</span> · <span>142 seats left</span></div>
                 </div>
-                <button id="pwa-install-cta" class="btn btn-warning btn-lg rounded-pill px-4 fw-bold">📲 Install App</button>
-            </div>
+                <div class="route-price">GH₵85</div>
+            </a>
+            
+            <a th:href="@{/rides(from=Accra,to='Cape Coast')}" class="route-card">
+                <div class="route-icon"><i class="bi bi-arrow-left-right"></i></div>
+                <div class="route-info">
+                    <div class="route-name">Accra → Cape Coast</div>
+                    <div class="route-meta"><span>2h 15m</span> · <span>89 seats left</span></div>
+                </div>
+                <div class="route-price">GH₵65</div>
+            </a>
+            
+            <a th:href="@{/rides(from=Kumasi,to=Tamale)}" class="route-card">
+                <div class="route-icon"><i class="bi bi-arrow-left-right"></i></div>
+                <div class="route-info">
+                    <div class="route-name">Kumasi → Tamale</div>
+                    <div class="route-meta"><span>4h 30m</span> · <span>67 seats left</span></div>
+                </div>
+                <div class="route-price">GH₵120</div>
+            </a>
+            
+            <a th:href="@{/rides(from=Accra,to=Takoradi)}" class="route-card">
+                <div class="route-icon"><i class="bi bi-arrow-left-right"></i></div>
+                <div class="route-info">
+                    <div class="route-name">Accra → Takoradi</div>
+                    <div class="route-meta"><span>3h 30m</span> · <span>103 seats left</span></div>
+                </div>
+                <div class="route-price">GH₵95</div>
+            </a>
         </div>
     </section>
 
-    <style>
-        .hero-world { min-height: 72vh; }
-        .hero-bg {
-            position:absolute; inset:0;
-            background:
-                    radial-gradient(1000px 600px at 80% -10%, rgba(15,157,88,.16), transparent 60%),
-                    radial-gradient(900px 500px at -10% 30%, rgba(252,209,22,.07), transparent 55%),
-                    linear-gradient(180deg, rgba(12,12,24,.3), var(--bg-color) 85%);
-        }
-        .search-super-card{
-            background:var(--card-bg); border:1px solid var(--border-color);
-            border-radius:24px; padding:28px; box-shadow:var(--shadow-lg);
-            backdrop-filter: blur(12px);
-        }
-        .search-input{ background: rgba(255,255,255,.035)!important; border-color: var(--border-color)!important; }
-        .trust-pill{
-            background:rgba(255,255,255,.04); border:1px solid var(--border-color);
-            padding:.35rem .75rem; border-radius:9999px; color:var(--text-muted); font-size:.78rem; font-weight:600;
-        }
-        .feature-pro{
-            background:var(--card-bg); border:1px solid var(--border-color); border-radius:20px; padding:26px;
-            transition:.25s ease;
-        }
-        .feature-pro:hover{ transform:translateY(-4px); border-color:rgba(252,209,22,.25); box-shadow:var(--shadow-lg);}
-        .feature-icon{ font-size:2rem; margin-bottom:.75rem;}
-        .route-card{
-            background:var(--card-bg); border:1px solid var(--border-color); border-radius:14px; padding:16px 18px;
-            transition:.2s;
-        }
-        .route-card:hover{ border-color:var(--ghana-gold); transform:translateY(-2px); }
-        .app-banner{
-            background:linear-gradient(135deg,#0F9D58 0%, #0a6a3b 55%, #0c1b14 100%);
-            border:1px solid rgba(252,209,22,.2);
-        }
-        .fw-800{ font-weight:800!important; }
-    </style>
+    <!-- Trust Badges -->
+    <section class="container mb-5" aria-labelledby="trust-title">
+        <h3 id="trust-title" class="visually-hidden">Trusted by thousands</h3>
+        <div class="trust-badges">
+            <div class="trust-badge"><i class="bi bi-shield-check"></i> Paystack Secured</div>
+            <div class="trust-badge"><i class="bi bi-phone"></i> MTN MoMo Verified</div>
+            <div class="trust-badge"><i class="bi bi-check-circle"></i> Licensed by NCA Ghana</div>
+            <div class="trust-badge"><i class="bi bi-lock"></i> 256-bit Encryption</div>
+            <div class="trust-badge"><i class="bi bi-clock"></i> 24/7 Support</div>
+        </div>
+    </section>
 
-    <script>
-        document.addEventListener('DOMContentLoaded',()=>{
-            const d=document.querySelector('input[name="date"]');
-            if(d && !d.value) { const t=new Date(); t.setDate(t.getDate()+1); d.value=t.toISOString().split('T')[0]; }
-            const btn=document.getElementById('pwa-install-cta');
-            if(btn && window.pwaPrompt){ btn.onclick=()=>window.pwaPrompt.prompt(); }
-        });
-    </script>
-
+    <!-- Install App Banner -->
+    <section class="container mb-5">
+        <div class="install-banner">
+            <h2 style="font-family: 'Outfit', sans-serif;">Get the GhanaRide App</h2>
+            <p class="lead mb-0">Install our PWA in 1 tap. Offline search. Push notifications. 67% faster.</p>
+            <div class="app-buttons">
+                <button id="installAppBtn" class="app-btn d-none" aria-label="Install GhanaRide app">
+                    <i class="bi bi-download"></i> Install App
+                </button>
+                <a href="#" class="app-btn"><i class="bi bi-phone"></i> iOS Shortcut</a>
+                <a href="#" class="app-btn"><i class="bi bi-android2"></i> Android</a>
+            </div>
+        </div>
+    </section>
 </main>
 </body>
 </html>

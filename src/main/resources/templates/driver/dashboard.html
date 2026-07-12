@@ -1,498 +1,575 @@
 <!DOCTYPE html>
-<html th:replace="~{layout :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" th:replace="~{layout :: layout(~{::title}, ~{::main})}">
 <head>
-    <title>Driver Dashboard - GhanaRide</title>
+    <title>Driver Dashboard — GhanaRide</title>
+    <meta name="description" content="Driver dashboard for GhanaRide - manage trips, track earnings, view passengers">
+    
+    <style th:inline="css">
+        .dashboard-layout {
+            display: flex;
+            min-height: calc(100vh - var(--header-height));
+        }
+        
+        .driver-sidebar {
+            width: var(--sidebar-width);
+            height: calc(100vh - var(--header-height));
+            position: fixed;
+            top: var(--header-height);
+            left: 0;
+            background: var(--color-surface);
+            border-right: 1px solid var(--color-border);
+            overflow-y: auto;
+            z-index: var(--z-fixed);
+            transition: width var(--transition);
+        }
+        
+        .driver-main {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            min-height: calc(100vh - var(--header-height));
+            padding: var(--space-6);
+            background: var(--color-bg);
+            transition: margin-left var(--transition);
+        }
+        
+        @media (max-width: 992px) {
+            .driver-sidebar {
+                transform: translateX(-100%);
+                width: var(--sidebar-width);
+            }
+            .driver-sidebar.open {
+                transform: translateX(0);
+            }
+            .driver-main { margin-left: 0; }
+        }
+        
+        .sidebar-header {
+            padding: var(--space-4);
+            border-bottom: 1px solid var(--color-border);
+        }
+        
+        .driver-info {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+        }
+        
+        .driver-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius);
+            background: var(--gold-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gold-dark);
+            font-size: 1.5rem;
+        }
+        
+        .driver-name { font-weight: 600; }
+        .driver-status {
+            font-size: 0.75rem;
+            color: var(--color-success);
+            display: flex;
+            align-items: center;
+            gap: var(--space-1);
+        }
+        
+        .sidebar-nav { padding: var(--space-4); }
+        .sidebar-nav-title {
+            font-size: 0.6875rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--color-text-muted);
+            padding: 0 var(--space-3);
+            margin-bottom: var(--space-2);
+        }
+        
+        .sidebar-nav-link {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            padding: var(--space-3);
+            border-radius: var(--radius);
+            color: var(--color-text-secondary);
+            font-weight: 500;
+            text-decoration: none;
+            transition: all var(--transition-fast);
+        }
+        
+        .sidebar-nav-link:hover,
+        .sidebar-nav-link.active {
+            background: var(--gold-muted);
+            color: var(--gold-dark);
+        }
+        
+        .sidebar-nav-link i {
+            font-size: 1.125rem;
+            width: 24px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        
+        .sidebar-footer {
+            padding: var(--space-4);
+            border-top: 1px solid var(--color-border);
+        }
+        
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: var(--space-4);
+            margin-bottom: var(--space-6);
+        }
+        
+        .stat-card {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            padding: var(--space-5);
+            transition: all var(--transition);
+        }
+        
+        .stat-card:hover {
+            box-shadow: var(--shadow);
+            border-color: var(--color-border-strong);
+        }
+        
+        .stat-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius);
+            font-size: 1.5rem;
+            margin-bottom: var(--space-3);
+        }
+        
+        .stat-icon-primary { background: var(--gold-muted); color: var(--gold-dark); }
+        .stat-icon-success { background: var(--color-success-bg); color: var(--color-success); }
+        .stat-icon-warning { background: var(--color-warning-bg); color: var(--color-warning); }
+        .stat-icon-info { background: var(--color-info-bg); color: var(--color-info); }
+        
+        .stat-value {
+            font-family: var(--font-display);
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--color-text);
+            line-height: 1.2;
+        }
+        
+        .stat-label {
+            font-size: 0.8125rem;
+            color: var(--color-text-muted);
+            margin-top: var(--space-1);
+        }
+        
+        .stat-trend {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-1);
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: var(--space-2);
+        }
+        
+        .stat-trend.up { color: var(--color-success); }
+        .stat-trend.down { color: var(--color-error); }
+        
+        /* Section Header */
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: var(--space-3);
+            margin-bottom: var(--space-4);
+        }
+        
+        .section-title { margin: 0; font-size: 1.25rem; }
+        
+        /* Trip Cards */
+        .trip-card {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            transition: all var(--transition);
+        }
+        
+        .trip-card:hover {
+            box-shadow: var(--shadow);
+            border-color: var(--color-border-strong);
+        }
+        
+        .trip-card-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            padding: var(--space-4);
+            border-bottom: 1px solid var(--color-border);
+        }
+        
+        .trip-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-1);
+            padding: 0.25rem 0.625rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: var(--radius-full);
+            white-space: nowrap;
+        }
+        
+        .badge-pending { background: var(--color-warning-bg); color: var(--color-warning); }
+        .badge-approved { background: var(--color-success-bg); color: var(--color-success); }
+        .badge-full { background: var(--color-error-bg); color: var(--color-error); }
+        .badge-completed { background: var(--color-surface-hover); color: var(--color-text-muted); }
+        
+        .trip-route {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--space-3);
+            padding: var(--space-4);
+        }
+        
+        .trip-route-line {
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--space-1);
+        }
+        
+        .trip-route-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            z-index: 1;
+        }
+        
+        .trip-route-dot:first-child { background: var(--green); }
+        .trip-route-dot:last-child { background: var(--red); }
+        
+        .trip-route-line::before {
+            content: '';
+            width: 2px;
+            height: 24px;
+            background: var(--color-border);
+        }
+        
+        .trip-route-info { flex: 1; min-width: 0; }
+        .trip-route-from { font-weight: 600; font-size: 1rem; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .trip-route-to { font-weight: 600; font-size: 1rem; line-height: 1.4; color: var(--color-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        .trip-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--space-2);
+            padding: 0 var(--space-4) var(--space-4);
+        }
+        
+        .trip-detail {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            font-size: 0.8125rem;
+            color: var(--color-text-secondary);
+        }
+        
+        .trip-detail i {
+            font-size: 1rem;
+            color: var(--gold);
+            width: 18px;
+            text-align: center;
+        }
+        
+        .trip-footer {
+            display: flex;
+            gap: var(--space-2);
+            padding: var(--space-4);
+            border-top: 1px solid var(--color-border);
+        }
+        
+        .trip-footer .btn { flex: 1; }
+        
+        /* Earnings Chart Placeholder */
+        .earnings-chart {
+            height: 300px;
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--color-text-muted);
+        }
+        
+        /* Mobile Sidebar Toggle */
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            bottom: var(--space-6);
+            right: var(--space-6);
+            z-index: var(--z-toast);
+        }
+        
+        @media (max-width: 992px) {
+            .sidebar-toggle { display: block; }
+        }
+    </style>
 </head>
 <body>
-<main th:fragment="main">
-
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h2 class="text-light mb-1">Driver Dashboard</h2>
-            <p class="text-muted mb-0">Welcome back, <span class="text-warning" th:text="${currentUser.fullName}">Driver</span></p>
+<main th:fragment="main" class="dashboard-layout">
+    <!-- Sidebar -->
+    <aside class="driver-sidebar" id="driverSidebar" role="navigation" aria-label="Driver navigation">
+        <div class="sidebar-header">
+            <div class="driver-info">
+                <div class="driver-avatar">
+                    <i class="bi bi-car-front"></i>
+                </div>
+                <div>
+                    <div class="driver-name" th:text="${currentUser.fullName}">Driver Name</div>
+                    <div class="driver-status">
+                        <span class="badge bg-success"><i class="bi bi-circle-fill me-1"></i> Online</span>
+                    </div>
+                </div>
+            </div>
         </div>
-        <!-- Block Add Trip if driver has active trip -->
-        <div>
-            <span th:if="${hasActiveTrip}"
-                  class="btn btn-secondary disabled"
-                  title="You already have an active trip">
-                <i class="bi bi-plus-circle"></i> Add New Trip
-            </span>
-            <a th:if="${!hasActiveTrip}"
-               th:href="@{/driver/add-trip}"
-               class="btn btn-warning">
-                <i class="bi bi-plus-circle"></i> Add New Trip
+        
+        <nav class="sidebar-nav">
+            <div class="sidebar-nav-title">Dashboard</div>
+            <a th:href="@{/driver/dashboard}" class="sidebar-nav-link active" aria-current="page">
+                <i class="bi bi-speedometer2"></i> Overview
+            </a>
+            <a th:href="@{/driver/earnings}" class="sidebar-nav-link">
+                <i class="bi bi-graph-up"></i> Earnings
+            </a>
+            
+            <div class="sidebar-nav-title">Trips</div>
+            <a th:href="@{/driver/add-trip}" class="sidebar-nav-link">
+                <i class="bi bi-plus-circle"></i> Add Trip
+            </a>
+            <a th:href="@{/driver/trips}" class="sidebar-nav-link">
+                <i class="bi bi-list-ul"></i> My Trips
+            </a>
+            <a th:href="@{/driver/passengers}" class="sidebar-nav-link">
+                <i class="bi bi-people"></i> Passengers
+            </a>
+            
+            <div class="sidebar-nav-title">Account</div>
+            <a th:href="@{/driver/profile}" class="sidebar-nav-link">
+                <i class="bi bi-person"></i> Profile
+            </a>
+            <a th:href="@{/driver/vehicle}" class="sidebar-nav-link">
+                <i class="bi bi-car-front"></i> Vehicle
+            </a>
+            <a th:href="@{/driver/documents}" class="sidebar-nav-link">
+                <i class="bi bi-file-earmark-text"></i> Documents
+            </a>
+            <a th:href="@{/wallet}" class="sidebar-nav-link">
+                <i class="bi bi-wallet2" style="color: var(--gold);"></i> Wallet
+            </a>
+        </nav>
+        
+        <div class="sidebar-footer">
+            <a th:href="@{/logout}" class="btn btn-danger w-100">
+                <i class="bi bi-box-arrow-right me-2"></i> Logout
             </a>
         </div>
-    </div>
-
-    <!-- Active Trip Warning -->
-    <div th:if="${hasActiveTrip}" class="alert alert-warning d-flex align-items-center gap-2 mb-4">
-        <i class="bi bi-info-circle-fill"></i>
-        You have an active trip. Delete or complete it before adding a new one.
-    </div>
-
-    <!-- Flash Messages -->
-    <div th:if="${success}" class="alert alert-success d-flex align-items-center gap-2 mb-4">
-        <i class="bi bi-check-circle-fill"></i>
-        <span th:text="${success}"></span>
-    </div>
-    <div th:if="${error}" class="alert alert-danger d-flex align-items-center gap-2 mb-4">
-        <i class="bi bi-exclamation-triangle-fill"></i>
-        <span th:text="${error}"></span>
-    </div>
-
-    <!-- Stats -->
-    <div class="row mb-4 g-4">
-        <div class="col-md-4">
-            <div class="stat-card border">
-                <i class="bi bi-signpost-2 stat-icon text-muted"></i>
-                <h6 class="text-muted text-uppercase mb-2">Total Trips</h6>
-                <div class="stat-value text-light" th:text="${#lists.size(trips)}">0</div>
+    </aside>
+    
+    <!-- Main Content -->
+    <div class="driver-main">
+        <div class="container-fluid px-4">
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-5">
+                <div>
+                    <h1 class="mb-1" style="font-family: 'Outfit', sans-serif;">Driver Dashboard</h1>
+                    <p class="text-muted mb-0">Welcome back, <span th:text="${currentUser.fullName}">Driver</span>! Here's your overview.</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a th:href="@{/driver/add-trip}" class="btn btn-primary btn-pill">
+                        <i class="bi bi-plus-circle me-2"></i> Add Trip
+                    </a>
+                </div>
             </div>
-        </div>
-        <div class="col-md-4">
-            <div class="stat-card" style="border-bottom: 3px solid var(--ghana-green)">
-                <i class="bi bi-check-circle stat-icon text-success"></i>
-                <h6 class="text-muted text-uppercase mb-2">Approved Trips</h6>
-                <div class="stat-value text-success"
-                     th:text="${#lists.size(trips.?[status.name() == 'APPROVED'])}">0</div>
+            
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon stat-icon-primary"><i class="bi bi-calendar-check"></i></div>
+                    <div class="stat-value" th:text="${totalTrips ?: 0}">0</div>
+                    <div class="stat-label">Total Trips</div>
+                    <div class="stat-trend up"><i class="bi bi-arrow-up"></i> +12% this month</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon stat-icon-success"><i class="bi bi-check-circle"></i></div>
+                    <div class="stat-value" th:text="${approvedTrips ?: 0}">0</div>
+                    <div class="stat-label">Active Trips</div>
+                    <div class="stat-trend up"><i class="bi bi-arrow-up"></i> +8% this month</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon stat-icon-warning"><i class="bi bi-people"></i></div>
+                    <div class="stat-value" th:text="${totalPassengers ?: 0}">0</div>
+                    <div class="stat-label">Passengers This Month</div>
+                    <div class="stat-trend up"><i class="bi bi-arrow-up"></i> +23% this month</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon stat-icon-info"><i class="bi bi-currency-exchange"></i></div>
+                    <div class="stat-value" th:text="'GH₵' + ${#numbers.formatDecimal(totalEarnings ?: 0, 1, 2, 'COMMA')}">GH₵0.00</div>
+                    <div class="stat-label">Total Earnings</div>
+                    <div class="stat-trend up"><i class="bi bi-arrow-up"></i> +31% this month</div>
+                </div>
             </div>
-        </div>
-        <div class="col-md-4">
-            <div class="stat-card" style="border-bottom: 3px solid var(--ghana-gold)">
-                <i class="bi bi-hourglass-split stat-icon text-warning"></i>
-                <h6 class="text-muted text-uppercase mb-2">Pending Trips</h6>
-                <div class="stat-value text-warning"
-                     th:text="${#lists.size(trips.?[status.name() == 'PENDING'])}">0</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Trips Table -->
-    <h3 class="mb-3 text-light">My Trips</h3>
-
-    <div th:if="${#lists.isEmpty(trips)}" class="alert alert-info">
-        You haven't added any trips yet. Click "Add New Trip" to get started.
-    </div>
-
-    <div th:if="${not #lists.isEmpty(trips)}" class="card border-0 shadow" style="background: var(--card-bg);">
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table   table-hover align-middle mb-0">
-                    <thead style="background: rgba(252,209,22,0.1); border-bottom: 2px solid rgba(252,209,22,0.3);">
-                    <tr>
-                        <th class="text-warning py-3 ps-3">Route</th>
-                        <th class="text-warning py-3">Car</th>
-                        <th class="text-warning py-3">Departure</th>
-                        <th class="text-warning py-3">Price / Seats</th>
-                        <th class="text-warning py-3">Status</th>
-                        <th class="text-warning py-3">Bookings</th>
-                        <th class="text-warning py-3">Actions</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr th:each="trip : ${trips}" style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-
-                        <!-- Route -->
-                        <td class="ps-3">
-                            <div class="fw-bold text-light">
-                                <i class="bi bi-geo-alt text-warning me-1"></i>
-                                <span th:text="${trip.fromLocation}">From</span>
-                            </div>
-                            <div class="small text-muted">
-                                <i class="bi bi-geo-alt-fill text-danger me-1"></i>
-                                <span th:text="${trip.toLocation}">To</span>
-                            </div>
-                            <div class="small text-muted mt-1" th:if="${trip.pickupStation != null and !trip.pickupStation.isEmpty()}">
-                                <i class="bi bi-geo me-1"></i>
-                                <span th:text="${trip.pickupStation}">Station</span>
-                            </div>
-                        </td>
-
-                        <!-- Car -->
-                        <td>
-                            <div class="text-light" th:text="${trip.car.carBrand}">Car</div>
-                            <div class="small text-muted" th:text="${trip.car.numberPlate}">Plate</div>
-                        </td>
-
-                        <!-- Departure -->
-                        <td>
-                            <div class="text-light small"
-                                 th:text="${#temporals.format(trip.departureTime, 'dd MMM yyyy')}">Date</div>
-                            <div class="small text-warning"
-                                 th:text="${#temporals.format(trip.departureTime, 'h:mm a')}">Time</div>
-                        </td>
-
-                        <!-- Price / Seats -->
-                        <td>
-                            <div class="text-success fw-bold">
-                                GHC <span th:text="${trip.tripAmount}">0</span>
-                            </div>
-                            <div class="small text-muted">
-                                <span th:text="${trip.totalSeats - trip.availableSeats}">0</span>/
-                                <span th:text="${trip.totalSeats}">0</span> booked
-                            </div>
-                        </td>
-
-                        <!-- Status -->
-                        <td>
-                            <span th:if="${trip.status.name() == 'PENDING'}"
-                                  class="badge rounded-pill"
-                                  style="background: rgba(252,209,22,0.2); color: #fcd116; border: 1px solid #fcd116;">
-                                <i class="bi bi-hourglass me-1"></i>Pending
-                            </span>
-                            <span th:if="${trip.status.name() == 'APPROVED'}"
-                                  class="badge rounded-pill"
-                                  style="background: rgba(0,200,83,0.2); color: #00c853; border: 1px solid #00c853;">
-                                <i class="bi bi-check me-1"></i>Approved
-                            </span>
-                            <span th:if="${trip.status.name() == 'REJECTED'}"
-                                  class="badge rounded-pill"
-                                  style="background: rgba(206,17,38,0.2); color: #ff5252; border: 1px solid #ff5252;">
-                                <i class="bi bi-x me-1"></i>Rejected
-                            </span>
-                            <span th:if="${trip.status.name() == 'FULL'}"
-                                  class="badge rounded-pill"
-                                  style="background: rgba(255,255,255,0.1); color: #94a3b8; border: 1px solid #94a3b8;">
-                                <i class="bi bi-slash-circle me-1"></i>Full
-                            </span>
-                        </td>
-
-                        <!-- Bookings Count -->
-                        <td>
-                            <span class="badge rounded-pill"
-                                  style="background: rgba(59,130,246,0.2); color: #3b82f6; border: 1px solid #3b82f6;"
-                                  th:text="${#lists.size(bookingsMap.get(trip.id))}">0</span>
-                        </td>
-
-                        <!-- Actions -->
-                        <td>
-                            <div class="d-flex gap-1 flex-wrap">
-
-                                <!-- View Passengers -->
-                                <a th:href="@{/driver/trips/{id}/passengers(id=${trip.id})}"
-                                   class="btn btn-sm btn-info text-light"
-                                   title="View Passengers">
-                                    <i class="bi bi-people-fill"></i>
+            
+            <!-- Quick Actions & Earnings -->
+            <div class="row g-4 mb-5">
+                <div class="col-lg-8">
+                    <div class="section-header">
+                        <h2 class="section-title">Earnings Overview (30 Days)</h2>
+                    </div>
+                    <div class="earnings-chart">
+                        <div class="text-center p-4">
+                            <i class="bi bi-bar-chart fs-1 text-muted mb-3"></i>
+                            <p class="mb-0">Interactive earnings chart (Chart.js integration ready)</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="mb-0">Quick Actions</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-grid gap-2">
+                                <a th:href="@{/driver/add-trip}" class="btn btn-primary btn-pill">
+                                    <i class="bi bi-plus-circle me-2"></i> Add New Trip
                                 </a>
-
-                                <!-- Real-Time Tools (Chat & Broadcast Location) -->
-                                <button type="button"
-                                        class="btn btn-sm btn-primary text-light"
-                                        title="Chat & Location"
-                                        th:if="${trip.status.name() == 'APPROVED' or trip.status.name() == 'FULL'}"
-                                        th:data-trip="${trip.id}"
-                                        th:data-route="${trip.fromLocation + ' → ' + trip.toLocation}"
-                                        onclick="openRealTimeModal(this)">
-                                    <i class="bi bi-broadcast"></i>
-                                </button>
-
-                                <!-- Mark as Full (only for APPROVED trips) -->
-                                <form th:if="${trip.status.name() == 'APPROVED'}"
-                                      th:action="@{/driver/trips/{id}/full(id=${trip.id})}"
-                                      method="post">
-                                    <button type="submit"
-                                            class="btn btn-sm btn-warning text-light"
-                                            title="Mark as Full"
-                                            onclick="return confirm('Mark this trip as full? Users will see it as unavailable.')">
-                                        <i class="bi bi-slash-circle"></i>
-                                    </button>
-                                </form>
-
-                                <!-- Cancel Trip Button -->
-                                <button type="button"
-                                        class="btn btn-sm btn-danger"
-                                        title="Cancel Trip"
-                                        th:data-id="${trip.id}"
-                                        th:data-route="${trip.fromLocation + ' → ' + trip.toLocation}"
-                                        onclick="confirmCancelTrip(this)">
-                                    <i class="bi bi-x-circle"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- Cancel Trip Modal -->
-    <div class="modal fade" id="cancelTripModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0"
-                 style="background: var(--card-bg); border: 1px solid rgba(206,17,38,0.3) !important;">
-                <form id="cancelTripForm" method="post" action="">
-                    <div class="modal-header border-0 pb-0">
-                        <h5 class="modal-title text-danger">
-                            <i class="bi bi-exclamation-triangle me-2"></i>Cancel Trip
-                        </h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p class="text-light">Are you sure you want to cancel this trip?</p>
-                        <div class="p-3 rounded mb-3"
-                             style="background: rgba(206,17,38,0.1); border: 1px solid rgba(206,17,38,0.2);">
-                            <strong class="text-warning" id="cancelTripRoute">Route</strong>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="cancelReason" class="form-label text-light">Reason for Cancellation</label>
-                            <select class="form-select bg-dark text-light border-secondary" id="cancelReason" name="cancelReason" required>
-                                <option value="" selected disabled>Select a reason...</option>
-                                <option value="Vehicle engine failure">Vehicle engine failure</option>
-                                <option value="Vehicle breakdown">Vehicle breakdown</option>
-                                <option value="Driver health issue">Driver health issue</option>
-                                <option value="Bad weather conditions">Bad weather conditions</option>
-                                <option value="Other">Other</option>
-                            </select>
-                        </div>
-
-                        <div class="mb-3" id="otherReasonDiv" style="display: none;">
-                            <label for="cancelReasonDetails" class="form-label text-light">Please specify</label>
-                            <textarea class="form-control bg-dark text-light border-secondary" id="cancelReasonDetails" name="cancelReasonDetails" rows="2"></textarea>
-                        </div>
-
-                        <p class="text-muted small mb-0">
-                            <i class="bi bi-info-circle me-1"></i>
-                            If this trip has bookings and departure is less than 3 hours away, cancellation is not allowed.
-                        </p>
-                    </div>
-                    <div class="modal-footer border-0 pt-0">
-                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                            <i class="bi bi-x me-1"></i>Close
-                        </button>
-                        <button type="submit" class="btn btn-danger">
-                            <i class="bi bi-x-circle me-1"></i>Cancel Trip
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        function confirmCancelTrip(btn) {
-            const tripId = btn.getAttribute('data-id');
-            const route = btn.getAttribute('data-route');
-
-            document.getElementById('cancelTripRoute').textContent = route;
-            document.getElementById('cancelTripForm').action = '/driver/trips/' + tripId + '/cancel';
-
-            new bootstrap.Modal(document.getElementById('cancelTripModal')).show();
-        }
-
-        document.getElementById('cancelReason').addEventListener('change', function() {
-            if (this.value === 'Other') {
-                document.getElementById('otherReasonDiv').style.display = 'block';
-                document.getElementById('cancelReasonDetails').required = true;
-            } else {
-                document.getElementById('otherReasonDiv').style.display = 'none';
-                document.getElementById('cancelReasonDetails').required = false;
-            }
-        });
-    </script>
-
-    <!-- REAL-TIME DRIVER MODAL (Location & Chat) -->
-    <div class="modal fade" id="realTimeModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content border-0 shadow-lg bg-card text-light" style="background: var(--card-bg);">
-                <div class="modal-header border-secondary-subtle">
-                    <h5 class="modal-title fw-bold">
-                        <i class="bi bi-broadcast me-2 text-primary"></i> Live Trip: <span id="rtRouteText">Route</span>
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body p-0">
-                    <div class="row g-0">
-                        <!-- Location Control Side -->
-                        <div class="col-md-5 p-4 border-end border-secondary-subtle bg-dark bg-opacity-50">
-                            <h6 class="text-warning mb-3"><i class="bi bi-geo-alt-fill me-2"></i>Location Broadcasting</h6>
-                            <p class="small text-muted">Turn this on when you start driving so passengers can track your live location on the map.</p>
-
-                            <div class="form-check form-switch fs-5 mb-3">
-                                <input class="form-check-input" type="checkbox" role="switch" id="broadcastToggle">
-                                <label class="form-check-label ms-2 text-light" for="broadcastToggle">Share Location</label>
-                            </div>
-
-                            <div id="broadcastStatus" class="alert alert-secondary small py-2 d-none">
-                                <i class="bi bi-hourglass-split me-1"></i> Waiting for GPS...
-                            </div>
-                        </div>
-
-                        <!-- Chat Side -->
-                        <div class="col-md-7 d-flex flex-column h-100" style="min-height: 400px;">
-                            <div class="p-3 bg-dark bg-opacity-25 border-bottom border-secondary-subtle">
-                                <h6 class="mb-0 text-info"><i class="bi bi-chat-dots-fill me-2"></i>Passenger Chat</h6>
-                            </div>
-                            <div class="p-3 flex-grow-1" id="driverChatMessages" style="overflow-y: auto; height: 300px;">
-                                <!-- Chat messages appear here -->
-                            </div>
-                            <div class="p-3 border-top border-secondary-subtle bg-dark bg-opacity-50">
-                                <form id="driverChatForm" class="d-flex m-0">
-                                    <input type="text" id="driverChatInput" class="form-control bg-dark text-light border-secondary rounded-pill me-2" placeholder="Message passengers..." required autocomplete="off">
-                                    <button type="submit" class="btn btn-primary rounded-circle shadow-sm" style="width: 40px; height: 40px; padding: 0;">
-                                        <i class="bi bi-send-fill"></i>
-                                    </button>
-                                </form>
+                                <a th:href="@{/driver/trips}" class="btn btn-secondary btn-pill">
+                                    <i class="bi bi-list-ul me-2"></i> Manage Trips
+                                </a>
+                                <a th:href="@{/driver/passengers}" class="btn btn-secondary btn-pill">
+                                    <i class="bi bi-people me-2"></i> View Passengers
+                                </a>
+                                <a th:href="@{/driver/earnings}" class="btn btn-secondary btn-pill">
+                                    <i class="bi bi-graph-up me-2"></i> View Earnings
+                                </a>
+                                <a th:href="@{/wallet}" class="btn btn-secondary btn-pill">
+                                    <i class="bi bi-wallet2 me-2" style="color: var(--gold);"></i> My Wallet
+                                </a>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+            
+            <!-- My Trips -->
+            <div class="section-header">
+                <h2 class="section-title">My Trips</h2>
+                <a th:href="@{/driver/trips}" class="btn btn-sm btn-ghost">View All</a>
+            </div>
+            
+            <div th:if="${driverTrips == null or driverTrips.isEmpty()}" class="card">
+                <div class="card-body text-center py-5">
+                    <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 80px; height: 80px; background: var(--gold-muted);">
+                        <i class="bi bi-plus-circle fs-1 text-gold"></i>
+                    </div>
+                    <h4 class="fw-bold">No trips yet</h4>
+                    <p class="text-muted">Start earning by adding your first trip</p>
+                    <a th:href="@{/driver/add-trip}" class="btn btn-primary mt-2">
+                        <i class="bi bi-plus-circle me-2"></i> Add Trip
+                    </a>
+                </div>
+            </div>
+            
+            <div th:unless="${driverTrips == null or driverTrips.isEmpty()}" class="d-flex flex-column gap-3">
+                <div th:each="trip : ${driverTrips}" class="trip-card">
+                    <div class="trip-card-header">
+                        <div>
+                            <span class="trip-badge" 
+                                  th:classappend="${trip.status.name() == 'PENDING' ? 'badge-pending' : (trip.status.name() == 'APPROVED' ? 'badge-approved' : (trip.status.name() == 'FULL' ? 'badge-full' : 'badge-completed'))}"
+                                  th:text="${trip.status.name()}">Pending</span>
+                        </div>
+                        <div class="trip-price" th:text="'GH₵ ' + ${#numbers.formatDecimal(trip.tripAmount, 1, 2, 'COMMA')}">GH₵ 0.00</div>
+                    </div>
+                    
+                    <div class="trip-route">
+                        <div class="trip-route-line">
+                            <div class="trip-route-dot"></div>
+                            <div class="trip-route-dot"></div>
+                        </div>
+                        <div class="trip-route-info">
+                            <div class="trip-route-from" th:text="${trip.fromLocation}">From</div>
+                            <div class="trip-route-to" th:text="${trip.toLocation}">To</div>
+                        </div>
+                    </div>
+                    
+                    <div class="trip-details">
+                        <div class="trip-detail">
+                            <i class="bi bi-calendar3"></i>
+                            <span th:text="${#temporals.format(trip.departureTime, 'MMM dd, yyyy')}">Date</span>
+                        </div>
+                        <div class="trip-detail">
+                            <i class="bi bi-clock"></i>
+                            <span th:text="${#temporals.format(trip.departureTime, 'HH:mm')}">Time</span>
+                        </div>
+                        <div class="trip-detail">
+                            <i class="bi bi-car-front"></i>
+                            <span th:text="${trip.car != null ? trip.car.model : 'Standard'}">Car</span>
+                        </div>
+                        <div class="trip-detail">
+                            <i class="bi bi-people"></i>
+                            <span th:text="${trip.availableSeats} + '/' + ${trip.totalSeats} + ' seats'">Seats</span>
+                        </div>
+                    </div>
+                    
+                    <div class="trip-footer">
+                        <a th:href="@{/driver/trip-passengers/{id}(id=${trip.id})}" class="btn btn-ghost btn-pill">
+                            <i class="bi bi-people me-1"></i> Passengers
+                        </a>
+                        <a th:if="${trip.status.name() == 'PENDING'}" th:href="@{/driver/edit-trip/{id}(id=${trip.id})}" class="btn btn-secondary btn-pill">Edit</a>
+                        <button th:if="${trip.status.name() == 'PENDING'}" class="btn btn-danger btn-pill" data-bs-toggle="modal" data-bs-target="#deleteTripModal" th:data-trip-id="${trip.id}">Delete</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-
-    <!-- SockJS & STOMP -->
-    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
-
+    
+    <!-- Mobile Sidebar Toggle -->
+    <button class="btn btn-primary sidebar-toggle rounded-circle shadow-lg" id="sidebarToggle" aria-label="Toggle navigation" style="width: 56px; height: 56px;">
+        <i class="bi bi-list fs-4"></i>
+    </button>
+    
     <script th:inline="javascript">
-        /*<![CDATA[*/
-        const driverName = /*[[${currentUser.fullName != null ? currentUser.fullName : currentUser.username}]]*/ 'Driver';
-        /*]]>*/
-
-        let stompClient = null;
-        let activeRtTripId = null;
-        let watchId = null;
-
-        // Modal closed -> stop everything
-        document.getElementById('realTimeModal').addEventListener('hidden.bs.modal', function () {
-            stopBroadcasting();
-            document.getElementById('broadcastToggle').checked = false;
-            if (stompClient !== null) {
-                stompClient.disconnect();
-            }
-            activeRtTripId = null;
-        });
-
-        // Toggle Switch Event
-        document.getElementById('broadcastToggle').addEventListener('change', function(e) {
-            const statusDiv = document.getElementById('broadcastStatus');
-            if (this.checked) {
-                statusDiv.classList.remove('d-none', 'alert-secondary', 'alert-danger');
-                statusDiv.classList.add('alert-warning');
-                statusDiv.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Requesting GPS access...';
-                startBroadcasting();
-            } else {
-                stopBroadcasting();
-                statusDiv.classList.add('d-none');
-            }
-        });
-
-        function openRealTimeModal(btn) {
-            const tripId = btn.getAttribute('data-trip');
-            const route = btn.getAttribute('data-route');
-            activeRtTripId = tripId;
-
-            document.getElementById('rtRouteText').innerText = route;
-            document.getElementById('driverChatMessages').innerHTML = ''; // Clear old chat
-
-            new bootstrap.Modal(document.getElementById('realTimeModal')).show();
-
-            // Connect WebSocket
-            const socket = new SockJS('/ws-ghanaride');
-            stompClient = Stomp.over(socket);
-            stompClient.debug = null;
-
-            stompClient.connect({}, function (frame) {
-                // Subscribe to chat
-                stompClient.subscribe('/topic/chat/' + tripId, function(message) {
-                    const chat = JSON.parse(message.body);
-                    appendDriverMessage(chat.senderName, chat.content, chat.senderName === driverName);
+        // Sidebar Toggle for Mobile
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('driverSidebar');
+            const toggle = document.getElementById('sidebarToggle');
+            
+            if (toggle && sidebar) {
+                toggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('open');
                 });
-            });
-        }
-
-        // Send Chat
-        document.getElementById('driverChatForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const input = document.getElementById('driverChatInput');
-            const msgText = input.value.trim();
-            if (msgText && stompClient && stompClient.connected && activeRtTripId) {
-                const chatMessage = {
-                    tripId: activeRtTripId,
-                    senderName: driverName,
-                    content: msgText,
-                    type: 'CHAT'
-                };
-                stompClient.send("/app/chat", {}, JSON.stringify(chatMessage));
-                input.value = '';
+                
+                // Close sidebar when clicking outside on mobile
+                document.addEventListener('click', function(e) {
+                    if (window.innerWidth <= 992 && 
+                        sidebar.classList.contains('open') && 
+                        !sidebar.contains(e.target) && 
+                        e.target !== toggle) {
+                        sidebar.classList.remove('open');
+                    }
+                });
             }
         });
-
-        function appendDriverMessage(sender, text, isMe) {
-            const messagesDiv = document.getElementById('driverChatMessages');
-            const msgHtml = isMe
-                ? `<div class="d-flex justify-content-end mb-2">
-                     <div class="bg-primary text-white rounded-3 px-3 py-2 shadow-sm" style="max-width: 80%; border-bottom-right-radius: 0 !important;">
-                        ${text}
-                     </div>
-                   </div>`
-                : `<div class="d-flex justify-content-start mb-2">
-                     <div class="bg-dark border border-secondary-subtle rounded-3 px-3 py-2 shadow-sm text-light" style="max-width: 80%; border-bottom-left-radius: 0 !important;">
-                        <small class="text-info fw-bold d-block mb-1" style="font-size: 0.75rem;">${sender}</small>
-                        ${text}
-                     </div>
-                   </div>`;
-            messagesDiv.insertAdjacentHTML('beforeend', msgHtml);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        }
-
-        // Geolocation Broadcasting
-        function startBroadcasting() {
-            if (!navigator.geolocation) {
-                alert("Geolocation is not supported by your browser.");
-                document.getElementById('broadcastToggle').checked = false;
-                return;
-            }
-
-            const statusDiv = document.getElementById('broadcastStatus');
-
-            watchId = navigator.geolocation.watchPosition(
-                function(position) {
-                    // Success callback
-                    statusDiv.classList.remove('alert-warning', 'alert-danger');
-                    statusDiv.classList.add('alert-success');
-                    statusDiv.innerHTML = `<i class="bi bi-broadcast me-1"></i> Live: ${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)}`;
-
-                    // Send to server
-                    if (stompClient && stompClient.connected && activeRtTripId) {
-                        const locUpdate = {
-                            tripId: activeRtTripId,
-                            driverId: driverName,
-                            latitude: position.coords.latitude,
-                            longitude: position.coords.longitude,
-                            speed: position.coords.speed || 0,
-                            heading: position.coords.heading || 0
-                        };
-                        stompClient.send("/app/location", {}, JSON.stringify(locUpdate));
-                    }
-                },
-                function(error) {
-                    // Error callback
-                    console.error("GPS Error", error);
-                    statusDiv.classList.remove('alert-warning', 'alert-success');
-                    statusDiv.classList.add('alert-danger');
-                    statusDiv.innerHTML = '<i class="bi bi-exclamation-triangle me-1"></i> GPS Error: ' + error.message;
-                    document.getElementById('broadcastToggle').checked = false;
-                },
-                {
-                    enableHighAccuracy: true,
-                    maximumAge: 10000, // 10 seconds
-                    timeout: 5000
-                }
-            );
-        }
-
-        function stopBroadcasting() {
-            if (watchId !== null) {
-                navigator.geolocation.clearWatch(watchId);
-                watchId = null;
-            }
-        }
     </script>
 </main>
 </body>

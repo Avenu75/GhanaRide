@@ -1,70 +1,49 @@
 package com.ghanaride.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.List;
 
 /**
- * Core user entity.
- *
- * NOTE: Using @Getter/@Setter instead of @Data because:
- * - @Data generates toString() that triggers lazy loading
- * - @Data generates equals/hashCode using all fields
- *   which breaks JPA entity identity semantics
- * - Explicitly excluding lazy associations from toString
+ * Core user entity implementing UserDetails for Spring Security.
  */
 @Getter
 @Setter
 @NoArgsConstructor
-@ToString(exclude = {
-        "password"      // Never log passwords
-})
+@AllArgsConstructor
+@Builder
+@ToString(exclude = {"password"})
 @Entity
 @Table(
-        name = "users",
-        indexes = {
-                // These indexes make login, email lookup,
-                // and role-based queries fast
-                @Index(name = "idx_user_email",
-                        columnList = "email"),
-                @Index(name = "idx_user_username",
-                        columnList = "username"),
-                @Index(name = "idx_user_role",
-                        columnList = "role"),
-                @Index(name = "idx_user_account_type",
-                        columnList = "account_type")
-        }
+    name = "users",
+    indexes = {
+        @Index(name = "idx_user_email", columnList = "email"),
+        @Index(name = "idx_user_username", columnList = "username"),
+        @Index(name = "idx_user_role", columnList = "role"),
+        @Index(name = "idx_user_account_type", columnList = "account_type"),
+        @Index(name = "idx_user_enabled", columnList = "enabled")
+    }
 )
-public class User {
+public class User implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(
-            length = 50,
-            unique = true,
-            nullable = false
-    )
+    @Column(length = 50, unique = true, nullable = false)
     private String username;
 
-    @Column(
-            name = "full_name",
-            length = 100,
-            nullable = false
-    )
+    @Column(name = "full_name", length = 100, nullable = false)
     private String fullName;
 
-    @Column(
-            length = 100,
-            unique = true,
-            nullable = false
-    )
+    @Column(length = 100, unique = true, nullable = false)
     private String email;
 
     @Column(nullable = false)
@@ -92,48 +71,67 @@ public class User {
     @Column(name = "profile_image_path")
     private String profileImagePath;
 
-    // =========================================================
-    // ACCOUNT STATUS FLAGS
-    // Used by CustomUserDetailsService for auth checks
-    // Changed fields to Object wrappers 'Boolean' to handle pre-existing NULL values in database
-    // =========================================================
+    // Driver specific
+    @Column(name = "license_number", length = 50)
+    private String licenseNumber;
 
-    /**
-     * Whether the user's email is verified.
-     * Currently set to true on registration
-     * (email verification is disabled for easier onboarding).
-     * Set to false to enable email verification flow.
-     */
-    @Column(
-            name = "email_verified"
-    )
+    @Column(name = "license_expiry_date")
+    private LocalDate licenseExpiryDate;
+
+    @Column(name = "license_document_path")
+    private String licenseDocumentPath;
+
+    @Column(name = "id_document_path")
+    private String idDocumentPath;
+
+    @Column(name = "vehicle_plate", length = 20)
+    private String vehiclePlate;
+
+    @Column(name = "vehicle_model", length = 100)
+    private String vehicleModel;
+
+    @Column(name = "vehicle_year")
+    private Integer vehicleYear;
+
+    @Column(name = "vehicle_color", length = 30)
+    private String vehicleColor;
+
+    @Column(name = "company_registration_path")
+    private String companyRegistrationPath;
+
+    @Column(name = "company_registration_no", length = 50)
+    private String companyRegistrationNo;
+
+    @Column(name = "company_name", length = 100)
+    private String companyName;
+
+    @Column(name = "company_email", length = 100)
+    private String companyEmail;
+
+    @Column(name = "company_phone", length = 20)
+    private String companyPhone;
+
+    @Column(name = "company_location", length = 255)
+    private String companyLocation;
+
+    @Column(name = "company_description", length = 1000)
+    private String companyDescription;
+
+    // Account status flags
+    @Builder.Default
+    @Column(name = "email_verified")
     private Boolean emailVerified = true;
 
-    /**
-     * Whether the account is active.
-     * Admins can disable accounts via admin panel.
-     * Disabled users cannot log in.
-     */
-    @Column(
-            name = "enabled"
-    )
+    @Builder.Default
+    @Column(name = "enabled")
     private Boolean enabled = true;
 
-    /**
-     * Whether the account is locked.
-     * Set to true after too many failed login attempts.
-     * Automatically cleared after lockout duration.
-     */
-    @Column(
-            name = "account_locked"
-    )
+    @Builder.Default
+    @Column(name = "account_locked")
     private Boolean accountLocked = false;
 
-    // =========================================================
-    // TIMESTAMPS
-    // =========================================================
-    @Column(name = "created_at", nullable = false,
-            updatable = false)
+    // Timestamps
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
@@ -142,16 +140,18 @@ public class User {
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
 
-    // =========================================================
-    // LIFECYCLE HOOKS
-    // =========================================================
+    @Column(name = "password_changed_at")
+    private LocalDateTime passwordChangedAt;
+
+    // Lifecycle hooks
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
-        // Ensure defaults are set safely (null-safe check for Boolean wrappers)
-        if (emailVerified == null || !emailVerified) emailVerified = true;
-        if (enabled == null || !enabled)             enabled       = true;
+        if (emailVerified == null) emailVerified = true;
+        if (enabled == null) enabled = true;
+        if (accountLocked == null) accountLocked = false;
+        if (role == null) role = Role.USER;
     }
 
     @PreUpdate
@@ -160,47 +160,70 @@ public class User {
     }
 
     // =========================================================
-    // CONVENIENCE CONSTRUCTOR
-    // For creating users in tests and OAuth flow
+    // USER DETAILS IMPLEMENTATION
     // =========================================================
-    public User(
-            String username,
-            String fullName,
-            String email,
-            String password,
-            Role role
-    ) {
-        this.username  = username;
-        this.fullName  = fullName;
-        this.email     = email;
-        this.password  = password;
-        this.role      = role;
-        this.enabled   = true;
-        this.emailVerified = true;
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
     }
 
-    // =========================================================
-    // NULL-SAFE BOOLEAN GETTERS
-    // Ensures existing database rows with NULL are treated safely as defaults
-    // and supports backward compatibility with .is...() methods
-    // =========================================================
-    public boolean isEmailVerified() {
-        return emailVerified != null && emailVerified;
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
     }
 
+    @Override
+    public boolean isAccountNonLocked() {
+        return accountLocked != null && !accountLocked;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
     public boolean isEnabled() {
         return enabled != null && enabled;
+    }
+
+    // =========================================================
+    // CONVENIENCE METHODS
+    // =========================================================
+
+    public boolean isEmailVerified() {
+        return emailVerified != null && emailVerified;
     }
 
     public boolean isAccountLocked() {
         return accountLocked != null && accountLocked;
     }
 
+    public boolean isProfileComplete() {
+        return phoneNumber != null && !phoneNumber.isBlank();
+    }
+
+    public boolean isDriver() {
+        return role == Role.DRIVER;
+    }
+
+    public boolean isCompany() {
+        return role == Role.COMPANY;
+    }
+
+    public boolean isAdmin() {
+        return role == Role.ADMIN;
+    }
+
+    public boolean isPassenger() {
+        return role == Role.USER;
+    }
+
     // =========================================================
     // EQUALS & HASHCODE
-    // Based on ID only — correct for JPA entities
-    // (Lombok @Data would use all fields which is wrong)
     // =========================================================
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

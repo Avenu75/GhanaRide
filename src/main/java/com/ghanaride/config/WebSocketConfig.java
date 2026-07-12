@@ -6,24 +6,32 @@ import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBr
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
+/**
+ * WebSocket Configuration - STOMP over WebSocket for real-time updates.
+ */
 @Configuration
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
-    public void configureMessageBroker(MessageBrokerRegistry config) {
-        // /topic for group broadcasts (like driver location)
-        // /queue for user specific messaging
-        config.enableSimpleBroker("/topic", "/queue");
-        // application endpoints prefix
-        config.setApplicationDestinationPrefixes("/app");
-        // user specific endpoint prefix
-        config.setUserDestinationPrefix("/user");
+    public void configureMessageBroker(MessageBrokerRegistry registry) {
+        // Enable simple in-memory broker for user queues
+        registry.enableSimpleBroker("/queue", "/topic", "/user");
+        
+        // Application destination prefix for @MessageMapping
+        registry.setApplicationDestinationPrefixes("/app");
+        
+        // User destination prefix for @SendToUser
+        registry.setUserDestinationPrefix("/user");
     }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        // SockJS fallback options for browsers that don't support WebSockets
-        registry.addEndpoint("/ws-ghanaride").withSockJS();
+        registry.addEndpoint("/ws")
+            .setAllowedOriginPatterns("*")
+            .withSockJS(); // Fallback for older browsers
+        
+        registry.addEndpoint("/ws")
+            .setAllowedOriginPatterns("*");
     }
 }

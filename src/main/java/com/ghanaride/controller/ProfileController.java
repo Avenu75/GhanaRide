@@ -1,5 +1,6 @@
 package com.ghanaride.controller;
 
+import com.ghanaride.dto.ProfileUpdateDTO;
 import com.ghanaride.entity.User;
 import com.ghanaride.service.FileStorageService;
 import com.ghanaride.service.UserService;
@@ -11,7 +12,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
+import com.ghanaride.repository.UserRepository;
 import java.security.Principal;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
@@ -196,14 +197,14 @@ public class ProfileController {
 
         // Update via service layer (not directly via repo)
         try {
-            userService.updateProfile(
-                    principal,
-                    fullName.trim(),
-                    phoneNumber.trim(),
-                    address != null ? address.trim() : null,
-                    dob,
-                    gender != null ? gender.toUpperCase() : null
-            );
+            ProfileUpdateDTO dto = new ProfileUpdateDTO();
+            dto.setFullName(fullName.trim());
+            dto.setPhoneNumber(phoneNumber.trim());
+            dto.setAddress(address != null ? address.trim() : null);
+            dto.setDateOfBirth(dob);
+            dto.setGender(gender != null ? gender.toUpperCase() : null);
+            User user = userService.getCurrentUser(principal);
+            userService.updateProfile(user, dto);
 
             log.info("Profile updated for user: {}",
                     principal.getName());
@@ -271,8 +272,8 @@ public class ProfileController {
         }
 
         try {
-            // Use service layer (not repository directly)
-            userService.updateProfileImage(principal, file);
+            User user = userService.getCurrentUser(principal);
+            userService.updateAvatar(user, file);
 
             log.info("Profile image updated for user: {}",
                     principal.getName());
@@ -347,8 +348,9 @@ public class ProfileController {
         }
 
         try {
+            User user = userService.getCurrentUser(principal);
             userService.changePassword(
-                    principal, currentPassword, newPassword
+                    user, currentPassword, newPassword
             );
 
             log.info("Password changed for user: {}",

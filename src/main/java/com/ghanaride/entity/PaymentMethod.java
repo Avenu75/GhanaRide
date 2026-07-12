@@ -1,19 +1,25 @@
 package com.ghanaride.entity;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
 /**
  * Payment methods supported by GhanaRide.
- *
- * PAYSTACK     = Generic Paystack (card or mobile money)
- * MOBILE_MONEY = MTN MoMo, Vodafone Cash, AirtelTigo
- * CARD         = Visa, Mastercard via Paystack
- * BANK_TRANSFER= Direct bank transfer via Paystack
- * CASH         = Cash paid directly to driver
  */
+@Getter
+@RequiredArgsConstructor
 public enum PaymentMethod {
-    PAYSTACK,       // Generic Paystack payment
-    MOBILE_MONEY,   // MTN MoMo, Vodafone Cash, AirtelTigo
-    CARD,           // Visa/Mastercard via Paystack
-    BANK_TRANSFER,  // Bank transfer via Paystack
-    CASH,            // Cash to driver on travel day
-    WALLET
+    WALLET("GhanaRide Wallet"),
+    PAYSTACK("Paystack (Card/MoMo)"),
+    MTN_MOMO("MTN Mobile Money"),
+    VODAFONE_CASH("Vodafone Cash"),
+    AIRTEL_TIGO("AirtelTigo Money"),
+    CASH("Cash at Pickup"),
+    APPLE_PAY("Apple Pay"),
+    GOOGLE_PAY("Google Pay"),
+    MOBILE_MONEY("Mobile Money"),
+    CARD("Card Payment"),
+    BANK_TRANSFER("Bank Transfer");
+
+    private final String displayName;
 }

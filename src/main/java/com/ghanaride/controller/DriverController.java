@@ -13,7 +13,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
+import com.ghanaride.repository.UserRepository;
 import java.math.BigDecimal;
 import java.security.Principal;
 import java.time.LocalDateTime;
@@ -188,7 +188,7 @@ public class DriverController {
         try {
             if (carService.existsByNumberPlate(numberPlate)) {
                 car = carService.findByDriver(currentUser).stream()
-                        .filter(c -> c.getNumberPlate()
+                        .filter(c -> c.getPlateNumber()
                                 .equalsIgnoreCase(numberPlate))
                         .findFirst()
                         .orElse(null);
@@ -204,10 +204,10 @@ public class DriverController {
                 car = new Car();
                 car.setDriver(currentUser);
                 car.setCarBrand(carBrand.trim());
-                car.setNumberPlate(
+                car.setPlateNumber(
                         numberPlate.trim().toUpperCase()
                 );
-                car.setStatus(CarStatus.APPROVED);
+                car.setStatus(CarStatus.ACTIVE);
 
                 // Handle car image upload
                 if (carImage != null && !carImage.isEmpty()) {
@@ -225,8 +225,8 @@ public class DriverController {
                         return "redirect:/driver/add-trip";
                     }
                     String imagePath =
-                            fileStorageService.storeFile(carImage);
-                    car.setCarImagePath("/" + imagePath);
+                            fileStorageService.storeCarImage(carImage);
+                    car.setImagePath("/" + imagePath);
                 }
                 car = carService.saveCar(car);
             }
@@ -330,7 +330,7 @@ public class DriverController {
 
         try {
             tripService.cancelTrip(
-                    tripId, cancelReason, cancelReasonDetails, currentUser
+                    tripId, cancelReason
             );
 
             log.info("Driver {} cancelled trip {} reason: {}",

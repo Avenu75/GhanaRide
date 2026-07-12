@@ -1,26 +1,19 @@
 package com.ghanaride.exception;
 
 /**
- * Thrown when a requested resource doesn't exist.
- * Used by services to signal 404-equivalent errors.
+ * Resource not found exception.
  */
-public class ResourceNotFoundException
-        extends RuntimeException {
+public class ResourceNotFoundException extends RuntimeException {
 
     public ResourceNotFoundException(String message) {
         super(message);
     }
 
-    public ResourceNotFoundException(
-            String resource, Long id
-    ) {
-        super(resource + " not found with id: " + id);
+    public ResourceNotFoundException(String resourceName, Object resourceId) {
+        super(resourceName + " not found with id: " + resourceId);
     }
 
-    public ResourceNotFoundException(
-            String resource, String field, Object value
-    ) {
-        super(resource + " not found with " +
-                field + ": " + value);
+    public ResourceNotFoundException(String resourceName, String fieldName, Object fieldValue) {
+        super(resourceName + " not found with " + fieldName + ": " + fieldValue);
     }
 }

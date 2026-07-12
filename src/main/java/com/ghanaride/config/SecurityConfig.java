@@ -24,6 +24,7 @@ import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWrite
 import org.springframework.security.web.session.HttpSessionEventPublisher;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -34,34 +35,20 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * GhanaRide Security Configuration
- *
- * Handles:
- * - Public vs authenticated route rules
- * - Form login + Google OAuth2
- * - Security headers (HSTS, CSP, etc.)
- * - Session management
- * - Remember-me
- * - CSRF protection
  */
 @Slf4j
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity(prePostEnabled = true)    // Enables @PreAuthorize on methods
+@EnableMethodSecurity(prePostEnabled = true)
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    // =========================================================
-    // Dependencies (injected via constructor by Lombok)
-    // =========================================================
     private final CustomUserDetailsService userDetailsService;
     private final CustomAuthenticationSuccessHandler successHandler;
     private final CustomAuthenticationFailureHandler failureHandler;
     private final CustomOAuthSuccessHandler oAuthSuccessHandler;
     private final com.ghanaride.service.CustomOAuth2UserService customOAuth2UserService;
 
-    // =========================================================
-    // Config values from application.properties
-    // =========================================================
     @Value("${app.security.remember-me-key}")
     private String rememberMeKey;
 
@@ -71,384 +58,222 @@ public class SecurityConfig {
     @Value("${app.security.max-login-attempts:5}")
     private int maxLoginAttempts;
 
-    @Value("${app.base-url}")
-    private String appBaseUrl;
+    @Value("${app.security.lockout-duration-minutes:15}")
+    private int lockoutDurationMinutes;
 
-    // =========================================================
-    // AUTHENTICATION PROVIDER
-    // Wires together UserDetailsService + PasswordEncoder
-    // =========================================================
+    private final ConcurrentHashMap<String, AtomicInteger> loginAttempts = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Long> lockoutUntil = new ConcurrentHashMap<>();
+
     @Bean
-    public DaoAuthenticationProvider daoAuthenticationProvider(PasswordEncoder passwordEncoder) {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userDetailsService);
-        authProvider.setPasswordEncoder(passwordEncoder);
-        // Show "bad credentials" instead of "user not found"
-        // (prevents username enumeration attacks)
-        authProvider.setHideUserNotFoundExceptions(true);
-        return authProvider;
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder(12);
     }
 
-    // =========================================================
-    // AUTHENTICATION MANAGER
-    // =========================================================
     @Bean
-    public AuthenticationManager authenticationManager(DaoAuthenticationProvider daoAuthenticationProvider) {
-        return new ProviderManager(daoAuthenticationProvider);
+    public AuthenticationManager authenticationManager(PasswordEncoder passwordEncoder) {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setUserDetailsService(userDetailsService);
+        provider.setPasswordEncoder(passwordEncoder);
+        return new ProviderManager(provider);
     }
 
-    // =========================================================
-    // SESSION EVENT PUBLISHER
-    // Required for concurrent session control to work
-    // =========================================================
     @Bean
     public HttpSessionEventPublisher httpSessionEventPublisher() {
         return new HttpSessionEventPublisher();
     }
 
-    // =========================================================
-    // MAIN SECURITY FILTER CHAIN
-    // =========================================================
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public OncePerRequestFilter loginRateLimitFilter() {
+        return new OncePerRequestFilter() {
+            @Override
+            protected void doFilterInternal(HttpServletRequest request,
+                                            HttpServletResponse response,
+                                            FilterChain filterChain)
+                    throws ServletException, IOException {
 
+                String path = request.getRequestURI();
+                String method = request.getMethod();
+                String ip = getClientIp(request);
+
+                // Only rate limit POST /login and /login/oauth2/*
+                if ("POST".equals(method) &&
+                    (path.equals("/login") || path.startsWith("/login/oauth2/"))) {
+
+                    Long lockout = lockoutUntil.get(ip);
+                    if (lockout != null && lockout > System.currentTimeMillis()) {
+                        long remaining = (lockout - System.currentTimeMillis()) / 1000;
+                        response.setStatus(429);
+                        response.setContentType("application/json");
+                        response.getWriter().write(
+                            "{\"error\":\"Too many attempts. Try again in " + remaining + " seconds.\"}"
+                        );
+                        return;
+                    }
+
+                    int attempts = loginAttempts.computeIfAbsent(ip, k -> new AtomicInteger(0)).incrementAndGet();
+                    if (attempts > maxLoginAttempts) {
+                        lockoutUntil.put(ip, System.currentTimeMillis() + (lockoutDurationMinutes * 60_000L));
+                        response.setStatus(429);
+                        response.setContentType("application/json");
+                        response.getWriter().write(
+                            "{\"error\":\"Account temporarily locked. Try again in " + lockoutDurationMinutes + " minutes.\"}"
+                        );
+                        return;
+                    }
+                }
+
+                filterChain.doFilter(request, response);
+            }
+
+            private String getClientIp(HttpServletRequest request) {
+                String xf = request.getHeader("X-Forwarded-For");
+                if (xf != null && !xf.isBlank()) return xf.split(",")[0].trim();
+                String xr = request.getHeader("X-Real-IP");
+                if (xr != null && !xr.isBlank()) return xr;
+                return request.getRemoteAddr();
+            }
+        };
+    }
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // -------------------------------------------------
-                // CSRF PROTECTION
-                // Thymeleaf th:action auto-injects CSRF tokens
-                // so all forms are protected automatically.
-                // We only exclude Paystack webhook callbacks
-                // (they come from Paystack's servers, not browsers)
-                // -------------------------------------------------
-                .csrf(csrf -> csrf
-                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                        .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
-                        .ignoringRequestMatchers(
-                                "/payment/webhook",       // Paystack webhook
-                                "/api/**"                 // REST API (uses JWT instead)
-                        )
+            .authorizeHttpRequests(auth -> auth
+                // Static resources & public assets
+                .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**", "/favicon.ico").permitAll()
+                .requestMatchers("/manifest.json", "/sw.js", "/offline.html").permitAll()
+                .requestMatchers("/error", "/error/**").permitAll()
+                .requestMatchers("/actuator/health/**").permitAll()
+
+                // OAuth2 flow
+                .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
+
+                // Public route browsing (no login needed to SEE rides)
+                .requestMatchers(HttpMethod.GET, "/rides", "/rides/search", "/routes/**").permitAll()
+
+                // Paystack payment callbacks
+                .requestMatchers("/payment/**").permitAll()
+
+                // Driver document uploads (only owner or admin)
+                .requestMatchers("/uploads/documents/**").hasAnyRole("DRIVER", "ADMIN")
+
+                // Actuator (admin only)
+                .requestMatchers("/actuator/**").hasRole("ADMIN")
+
+                // ROLE-BASED ACCESS
+                .requestMatchers("/dashboard", "/booking/**", "/my-bookings/**",
+                    "/profile/**", "/reviews/**", "/wallet/**", "/notifications/**", "/track/**")
+                    .hasAnyRole("USER", "DRIVER", "COMPANY", "ADMIN")
+
+                .requestMatchers("/driver/**").hasAnyRole("DRIVER", "ADMIN")
+                .requestMatchers("/company/**").hasAnyRole("COMPANY", "ADMIN")
+                .requestMatchers("/admin/**").hasRole("ADMIN")
+
+                // API endpoints
+                .requestMatchers(HttpMethod.GET, "/api/trips/**").permitAll()
+                .requestMatchers("/api/v1/public/**").permitAll()
+                .requestMatchers("/api/**").authenticated()
+
+                .anyRequest().authenticated()
+            )
+
+            .formLogin(form -> form
+                .loginPage("/login")
+                .loginProcessingUrl("/login")
+                .successHandler(successHandler)
+                .failureHandler(failureHandler)
+                .usernameParameter("username")
+                .passwordParameter("password")
+                .permitAll()
+            )
+
+            .oauth2Login(oauth -> oauth
+                .loginPage("/login")
+                .userInfoEndpoint(userInfo -> userInfo
+                    .userService(customOAuth2UserService)
                 )
+                .successHandler(oAuthSuccessHandler)
+                .failureHandler(failureHandler)
+            )
 
-                // -------------------------------------------------
-                // SECURITY HEADERS
-                // Protects against XSS, clickjacking, MITM, etc.
-                // -------------------------------------------------
-                .headers(headers -> headers
+            .rememberMe(remember -> remember
+                .key(rememberMeKey)
+                .tokenValiditySeconds(rememberMeValidity)
+                .userDetailsService(userDetailsService)
+                .rememberMeParameter("remember-me")
+                .rememberMeCookieName("GHANARIDE_REMEMBER_ME")
+            )
 
-                        // HSTS: Force HTTPS for 1 year
-                        // (After this is deployed, browsers will NEVER
-                        //  try HTTP for your domain)
-                        .httpStrictTransportSecurity(hsts -> hsts
-                                .includeSubDomains(true)
-                                .maxAgeInSeconds(31536000)
-                                .preload(true)
-                        )
+            .logout(logout -> logout
+                .logoutUrl("/logout")
+                .logoutSuccessUrl("/?logged_out=true")
+                .invalidateHttpSession(true)
+                .deleteCookies("JSESSIONID", "GHANARIDE_REMEMBER_ME")
+                .clearAuthentication(true)
+                .permitAll()
+            )
 
-                        // Prevent clickjacking (same as X-Frame-Options: DENY)
-                        .frameOptions(HeadersConfigurer.FrameOptionsConfig::deny)
+            .sessionManagement(session -> session
+                .sessionFixation(sf -> sf.changeSessionId())
+                .maximumSessions(3)
+                .maxSessionsPreventsLogin(false)
+                .expiredUrl("/login?session=expired")
+            )
 
-                        // Prevent MIME type sniffing
-                        .contentTypeOptions(contentType -> {})
+            .csrf(csrf -> csrf
+                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
+            )
 
-                        // Content Security Policy
-                        // Allows Bootstrap CDN, Google OAuth, Paystack
-                        // Adjust if you add other CDN sources
-                        .contentSecurityPolicy(csp -> csp
-                                .policyDirectives(buildCspPolicy())
-                        )
-
-                        // Referrer Policy: Don't leak URL details
-                        .referrerPolicy(referrer -> referrer
-                                .policy(ReferrerPolicyHeaderWriter.ReferrerPolicy
-                                        .STRICT_ORIGIN_WHEN_CROSS_ORIGIN)
-                        )
-
-                        // Permissions Policy: Disable unused browser features
-                        .permissionsPolicy(permissions -> permissions
-                                .policy("camera=(), microphone=(), geolocation=(self), " +
-                                        "payment=(self), usb=(), bluetooth=()")
-                        )
+            .headers(headers -> headers
+                .httpStrictTransportSecurity(hsts -> hsts
+                    .includeSubDomains(true)
+                    .maxAgeInSeconds(31536000)
+                    .preload(true)
                 )
+                .contentSecurityPolicy(csp -> csp.policyDirectives(buildCspPolicy()))
+                .frameOptions(HeadersConfigurer.FrameOptionsConfig::deny)
+                .contentTypeOptions(contentType -> {})
+                .referrerPolicy(referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
+                .permissionsPolicy(policy -> policy.policy(
+                    "geolocation=(), camera=(), microphone=(), payment=(self)"
+                ))
+            )
 
-                // -------------------------------------------------
-                // AUTHORIZATION RULES
-                // Order matters: more specific rules first
-                // -------------------------------------------------
-                .authorizeHttpRequests(auth -> auth
+            .exceptionHandling(ex -> ex
+                .accessDeniedPage("/error/403")
+                .authenticationEntryPoint((request, response, authException) -> {
+                    String requestUri = request.getRequestURI();
+                    if (requestUri.startsWith("/api/")) {
+                        response.setContentType("application/json");
+                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                        response.getWriter().write(
+                            "{\"error\":\"Unauthorized\",\"message\":\"Please login to continue\"}"
+                        );
+                    } else {
+                        response.sendRedirect("/login?redirect=" +
+                            java.net.URLEncoder.encode(requestUri, java.nio.charset.StandardCharsets.UTF_8));
+                    }
+                })
+            );
 
-                        // --- Fully PUBLIC pages ---
-                        // Core pages
-                        .requestMatchers(
-                                "/",
-                                "/about",
-                                "/contact",
-                                "/register",
-                                "/login",
-                                "/forgot-password",
-                                "/reset-password"
-                        ).permitAll()
-
-                        // FIX #1: Legal pages (were incorrectly
-                        // requiring authentication — now public)
-                        .requestMatchers(
-                                "/terms",
-                                "/privacy",
-                                "/refunds",
-                                "/faq"
-                        ).permitAll()
-
-                        // FIX #2: SEO & crawling files
-                        // (were redirecting to /login!)
-                        .requestMatchers(
-                                "/sitemap.xml",
-                                "/robots.txt",
-                                "/favicon.ico",
-                                "/favicon.svg",
-                                "/apple-touch-icon.png"
-                        ).permitAll()
-
-                        // Static resources
-                        .requestMatchers(
-                                "/css/**",
-                                "/js/**",
-                                "/images/**",
-                                "/fonts/**",
-                                "/webjars/**"
-                        ).permitAll()
-
-                        // Public uploads (profile photos, car images)
-                        // Driver documents are protected below
-                        .requestMatchers("/uploads/cars/**").permitAll()
-                        .requestMatchers("/uploads/profiles/**").permitAll()
-
-                        // FIX #3: Actuator health for Railway
-                        .requestMatchers("/actuator/health").permitAll()
-                        .requestMatchers("/actuator/health/**").permitAll()
-
-                        // PWA files
-                        .requestMatchers(
-                                "/manifest.json",
-                                "/sw.js",
-                                "/offline.html"
-                        ).permitAll()
-
-                        // OAuth2 flow
-                        .requestMatchers(
-                                "/oauth2/**",
-                                "/login/oauth2/**"
-                        ).permitAll()
-
-                        // Error pages
-                        .requestMatchers("/error", "/error/**").permitAll()
-
-                        // Paystack payment callbacks
-                        .requestMatchers("/payment/**").permitAll()
-
-                        // Public route browsing (no login needed
-                        // to SEE available rides — improves conversion)
-                        .requestMatchers(
-                                HttpMethod.GET,
-                                "/rides",
-                                "/rides/search",
-                                "/routes/**"
-                        ).permitAll()
-
-                        // --- PROTECTED: Driver document uploads
-                        // (only accessible by owner or admin)
-                        .requestMatchers("/uploads/documents/**")
-                        .hasAnyRole("DRIVER", "ADMIN")
-
-                        // --- PROTECTED: Actuator (admin only)
-                        .requestMatchers("/actuator/**")
-                        .hasRole("ADMIN")
-
-                        // --- ROLE-BASED ACCESS ---
-                        .requestMatchers(
-                                "/dashboard",
-                                "/booking/**",
-                                "/my-bookings/**",
-                                "/profile/**",
-                                "/reviews/**",
-                                "/wallet/**",
-                                "/notifications/**",
-                                "/track/**"
-                        ).hasAnyRole("USER", "DRIVER", "COMPANY", "ADMIN")
-
-                        .requestMatchers("/driver/**")
-                        .hasAnyRole("DRIVER", "ADMIN")
-
-                        .requestMatchers("/company/**")
-                        .hasAnyRole("COMPANY", "ADMIN")
-
-                        .requestMatchers("/admin/**")
-                        .hasRole("ADMIN")
-
-                        // API endpoints (JWT authenticated)
-                        // v5 WORLD CLASS – public read endpoints
-                        .requestMatchers(HttpMethod.GET, "/api/trips/**").permitAll()
-                        .requestMatchers("/api/v1/public/**").permitAll()
-                        .requestMatchers("/api/**").authenticated()
-
-                        // Everything else requires authentication
-                        .anyRequest().authenticated()
-                )
-
-                // -------------------------------------------------
-                // FORM LOGIN
-                // -------------------------------------------------
-                .formLogin(form -> form
-                        .loginPage("/login")
-                        .loginProcessingUrl("/login")
-                        .successHandler(successHandler)
-                        .failureHandler(failureHandler)
-                        .usernameParameter("username")     // Matches login.html's "username"
-                        // input field. CustomUserDetailsService
-                        // looks the value up as either a
-                        // username OR an email, so this
-                        // single field supports both.
-                        .passwordParameter("password")
-                        .permitAll()
-                )
-
-                // -------------------------------------------------
-                // GOOGLE OAUTH2 LOGIN
-                // FIX 2026-07-10: use CustomOAuth2UserService to inject ROLE_*
-                // -------------------------------------------------
-                .oauth2Login(oauth -> oauth
-                        .loginPage("/login")
-                        .userInfoEndpoint(userInfo -> userInfo
-                                .userService(customOAuth2UserService)
-                        )
-                        .successHandler(oAuthSuccessHandler)
-                        .failureHandler(failureHandler)
-                )
-
-                // -------------------------------------------------
-                // REMEMBER ME
-                // "Remember me for 30 days" checkbox on login form
-                // -------------------------------------------------
-                .rememberMe(remember -> remember
-                        .key(rememberMeKey)
-                        .tokenValiditySeconds(rememberMeValidity)
-                        .userDetailsService(userDetailsService)
-                        .rememberMeParameter("remember-me")
-                        .rememberMeCookieName("GHANARIDE_REMEMBER_ME")
-                )
-
-                // -------------------------------------------------
-                // LOGOUT
-                // -------------------------------------------------
-                .logout(logout -> logout
-                        .logoutUrl("/logout")
-                        .logoutSuccessUrl("/?logged_out=true")
-                        .invalidateHttpSession(true)
-                        .deleteCookies("JSESSIONID", "GHANARIDE_REMEMBER_ME")
-                        .clearAuthentication(true)
-                        .permitAll()
-                )
-
-                // -------------------------------------------------
-                // SESSION MANAGEMENT
-                // Prevents session fixation attacks
-                // Limits concurrent sessions per user
-                // -------------------------------------------------
-                .sessionManagement(session -> session
-                        // Change session ID on login (prevents fixation without dropping OAuth2AuthorizationRequest)
-                        // FIX for Google OAuth 400 "invalid_state" – migrateSession() was dropping the OAuth2 state
-                        .sessionFixation(
-                                sf -> sf.changeSessionId()
-                        )
-                        // Max 3 concurrent sessions per user
-                        // (prevents account sharing abuse)
-                        .maximumSessions(3)
-                        .maxSessionsPreventsLogin(false)
-                        .expiredUrl("/login?session=expired")
-                )
-
-                // -------------------------------------------------
-                // EXCEPTION HANDLING
-                // Custom pages for access denied
-                // -------------------------------------------------
-                .exceptionHandling(ex -> ex
-                        .accessDeniedPage("/error/403")
-                        .authenticationEntryPoint((request, response, authException) -> {
-                            // If it's an API request, return 401 JSON
-                            // If it's a web request, redirect to login
-                            String requestUri = request.getRequestURI();
-                            if (requestUri.startsWith("/api/")) {
-                                response.setContentType("application/json");
-                                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                                response.getWriter().write(
-                                        "{\"error\":\"Unauthorized\"," +
-                                                "\"message\":\"Please login to continue\"}"
-                                );
-                            } else {
-                                response.sendRedirect("/login?redirect=" +
-                                        java.net.URLEncoder.encode(requestUri,
-                                                java.nio.charset.StandardCharsets.UTF_8));
-                            }
-                        })
-                );
+        http.addFilterBefore(loginRateLimitFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-    // =========================================================
-    // CONTENT SECURITY POLICY BUILDER
-    // Allows exactly what GhanaRide needs, blocks everything else
-    // =========================================================
     private String buildCspPolicy() {
         return String.join("; ",
-                // Scripts: self + Bootstrap CDN + Paystack + Google
-                "default-src 'self'",
-
-                // Scripts from trusted CDNs only
-                "script-src 'self' " +
-                        "'unsafe-inline' " +      // Required for Thymeleaf inline scripts
-                        "https://js.paystack.co " +
-                        "https://accounts.google.com " +
-                        "https://cdn.jsdelivr.net " +
-                        "https://cdnjs.cloudflare.com",
-
-                // Styles from trusted CDNs
-                "style-src 'self' " +
-                        "'unsafe-inline' " +      // Required for Bootstrap
-                        "https://fonts.googleapis.com " +
-                        "https://cdn.jsdelivr.net " +
-                        "https://cdnjs.cloudflare.com",
-
-                // Fonts from Google
-                "font-src 'self' " +
-                        "https://fonts.gstatic.com " +
-                        "data:",
-
-                // Images from self + data URIs (for inline images)
-                "img-src 'self' " +
-                        "data: " +
-                        "https: " +              // Allow HTTPS images
-                        "https://lh3.googleusercontent.com", // Google profile pics
-
-                // Frames: Paystack payment modal + Google OAuth
-                "frame-src 'self' " +
-                        "https://js.paystack.co " +
-                        "https://accounts.google.com " +
-                        "https://checkout.paystack.com",
-
-                // API connections allowed
-                "connect-src 'self' " +
-                        "https://api.paystack.co " +
-                        "https://accounts.google.com " +
-                        "wss://ghanaride.me",     // WebSocket for real-time features
-
-                // Form submissions only to self
-                "form-action 'self' " +
-                        "https://accounts.google.com",
-
-                // Disallow embedding in iframes (prevents clickjacking)
-                "frame-ancestors 'none'",
-
-                // Only load resources over HTTPS
-                "upgrade-insecure-requests"
+            "default-src 'self'",
+            "script-src 'self' 'unsafe-inline' https://js.paystack.co https://accounts.google.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
+            "font-src 'self' https://fonts.gstatic.com data:",
+            "img-src 'self' data: https: https://lh3.googleusercontent.com",
+            "frame-src 'self' https://js.paystack.co https://accounts.google.com https://checkout.paystack.com",
+            "connect-src 'self' https://api.paystack.co https://accounts.google.com wss://ghanaride.me",
+            "form-action 'self' https://accounts.google.com",
+            "frame-ancestors 'none'",
+            "upgrade-insecure-requests"
         );
     }
 }

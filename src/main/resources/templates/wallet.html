@@ -1,109 +1,576 @@
 <!DOCTYPE html>
-<html th:replace="~{layout :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
-<head><title>GhanaRide Wallet — v5</title></head>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" th:replace="~{layout :: layout(~{::title}, ~{::main})}">
+<head>
+    <title>My Wallet — GhanaRide</title>
+    <meta name="description" content="Manage your GhanaRide wallet balance, view transaction history, top up, and earn loyalty cashback.">
+    
+    <style th:inline="css">
+        .wallet-layout {
+            display: grid;
+            grid-template-columns: 1fr 420px;
+            gap: var(--space-6);
+            align-items: start;
+        }
+        
+        @media (max-width: 992px) {
+            .wallet-layout { grid-template-columns: 1fr; }
+        }
+        
+        .wallet-main { min-width: 0; }
+        .wallet-sidebar { position: sticky; top: calc(var(--header-height) + var(--space-6)); }
+        
+        /* Wallet Hero Card */
+        .wallet-hero {
+            background: linear-gradient(135deg, var(--black) 0%, var(--black-light) 100%);
+            color: white;
+            border-radius: var(--radius-xl);
+            padding: var(--space-6);
+            margin-bottom: var(--space-6);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .wallet-hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(252, 209, 22, 0.2) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        
+        .wallet-balance {
+            font-family: var(--font-display);
+            font-size: clamp(2.5rem, 6vw, 4rem);
+            font-weight: 800;
+            color: var(--gold);
+            line-height: 1.1;
+        }
+        
+        .wallet-balance-label {
+            color: rgba(255,255,255,0.7);
+            font-size: 0.9375rem;
+            margin-bottom: var(--space-1);
+        }
+        
+        .wallet-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-4); }
+        
+        .wallet-btn {
+            padding: var(--space-3) var(--space-5);
+            border-radius: var(--radius);
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            transition: all var(--transition-fast);
+        }
+        
+        .wallet-btn-primary {
+            background: var(--gold);
+            color: var(--black);
+            border: none;
+        }
+        
+        .wallet-btn-primary:hover {
+            background: var(--gold-light);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+        
+        .wallet-btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .wallet-btn-secondary:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        
+        .wallet-btn-outline {
+            background: transparent;
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        
+        .wallet-btn-outline:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        
+        /* Loyalty Card */
+        .loyalty-card {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            padding: var(--space-5);
+            margin-bottom: var(--space-5);
+        }
+        
+        .loyalty-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--space-4);
+        }
+        
+        .loyalty-points {
+            font-family: var(--font-display);
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--gold-dark);
+        }
+        
+        .loyalty-label { color: var(--color-text-muted); }
+        
+        .loyalty-progress {
+            height: 8px;
+            background: var(--color-border);
+            border-radius: var(--radius-full);
+            overflow: hidden;
+            margin-top: var(--space-3);
+        }
+        
+        .loyalty-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--gold) 0%, var(--gold-dark) 100%);
+            border-radius: var(--radius-full);
+            transition: width var(--transition-slow);
+        }
+        
+        .loyalty-tier {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            margin-top: var(--space-3);
+            padding: var(--space-3);
+            background: var(--gold-muted);
+            border-radius: var(--radius);
+        }
+        
+        .loyalty-tier-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius);
+            background: var(--gold);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--black);
+        }
+        
+        .loyalty-tier-info { flex: 1; }
+        .loyalty-tier-name { font-weight: 700; color: var(--gold-dark); }
+        .loyalty-tier-benefit { font-size: 0.8125rem; color: var(--color-text-secondary); }
+        
+        /* Transaction List */
+        .txn-list { display: flex; flex-direction: column; gap: var(--space-2); }
+        
+        .txn-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+            padding: var(--space-4);
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius);
+            transition: all var(--transition-fast);
+        }
+        
+        .txn-item:hover {
+            box-shadow: var(--shadow-sm);
+            border-color: var(--color-border-strong);
+        }
+        
+        .txn-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+        
+        .txn-icon.topup { background: var(--color-success-bg); color: var(--color-success); }
+        .txn-icon.payment { background: var(--color-info-bg); color: var(--color-info); }
+        .txn-icon.refund { background: var(--color-warning-bg); color: var(--color-warning); }
+        .txn-icon.loyalty { background: var(--gold-muted); color: var(--gold-dark); }
+        
+        .txn-info { flex: 1; min-width: 0; }
+        .txn-description { font-weight: 500; color: var(--color-text); margin-bottom: var(--space-1); }
+        .txn-meta { font-size: 0.75rem; color: var(--color-text-muted); }
+        
+        .txn-amount {
+            font-family: var(--font-display);
+            font-size: 1.125rem;
+            font-weight: 700;
+        }
+        
+        .txn-amount.positive { color: var(--color-success); }
+        .txn-amount.negative { color: var(--color-error); }
+        .txn-amount.neutral { color: var(--gold-dark); }
+        
+        /* Top Up Modal / Card */
+        .topup-card {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            padding: var(--space-5);
+        }
+        
+        .topup-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: var(--space-3);
+            margin-bottom: var(--space-4);
+        }
+        
+        .topup-option {
+            position: relative;
+            padding: var(--space-4);
+            border: 2px solid var(--color-border);
+            border-radius: var(--radius);
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+        
+        .topup-option input { position: absolute; opacity: 0; pointer-events: none; }
+        .topup-option:hover { border-color: var(--gold); }
+        .topup-option:has(input:checked) { border-color: var(--gold); background: var(--gold-muted); }
+        
+        .topup-amount { font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; color: var(--color-text); }
+        .topup-label { font-size: 0.75rem; color: var(--color-text-muted); text-transform: uppercase; }
+        
+        .custom-amount .form-control { text-align: center; font-size: 1.5rem; font-weight: 700; }
+        
+        /* Payment Methods */
+        .payment-methods-list { display: flex; flex-direction: column; gap: var(--space-3); }
+        
+        .payment-method-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            padding: var(--space-4);
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius);
+        }
+        
+        .payment-method-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius);
+            background: var(--color-surface-hover);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        
+        .payment-method-info { flex: 1; }
+        .payment-method-name { font-weight: 600; }
+        .payment-method-detail { font-size: 0.8125rem; color: var(--color-text-muted); }
+        
+        .payment-method-default {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-1);
+            padding: 0.125rem 0.5rem;
+            background: var(--color-success-bg);
+            color: var(--color-success);
+            font-size: 0.6875rem;
+            font-weight: 600;
+            border-radius: var(--radius-full);
+            text-transform: uppercase;
+        }
+        
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: var(--space-10) var(--space-6);
+        }
+        
+        .empty-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--color-surface-hover);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: var(--space-4);
+            font-size: 2rem;
+            color: var(--color-text-muted);
+        }
+    </style>
+</head>
 <body>
-<main th:fragment="main" class="py-4">
-<div class="container" style="max-width:980px">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-      <h2 class="fw-800 mb-1">GhanaRide Pay</h2>
-      <div class="text-muted">Instant top-up • 2% cashback • instant refunds</div>
-    </div>
-    <div class="text-end">
-      <div class="small text-muted">Wallet ID</div>
-      <div class="fw-bold" th:text="'GRW-'+${wallet.id}">GRW-</div>
-    </div>
-  </div>
-
-  <div class="row g-4">
-    <div class="col-md-5">
-      <div class="card bg-card border-0 rounded-4 shadow-lg" style="background:linear-gradient(160deg,#0F9D58,#0a5a33); color:white;">
-        <div class="card-body p-4">
-          <div class="small text-white-50">Available balance</div>
-          <div class="display-6 fw-800 text-warning mb-2">GH₵ <span th:text="${#numbers.formatDecimal(wallet.balance,1,2)}">0.00</span></div>
-          <div class="d-flex gap-3 small text-white-50">
-            <span>⭐ <span th:text="${#numbers.formatDecimal(wallet.loyaltyPoints,1,2)}">0</span> pts</span>
-            <span>•</span>
-            <span th:text="${wallet.currency}">GHS</span>
-          </div>
-          <div class="mt-4 d-grid gap-2">
-            <button class="btn btn-warning fw-bold rounded-3" data-bs-toggle="modal" data-bs-target="#topupModal">+ Top up wallet</button>
-            <a href="/my-bookings" class="btn btn-outline-light rounded-3">Use at checkout</a>
-          </div>
-        </div>
-      </div>
-
-      <div class="card bg-card border-0 rounded-4 shadow-sm mt-3">
-        <div class="card-body p-3">
-          <div class="fw-bold mb-2 small text-uppercase text-muted">Quick top-up</div>
-          <div class="d-flex flex-wrap gap-2">
-            <button class="btn btn-sm btn-outline-warning" onclick="quickTop(50)">GH₵50</button>
-            <button class="btn btn-sm btn-outline-warning" onclick="quickTop(100)">GH₵100</button>
-            <button class="btn btn-sm btn-outline-warning" onclick="quickTop(200)">GH₵200</button>
-            <button class="btn btn-sm btn-outline-warning" onclick="quickTop(500)">GH₵500</button>
-          </div>
-          <div class="small text-muted mt-2">MTN MoMo • Vodafone Cash • Paystack • Visa</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="col-md-7">
-      <div class="card bg-card border-0 rounded-4 shadow-sm">
-        <div class="card-body p-4">
-          <h6 class="fw-800 mb-3">Recent activity</h6>
-          <div th:if="${#lists.isEmpty(recent)}" class="text-muted text-center py-4">No transactions yet. Top up to start earning 2% cashback.</div>
-          <div class="vstack gap-2" th:unless="${#lists.isEmpty(recent)}">
-            <div th:each="tx : ${recent}" class="d-flex justify-content-between align-items-center py-2 border-bottom" style="border-color:var(--border-color)!important;">
-              <div>
-                <div class="fw-600" th:text="${tx.description}">Top-up</div>
-                <div class="small text-muted" th:text="${#temporals.format(tx.createdAt,'dd MMM HH:mm')} + ' • ' + ${tx.provider}">date</div>
-              </div>
-              <div class="text-end">
-                <div th:class="${tx.amount.signum() >= 0 ? 'text-success fw-bold' : 'text-warning fw-bold'}" th:text="${tx.amount.signum()>=0?'+GH₵':''} + ${tx.amount}">GH₵0</div>
-                <div class="small text-muted" th:text="${tx.type}">TOPUP</div>
-              </div>
+<main th:fragment="main">
+    <div class="container py-4">
+        <!-- Breadcrumb -->
+        <nav aria-label="Breadcrumb" class="mb-4">
+            <ol class="breadcrumb mb-0" style="background: transparent; padding: 0;">
+                <li class="breadcrumb-item"><a th:href="@{/}">Home</a></li>
+                <li class="breadcrumb-item"><a th:href="@{/dashboard}">Dashboard</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Wallet</li>
+            </ol>
+        </nav>
+        
+        <div class="wallet-layout">
+            <!-- Main Content -->
+            <div class="wallet-main">
+                <!-- Wallet Hero -->
+                <div class="wallet-hero animate-slide-up">
+                    <div class="wallet-balance-label">Wallet Balance</div>
+                    <div class="wallet-balance" th:text="'GH₵' + ${#numbers.formatDecimal(wallet.balance, 1, 2, 'COMMA')}">GH₵0.00</div>
+                    <div class="wallet-actions">
+                        <button class="wallet-btn wallet-btn-primary" data-bs-toggle="modal" data-bs-target="#topupModal">
+                            <i class="bi bi-plus-circle"></i> Top Up
+                        </button>
+                        <a th:href="@{/wallet/withdraw}" class="wallet-btn wallet-btn-secondary">
+                            <i class="bi bi-bank"></i> Withdraw
+                        </a>
+                        <button class="wallet-btn wallet-btn-outline" data-bs-toggle="modal" data-bs-target="#sendModal">
+                            <i class="bi bi-send"></i> Send
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Loyalty Card -->
+                <div class="loyalty-card animate-slide-up stagger-1">
+                    <div class="loyalty-header">
+                        <div>
+                            <div class="loyalty-label">Loyalty Points</div>
+                            <div class="loyalty-points" th:text="${#numbers.formatDecimal(wallet.loyaltyPoints, 1, 0, 'COMMA')}">0</div>
+                        </div>
+                        <div class="text-end">
+                            <div class="small text-muted">2% cashback on every booking</div>
+                            <a th:href="@{/wallet/loyalty}" class="text-gold text-decoration-none small">View rewards <i class="bi bi-arrow-right"></i></a>
+                        </div>
+                    </div>
+                    
+                    <div class="loyalty-progress">
+                        <div class="loyalty-progress-bar" style="width: 45%;"></div>
+                    </div>
+                    
+                    <div class="loyalty-tier">
+                        <div class="loyalty-tier-icon"><i class="bi bi-star-fill"></i></div>
+                        <div class="loyalty-tier-info">
+                            <div class="loyalty-tier-name">Silver Member</div>
+                            <div class="loyalty-tier-benefit">5,000 points to reach Gold — Free priority support</div>
+                        </div>
+                        <a th:href="@{/wallet/loyalty}" class="btn btn-sm btn-primary">View Tiers</a>
+                    </div>
+                </div>
+                
+                <!-- Transaction History -->
+                <div class="section-header animate-slide-up stagger-2">
+                    <h2 class="section-title">Recent Transactions</h2>
+                    <a th:href="@{/wallet/history}" class="btn btn-sm btn-ghost">View All</a>
+                </div>
+                
+                <div class="txn-list animate-slide-up stagger-3">
+                    <div th:each="txn : ${transactions}" class="txn-item">
+                        <div class="txn-icon" th:classappend="${txn.type == 'TOPUP' ? 'topup' : (txn.type == 'PAYMENT' ? 'payment' : (txn.type == 'REFUND' ? 'refund' : 'loyalty'))}">
+                            <i th:class="${txn.type == 'TOPUP' ? 'bi bi-plus-circle' : (txn.type == 'PAYMENT' ? 'bi bi-dash-circle' : (txn.type == 'REFUND' ? 'bi bi-arrow-return-left' : 'bi bi-star'))}"></i>
+                        </div>
+                        <div class="txn-info">
+                            <div class="txn-description" th:text="${txn.description}">Transaction</div>
+                            <div class="txn-meta">
+                                <span th:text="${#temporals.format(txn.createdAt, 'MMM dd, yyyy HH:mm')}">Date</span>
+                                <span class="mx-2">•</span>
+                                <span th:text="${txn.provider}">Provider</span>
+                                <span class="mx-2">•</span>
+                                <span th:text="${txn.reference}">Reference</span>
+                            </div>
+                        </div>
+                        <div class="txn-amount" th:classappend="${txn.amount.compareTo(T(0)) > 0 ? 'positive' : (txn.amount.compareTo(T(0)) < 0 ? 'negative' : 'neutral')}" th:text="${txn.amount.compareTo(T(0)) > 0 ? '+' : ''} + ' GH₵' + ${#numbers.formatDecimal(txn.amount.abs(), 1, 2, 'COMMA')}">+ GH₵0.00</div>
+                    </div>
+                    
+                    <div th:if="${transactions == null or transactions.empty}" class="empty-state">
+                        <div class="empty-icon"><i class="bi bi-receipt"></i></div>
+                        <h4 class="fw-bold">No transactions yet</h4>
+                        <p class="text-muted">Your transaction history will appear here</p>
+                        <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#topupModal">Top Up to Get Started</button>
+                    </div>
+                </div>
             </div>
-          </div>
+            
+            <!-- Sidebar -->
+            <div class="wallet-sidebar animate-slide-up stagger-4">
+                <!-- Top Up Card -->
+                <div class="topup-card mb-5" id="topupCard">
+                    <h4 class="mb-4">Top Up Wallet</h4>
+                    
+                    <form th:action="@{/wallet/topup}" method="post" id="topupForm">
+                        <input type="hidden" name="_csrf" th:value="${_csrf.token}"/>
+                        <input type="hidden" name="provider" id="providerInput" value="PAYSTACK">
+                        
+                        <div class="topup-options" role="radiogroup" aria-label="Top up amount">
+                            <label class="topup-option">
+                                <input type="radio" name="amount" value="50" id="amt50">
+                                <div class="topup-amount">GH₵50</div>
+                                <div class="topup-label">Starter</div>
+                            </label>
+                            <label class="topup-option">
+                                <input type="radio" name="amount" value="100" id="amt100" checked>
+                                <div class="topup-amount">GH₵100</div>
+                                <div class="topup-label">Popular</div>
+                            </label>
+                            <label class="topup-option">
+                                <input type="radio" name="amount" value="200" id="amt200">
+                                <div class="topup-amount">GH₵200</div>
+                                <div class="topup-label">Value</div>
+                            </label>
+                            <label class="topup-option custom-amount">
+                                <input type="radio" name="amount" value="custom" id="amtCustom">
+                                <div class="form-floating">
+                                    <input type="number" class="form-control" name="customAmount" id="customAmount" placeholder="Custom Amount" min="10" max="5000" step="10" disabled>
+                                    <label for="customAmount">Custom</label>
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <div class="form-floating mb-3" id="providerField">
+                            <select class="form-select" id="provider" name="provider" required>
+                                <option value="PAYSTACK">Paystack (Card / MoMo)</option>
+                                <option value="MTN_MOMO">MTN Mobile Money</option>
+                                <option value="VODAFONE_CASH">Vodafone Cash</option>
+                            </select>
+                            <label for="provider">Payment Method</label>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100 btn-pill py-3" id="topupBtn">
+                            <span class="btn-text">Pay <span th:text="'GH₵' + ${#numbers.formatDecimal(100, 1, 2, 'COMMA')}">GH₵100.00</span></span>
+                            <span class="btn-loading d-none"><i class="bi bi-arrow-clockwise spin me-2"></i>Processing...</span>
+                        </button>
+                        
+                        <p class="text-center text-muted small mt-3">
+                            Secure payment via Paystack. <a th:href="@{/terms}" target="_blank">Terms apply</a>.
+                        </p>
+                    </form>
+                </div>
+                
+                <!-- Payment Methods -->
+                <div class="topup-card mb-5">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="mb-0">Payment Methods</h4>
+                        <button class="btn btn-sm btn-ghost" data-bs-toggle="modal" data-bs-target="#addPaymentModal">Add</button>
+                    </div>
+                    
+                    <div class="payment-methods-list">
+                        <div class="payment-method-item">
+                            <div class="payment-method-icon" style="background: var(--color-info-bg); color: var(--color-info);">
+                                <img src="https://js.paystack.co/v1/inline/gh/logo.png" alt="Paystack" height="28">
+                            </div>
+                            <div class="payment-method-info">
+                                <div class="payment-method-name">Paystack</div>
+                                <div class="payment-method-detail">Card ending in •••• 4242</div>
+                            </div>
+                            <span class="payment-method-default">Default</span>
+                        </div>
+                        
+                        <div class="payment-method-item">
+                            <div class="payment-method-icon" style="background: var(--gold-muted); color: var(--gold-dark);">
+                                <i class="bi bi-phone"></i>
+                            </div>
+                            <div class="payment-method-info">
+                                <div class="payment-method-name">MTN Mobile Money</div>
+                                <div class="payment-method-detail">Linked: 055 773 4624</div>
+                            </div>
+                        </div>
+                        
+                        <div class="payment-method-item">
+                            <div class="payment-method-icon" style="background: var(--color-success-bg); color: var(--color-success);">
+                                <i class="bi bi-wallet2"></i>
+                            </div>
+                            <div class="payment-method-info">
+                                <div class="payment-method-name">GhanaRide Wallet</div>
+                                <div class="payment-method-detail">Balance: <span th:text="'GH₵' + ${#numbers.formatDecimal(wallet.balance, 1, 2, 'COMMA')}">GH₵0.00</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick Stats -->
+                <div class="topup-card">
+                    <h4 class="mb-3">This Month</h4>
+                    <div class="row g-3 text-center">
+                        <div class="col-6">
+                            <div class="stat-value text-success" th:text="'+ GH₵' + ${#numbers.formatDecimal(monthlyTopup ?: 0, 1, 2, 'COMMA')}">+ GH₵0.00</div>
+                            <div class="stat-label">Topped Up</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-value text-error" th:text="'- GH₵' + ${#numbers.formatDecimal(monthlySpent ?: 0, 1, 2, 'COMMA')}">- GH₵0.00</div>
+                            <div class="stat-label">Spent</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-value text-gold" th:text="'+ ' + ${#numbers.formatDecimal(monthlyLoyalty ?: 0, 1, 0, 'COMMA')}">+ 0</div>
+                            <div class="stat-label">Points Earned</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-value text-info" th:text="${monthlyTxns ?: 0}">0</div>
+                            <div class="stat-label">Transactions</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
-  </div>
-</div>
-
-<!-- Topup Modal -->
-<div class="modal fade" id="topupModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content bg-card text-body">
-      <form method="post" action="/wallet/topup">
-        <div class="modal-header border-secondary">
-          <h5 class="modal-title fw-800">Top up GhanaRide Pay</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <label class="form-label">Amount (GH₵)</label>
-          <input type="number" step="0.01" min="5" name="amount" id="topupAmount" class="form-control form-control-lg" required placeholder="100.00">
-          <div class="mt-3 small">
-            <div class="form-check"><input class="form-check-input" type="radio" name="provider" value="MOMO" id="p1" checked><label class="form-check-label" for="p1">📱 MTN MoMo / Vodafone Cash</label></div>
-            <div class="form-check"><input class="form-check-input" type="radio" name="provider" value="PAYSTACK" id="p2"><label class="form-check-label" for="p2">💳 Paystack • Visa / Mastercard</label></div>
-            <div class="form-check"><input class="form-check-input" type="radio" name="provider" value="APPLE_PAY" id="p3"><label class="form-check-label" for="p3"> Apple Pay</label></div>
-          </div>
-          <div class="alert alert-success mt-3 small mb-0" style="background:rgba(15,157,88,.08); color:#4ade80; border-color:rgba(15,157,88,.2);">
-            Instant credit • 2% cashback on every ride • Free withdrawals
-          </div>
-        </2div>
-        <div class="modal-footer border-secondary">
-          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button class="btn btn-warning fw-bold">Top up now</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-
-<script>
-function quickTop(a){ document.getElementById('topupAmount').value=a; new bootstrap.Modal(document.getElementById('topupModal')).show(); }
-</script>
-<style>.fw-800{font-weight:800}</style>
 </main>
+
+<script th:inline="javascript">
+    // Top Up Amount Selection
+    document.addEventListener('DOMContentLoaded', function() {
+        const amountRadios = document.querySelectorAll('input[name="amount"]');
+        const customAmountInput = document.getElementById('customAmount');
+        const topupBtn = document.getElementById('topupBtn');
+        const btnText = topupBtn?.querySelector('.btn-text');
+        
+        amountRadios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                if (this.value === 'custom') {
+                    customAmountInput.disabled = false;
+                    customAmountInput.focus();
+                    customAmountInput.required = true;
+                } else {
+                    customAmountInput.disabled = true;
+                    customAmountInput.required = false;
+                    if (btnText) {
+                        btnText.innerHTML = `Pay <span>GH₵${parseFloat(this.value).toFixed(2)}</span>`;
+                    }
+                }
+            });
+        });
+        
+        customAmountInput?.addEventListener('input', function() {
+            if (btnText && this.value) {
+                btnText.innerHTML = `Pay <span>GH₵${parseFloat(this.value).toFixed(2)}</span>`;
+            }
+        });
+        
+        // Form submission loading state
+        const topupForm = document.getElementById('topupForm');
+        topupForm?.addEventListener('submit', function(e) {
+            const amount = document.querySelector('input[name="amount"]:checked')?.value;
+            const customAmount = customAmountInput?.value;
+            const finalAmount = amount === 'custom' ? customAmount : amount;
+            
+            if (!finalAmount || parseFloat(finalAmount) < 10) {
+                e.preventDefault();
+                GhanaRide?.utils?.showToast('Minimum top-up is GH₵10', 'error');
+                return;
+            }
+            
+            topupBtn.disabled = true;
+            topupBtn.querySelector('.btn-text').classList.add('d-none');
+            topupBtn.querySelector('.btn-loading').classList.remove('d-none');
+        });
+    });
+</script>
 </body>
 </html>

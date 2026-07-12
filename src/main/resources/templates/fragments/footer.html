@@ -1,84 +1,110 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
-
-<footer th:fragment="footer" class="footer mt-auto py-5 bg-darker text-light" style="background-color: #121220; border-top: 1px solid rgba(255,255,255,0.05);">
+<footer th:fragment="footer" class="footer mt-auto bg-dark text-white py-5" role="contentinfo">
     <div class="container">
         <div class="row g-4">
-            <!-- Brand Column -->
-            <div class="col-lg-4 col-md-6 mb-4 mb-lg-0">
-                <a class="navbar-brand d-flex align-items-center mb-3 text-decoration-none" th:href="@{/}">
-                    <img th:src="@{/images/icon-192.svg}" alt="GhanaRide Logo" width="32" height="32" class="me-2 rounded-circle">
-                    <span class="fw-bold fs-5" style="color: #FCD116;">GhanaRide</span>
+            <!-- Brand & Description -->
+            <div class="col-lg-4 col-md-6">
+                <a th:href="@{/}" class="d-flex align-items-center mb-3 text-decoration-none">
+                    <img th:src="@{/images/icon-192.svg}" alt="GhanaRide Logo" width="40" height="40" class="me-2 rounded-circle bg-gold-subtle p-1">
+                    <span class="fw-bold fs-4 text-gold" style="font-family: 'Outfit', sans-serif;">GhanaRide</span>
                 </a>
-                <p class="text-muted small lh-lg pe-lg-4">
-                    Ghana's premier intercity and campus transport booking platform.
-                    We connect passengers with trusted drivers and transport companies for a safe,
-                    comfortable journey across the country.
+                <p class="text-muted small mb-3">
+                    Ghana's trusted campus and intercity transport booking platform. 
+                    Safe, reliable, and affordable rides across Ghana.
                 </p>
-                <div class="d-flex gap-3 mt-4">
-                    <a href="#" class="text-muted text-hover-primary"><i class="bi bi-facebook fs-5"></i></a>
-                    <a href="#" class="text-muted text-hover-primary"><i class="bi bi-twitter-x fs-5"></i></a>
-                    <a href="#" class="text-muted text-hover-primary"><i class="bi bi-instagram fs-5"></i></a>
-                    <a href="https://wa.me/233595873230" class="text-muted text-hover-primary"><i class="bi bi-whatsapp fs-5"></i></a>
+                <div class="d-flex gap-3">
+                    <a href="https://twitter.com/ghanaride" class="text-muted" target="_blank" rel="noopener" aria-label="Twitter"><i class="bi bi-twitter-x fs-5"></i></a>
+                    <a href="https://facebook.com/ghanaride" class="text-muted" target="_blank" rel="noopener" aria-label="Facebook"><i class="bi bi-facebook fs-5"></i></a>
+                    <a href="https://instagram.com/ghanaride" class="text-muted" target="_blank" rel="noopener" aria-label="Instagram"><i class="bi bi-instagram fs-5"></i></a>
+                    <a href="https://linkedin.com/company/ghanaride" class="text-muted" target="_blank" rel="noopener" aria-label="LinkedIn"><i class="bi bi-linkedin fs-5"></i></a>
                 </div>
             </div>
 
             <!-- Quick Links -->
-            <div class="col-lg-2 col-md-6 mb-4 mb-lg-0">
-                <h5 class="text-white mb-4 fw-semibold fs-6">Quick Links</h5>
-                <ul class="list-unstyled footer-links">
-                    <li class="mb-2"><a th:href="@{/}" class="text-muted text-decoration-none text-hover-white transition-all"><i class="bi bi-chevron-right small text-primary me-1"></i> Home</a></li>
-                    <li class="mb-2"><a th:href="@{/about}" class="text-muted text-decoration-none text-hover-white transition-all"><i class="bi bi-chevron-right small text-primary me-1"></i> About Us</a></li>
-                    <li class="mb-2"><a th:href="@{/contact}" class="text-muted text-decoration-none text-hover-white transition-all"><i class="bi bi-chevron-right small text-primary me-1"></i> Contact</a></li>
-                    <li class="mb-2"><a th:href="@{/faq}" class="text-muted text-decoration-none text-hover-white transition-all"><i class="bi bi-chevron-right small text-primary me-1"></i> FAQ</a></li>
+            <div class="col-lg-2 col-md-6">
+                <h6 class="fw-bold mb-3">Quick Links</h6>
+                <ul class="list-unstyled small">
+                    <li class="mb-2"><a th:href="@{/rides}" class="text-muted text-decoration-none hover-gold">Find Rides</a></li>
+                    <li class="mb-2"><a th:href="@{/routes}" class="text-muted text-decoration-none hover-gold">Popular Routes</a></li>
+                    <li class="mb-2"><a th:href="@{/about}" class="text-muted text-decoration-none hover-gold">About Us</a></li>
+                    <li class="mb-2"><a th:href="@{/faq}" class="text-muted text-decoration-none hover-gold">Help Center</a></li>
+                    <li class="mb-2"><a th:href="@{/contact}" class="text-muted text-decoration-none hover-gold">Contact</a></li>
                 </ul>
             </div>
 
-            <!-- Legal -->
-            <div class="col-lg-2 col-md-6 mb-4 mb-lg-0">
-                <h5 class="text-white mb-4 fw-semibold fs-6">Legal</h5>
-                <ul class="list-unstyled footer-links">
-                    <li class="mb-2"><a th:href="@{/terms}" class="text-muted text-decoration-none text-hover-white transition-all"><i class="bi bi-chevron-right small text-primary me-1"></i> Terms of Service</a></li>
-                    <li class="mb-2"><a th:href="@{/privacy}" class="text-muted text-decoration-none text-hover-white transition-all"><i class="bi bi-chevron-right small text-primary me-1"></i> Privacy Policy</a></li>
-                    <li class="mb-2"><a th:href="@{/refunds}" class="text-muted text-decoration-none text-hover-white transition-all"><i class="bi bi-chevron-right small text-primary me-1"></i> Refund Policy</a></li>
+            <!-- For Passengers -->
+            <div class="col-lg-2 col-md-6">
+                <h6 class="fw-bold mb-3">For Passengers</h6>
+                <ul class="list-unstyled small">
+                    <li class="mb-2"><a th:href="@{/register}" class="text-muted text-decoration-none hover-gold">Create Account</a></li>
+                    <li class="mb-2"><a th:href="@{/wallet}" class="text-muted text-decoration-none hover-gold">GhanaRide Wallet</a></li>
+                    <li class="mb-2"><a th:href="@{/my-bookings}" class="text-muted text-decoration-none hover-gold">My Bookings</a></li>
+                    <li class="mb-2"><a th:href="@{/profile}" class="text-muted text-decoration-none hover-gold">Profile Settings</a></li>
+                    <li class="mb-2"><a th:href="@{/reviews}" class="text-muted text-decoration-none hover-gold">Leave a Review</a></li>
                 </ul>
             </div>
 
-            <!-- Contact -->
-            <div class="col-lg-4 col-md-6">
-                <h5 class="text-white mb-4 fw-semibold fs-6">Contact Us</h5>
-                <ul class="list-unstyled text-muted small">
-                    <li class="mb-3 d-flex align-items-start">
-                        <i class="bi bi-geo-alt text-primary fs-5 me-3"></i>
-                        <span>123 Transport Avenue, East Legon<br>Accra, Ghana</span>
-                    </li>
-                    <li class="mb-3 d-flex align-items-center">
-                        <i class="bi bi-envelope text-primary fs-5 me-3"></i>
-                        <a href="mailto:support@ghanaride.me" class="text-muted text-decoration-none text-hover-white">support@ghanaride.me</a>
-                    </li>
-                    <li class="d-flex align-items-center">
-                        <i class="bi bi-telephone text-primary fs-5 me-3"></i>
-                        <a href="tel:+233201234567" class="text-muted text-decoration-none text-hover-white">+233 557 734 624</a>
-                    </li>
+            <!-- For Drivers/Companies -->
+            <div class="col-lg-2 col-md-6">
+                <h6 class="fw-bold mb-3">Drive with Us</h6>
+                <ul class="list-unstyled small">
+                    <li class="mb-2"><a th:href="@{/register}" class="text-muted text-decoration-none hover-gold">Become a Driver</a></li>
+                    <li class="mb-2"><a th:href="@{/driver/dashboard}" class="text-muted text-decoration-none hover-gold">Driver Dashboard</a></li>
+                    <li class="mb-2"><a th:href="@{/company/dashboard}" class="text-muted text-decoration-none hover-gold">Company Portal</a></li>
+                    <li class="mb-2"><a th:href="@{/driver/add-trip}" class="text-muted text-decoration-none hover-gold">Add a Trip</a></li>
+                    <li class="mb-2"><a th:href="@{/driver/earnings}" class="text-muted text-decoration-none hover-gold">Earnings</a></li>
+                </ul>
+            </div>
+
+            <!-- Legal & Support -->
+            <div class="col-lg-2 col-md-6">
+                <h6 class="fw-bold mb-3">Legal & Support</h6>
+                <ul class="list-unstyled small">
+                    <li class="mb-2"><a th:href="@{/terms}" class="text-muted text-decoration-none hover-gold">Terms of Service</a></li>
+                    <li class="mb-2"><a th:href="@{/privacy}" class="text-muted text-decoration-none hover-gold">Privacy Policy</a></li>
+                    <li class="mb-2"><a th:href="@{/refunds}" class="text-muted text-decoration-none hover-gold">Refund Policy</a></li>
+                    <li class="mb-2"><a th:href="@{/cookies}" class="text-muted text-decoration-none hover-gold">Cookie Policy</a></li>
+                    <li class="mb-2"><a href="mailto:support@ghanaride.me" class="text-muted text-decoration-none hover-gold">Email Support</a></li>
                 </ul>
             </div>
         </div>
 
-        <hr class="mt-5 mb-4 border-secondary opacity-25">
-
+        <!-- Bottom Bar -->
+        <hr class="border-secondary-subtle my-4">
         <div class="row align-items-center">
-            <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
-                <p class="text-muted small mb-0">&copy; <span th:text="${#temporals.year(#temporals.createNow())}">2025</span> GhanaRide. All rights reserved.</p>
+            <div class="col-md-6">
+                <p class="text-muted small mb-0">
+                    &copy; 2025 GhanaRide. All rights reserved. 
+                    Built with <span class="text-danger">♥</span> in Accra, Ghana.
+                </p>
             </div>
-            <div class="col-md-6 text-center text-md-end">
-                <span class="badge bg-dark border border-secondary text-muted fw-normal px-3 py-2 rounded-pill">
-                    <i class="bi bi-shield-check text-success me-1"></i> Secure Payments by Paystack
-                </span>
+            <div class="col-md-6 text-md-end">
+                <p class="text-muted small mb-0">
+                    <a th:href="@{/terms}" class="text-muted text-decoration-none hover-gold me-3">Terms</a>
+                    <a th:href="@{/privacy}" class="text-muted text-decoration-none hover-gold me-3">Privacy</a>
+                    <a th:href="@{/refunds}" class="text-muted text-decoration-none hover-gold me-3">Refunds</a>
+                    <a th:href="@{/cookies}" class="text-muted text-decoration-none hover-gold">Cookies</a>
+                </p>
+            </div>
+        </div>
+
+        <!-- Payment Methods Badge -->
+        <div class="row mt-3">
+            <div class="col-12 text-center">
+                <small class="text-muted d-block mb-2">Secure payments powered by</small>
+                <div class="d-flex justify-content-center flex-wrap gap-2">
+                    <img src="https://js.paystack.co/v1/inline/gh/logo.png" alt="Paystack" height="24" class="opacity-75">
+                    <span class="text-gold fw-bold small align-self-center">+</span>
+                    <i class="bi bi-phone-fill text-success align-self-center" style="font-size: 1.5rem;" title="MTN MoMo"></i>
+                    <i class="bi bi-phone-fill text-primary align-self-center" style="font-size: 1.5rem;" title="Vodafone Cash"></i>
+                    <i class="bi bi-apple text-dark align-self-center" style="font-size: 1.5rem;" title="Apple Pay"></i>
+                    <i class="bi bi-credit-card text-gold align-self-center" style="font-size: 1.5rem;" title="GhanaRide Wallet"></i>
+                </div>
             </div>
         </div>
     </div>
 </footer>
-
 </body>
 </html>

@@ -1,77 +1,231 @@
 package com.ghanaride.service;
 
-import com.ghanaride.entity.Notification;
-import com.ghanaride.entity.User;
+import com.ghanaride.entity.*;
 import com.ghanaride.repository.NotificationRepository;
+import com.ghanaride.repository.BookingRepository;
+import com.ghanaride.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
+
+/**
+ * Notification Service - Handles in-app notifications and real-time updates.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class NotificationService {
+
     private final NotificationRepository notificationRepository;
-    private final EmailService emailService;
+    private final WebSocketService webSocketService;
+    private final BookingRepository bookingRepository;
+    private final UserRepository userRepository;
 
     @Transactional
-    public Notification push(User user, Notification.Type type, String title, String message, String actionUrl) {
-        Notification n = Notification.builder()
+    public Notification createNotification(
+            User user,
+            NotificationType type,
+            String title,
+            String message,
+            String actionUrl
+    ) {
+        NotificationType typeype = null;
+        Notification notification = Notification.builder()
+            .user(user)
+            .type(typeype)
+            .title(title)
+            .message(message)
+            .actionUrl(actionUrl)
+            .read(false)
+            .createdAt(LocalDateTime.now())
+            .build();
+
+        Notification saved = notificationRepository.save(notification);
+
+        // Send real-time via WebSocket
+        webSocketService.sendNotification(user.getId(), saved);
+
+        return saved;
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Notification> getUserNotifications(Long userId, Pageable pageable) {
+        return notificationRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Notification> getRecentNotifications(Long userId, int limit) {
+        return notificationRepository.findTop10ByUserIdOrderByCreatedAtDesc(userId, PageRequest.of(0, limit));
+    }
+
+    @Transactional(readOnly = true)
+    public long getUnreadCount(Long userId) {
+        return notificationRepository.countUnreadByUserId(userId);
+    }
+
+    @Transactional
+    public void markAsRead(Long notificationId, Long userId) {
+        notificationRepository.findByIdAndUserId(notificationId, userId)
+            .ifPresent(n -> {
+                n.setRead(true);
+                n.setReadAt(LocalDateTime.now());
+                notificationRepository.save(n);
+            });
+    }
+
+    @Transactional
+    public void markAllAsRead(Long userId) {
+        notificationRepository.markAllAsRead(userId);
+    }
+
+    @Transactional
+    public void deleteNotification(Long notificationId, Long userId) {
+        notificationRepository.findByIdAndUserId(notificationId, userId)
+            .ifPresent(notificationRepository::delete);
+    }
+
+    @Transactional
+    public void createBulkNotifications(
+            List<User> users,
+            NotificationType type,
+            String title,
+            String message,
+            String actionUrl
+    ) {
+        List<Notification> notifications = users.stream()
+            .map(user -> Notification.builder()
                 .user(user)
                 .type(type)
                 .title(title)
                 .message(message)
                 .actionUrl(actionUrl)
-                .channel(Notification.Channel.IN_APP)
-                .build();
-        Notification saved = notificationRepository.save(n);
+                .read(false)
+                .createdAt(LocalDateTime.now())
+                .build())
+            .collect(Collectors.toList());
 
-        // best-effort email
-        try {
-            if (user.getEmail() != null) {
-                emailService.sendNotificationEmail(user.getEmail(), title, message, actionUrl);
-            }
-        } catch (Exception e) {
-            log.debug("Email notify failed: {}", e.getMessage());
-        }
-        return saved;
+        notificationRepository.saveAll(notifications);
+
+        // Send real-time to all users
+        users.forEach(user -> webSocketService.sendNotification(user.getId(),
+            notifications.stream().filter(n -> n.getUser().getId().equals(user.getId())).findFirst().orElse(null)));
     }
 
-    public Page<Notification> inbox(Long userId, int page) {
-        return notificationRepository.findByUserIdOrderByCreatedAtDesc(userId, PageRequest.of(page, 20));
+    // =========================================================
+    // PREDEFINED NOTIFICATION TYPES
+    // =========================================================
+
+    public void notifyBookingConfirmed(Booking booking) {
+        createNotification(booking.getUser(), NotificationType.BOOKING_CONFIRMED,
+            "Booking Confirmed",
+            "Your booking " + booking.getBookingReference() + " is confirmed.",
+            "/booking/receipt/" + booking.getId());
     }
 
-    public long unreadCount(Long userId) {
-        return notificationRepository.countByUserIdAndReadFlagFalse(userId);
-    }
-
-    @Transactional
-    public int markAllRead(Long userId) {
-        return notificationRepository.markAllRead(userId);
-    }
-
-    // convenience helpers
-    public void bookingConfirmed(User user, String bookingRef) {
-        push(user, Notification.Type.BOOKING_CONFIRMED,
-            "Booking confirmed ✓",
-            "Your GhanaRide booking "+bookingRef+" is confirmed. Boarding QR is ready.",
+    public void notifyBookingCancelled(Booking booking, String reason) {
+        createNotification(booking.getUser(), NotificationType.BOOKING_CANCELLED,
+            "Booking Cancelled",
+            "Booking " + booking.getBookingReference() + " was cancelled. " + reason,
             "/my-bookings");
     }
 
-    public void tripReminder(User user, String route) {
-        push(user, Notification.Type.TRIP_REMINDER,
-            "Trip tomorrow",
-            "Reminder: "+route+" departs tomorrow. Arrive 20 min early.",
-            "/my-bookings");
+    public void notifyTripCancelled(Trip trip, String reason) {
+        List<Booking> bookings = bookingRepository.findByTripAndStatusIn(trip,
+            List.of(BookingStatus.ACTIVE, BookingStatus.CONFIRMED));
+
+        bookings.forEach(booking -> createNotification(booking.getUser(),
+            NotificationType.TRIP_CANCELLED,
+            "Trip Cancelled",
+            "Your trip " + trip.getFromLocation() + " → " + trip.getToLocation() + " was cancelled. " + reason,
+            "/my-bookings"));
     }
 
-    public void refundProcessed(User user, String amount) {
-        push(user, Notification.Type.REFUND_PROCESSED,
-            "Refund processed",
-            "GH₵"+amount+" has been refunded instantly to your GhanaRide Wallet.",
+    public void notifyTripDepartingSoon(Booking booking, int minutes) {
+        createNotification(booking.getUser(), NotificationType.TRIP_REMINDER,
+            "Departure Reminder",
+            "Your trip departs in " + minutes + " minutes. Please proceed to the pickup point.",
+            "/boarding-pass/" + booking.getId());
+    }
+
+    public void notifyPaymentReceived(Booking booking) {
+        createNotification(booking.getUser(), NotificationType.PAYMENT_RECEIVED,
+            "Payment Received",
+            "Payment of GH₵" + booking.getTotalAmount() + " received for booking " + booking.getBookingReference(),
+            "/booking/receipt/" + booking.getId());
+    }
+
+    public void notifyRefundProcessed(Booking booking) {
+        createNotification(booking.getUser(), NotificationType.REFUND_PROCESSED,
+            "Refund Processed",
+            "Refund of GH₵" + booking.getTotalAmount() + " has been processed to your wallet.",
             "/wallet");
+    }
+
+    public void notifyDriverNewBooking(Booking booking) {
+        if (booking.getTrip().getDriver() != null) {
+            createNotification(booking.getTrip().getDriver(), NotificationType.NEW_BOOKING,
+                "New Passenger",
+                "New booking for your trip " + booking.getTrip().getFromLocation() + " → " + booking.getTrip().getToLocation(),
+                "/driver/trip-passengers/" + booking.getTrip().getId());
+        }
+    }
+
+    public void notifyDriverTripApproved(Trip trip) {
+        if (trip.getDriver() != null) {
+            createNotification(trip.getDriver(), NotificationType.TRIP_APPROVED,
+                "Trip Approved",
+                "Your trip " + trip.getFromLocation() + " → " + trip.getToLocation() + " has been approved.",
+                "/driver/dashboard");
+        }
+    }
+
+    public void notifyDriverTripRejected(Trip trip, String reason) {
+        if (trip.getDriver() != null) {
+            createNotification(trip.getDriver(), NotificationType.TRIP_REJECTED,
+                "Trip Rejected",
+                "Your trip " + trip.getFromLocation() + " → " + trip.getToLocation() + " was rejected. Reason: " + reason,
+                "/driver/trips");
+        }
+    }
+
+    public void notifyWalletTopup(User user, BigDecimal amount) {
+        createNotification(user, NotificationType.WALLET_TOPUP,
+            "Wallet Topped Up",
+            "GH₵" + amount + " has been added to your wallet.",
+            "/wallet");
+    }
+
+    public void notifyLoyaltyEarned(User user, BigDecimal points) {
+        createNotification(user, NotificationType.LOYALTY_EARNED,
+            "Loyalty Points Earned",
+            "You earned " + points + " loyalty points!",
+            "/wallet/loyalty");
+    }
+
+    public void notifyReviewReceived(Booking booking) {
+        if (booking.getTrip().getDriver() != null) {
+            createNotification(booking.getTrip().getDriver(), NotificationType.REVIEW_RECEIVED,
+                "New Review",
+                "You received a new review from a passenger.",
+                "/driver/reviews");
+        }
+    }
+
+    public void notifySystemMaintenance(String message, LocalDateTime scheduledAt) {
+        // Broadcast to all active users
+        List<User> users = userRepository.findActiveUsers();
+        createBulkNotifications(users, NotificationType.SYSTEM_MAINTENANCE,
+            "Scheduled Maintenance",
+            message + " (Scheduled: " + scheduledAt + ")",
+            "/faq");
     }
 }

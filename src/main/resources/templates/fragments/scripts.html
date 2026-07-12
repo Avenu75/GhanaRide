@@ -1,191 +1,381 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
-
 <th:block th:fragment="scripts">
-    <script th:src="@{/webjars/bootstrap/5.3.2/js/bootstrap.bundle.min.js}"></script>
+    
+    <!-- Bootstrap JS Bundle (Popper included) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" 
+            integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" 
+            crossorigin="anonymous"></script>
 
-    <!-- ============================================================
-         THEME SYSTEM — Dark / Light Mode
-         Reads from localStorage, applies on every page load.
-         Toggle button is in the navbar (#themeToggleBtn).
-         ============================================================ -->
-    <script>
-        (function () {
-            // 1. Determine stored theme, fallback to system preference
-            const getStoredTheme = () => localStorage.getItem('ghanaride-theme');
-            const getPreferredTheme = () => {
-                const stored = getStoredTheme();
-                if (stored) return stored;
-                return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    <!-- GhanaRide Design System JS -->
+    <script th:inline="javascript">
+        /* ========================================================
+         * GHANARIDE DESIGN SYSTEM - Core JavaScript
+         * Handles: Theme, Toasts, PWA, Navbar, Forms, WebSocket
+         * ======================================================== */
+        
+        (function() {
+            'use strict';
+            
+            // ---- GLOBAL STATE ----
+            const GR = window.GhanaRide = {
+                config: {
+                    apiBase: '/api',
+                    wsUrl: 'wss://ghanaride.me/ws',
+                    toastDuration: 5000
+                },
+                state: {
+                    theme: 'light',
+                    ws: null,
+                    wsReconnectAttempts: 0,
+                    wsMaxReconnectAttempts: 5
+                },
+                utils: {}
             };
 
-            // 2. Apply theme immediately (before DOMContentLoaded to avoid flash)
-            const applyTheme = (theme) => {
-                document.documentElement.setAttribute('data-bs-theme', theme);
-                if (theme === 'light') {
-                    document.documentElement.classList.add('light-mode');
-                    document.documentElement.classList.remove('dark-mode');
-                } else {
-                    document.documentElement.classList.add('dark-mode');
-                    document.documentElement.classList.remove('light-mode');
-                }
-            };
-
-            applyTheme(getPreferredTheme());
-
-            // 3. Once DOM is ready, wire up the toggle button
-            window.addEventListener('DOMContentLoaded', () => {
-                const btn = document.getElementById('themeToggleBtn');
-                const icon = document.getElementById('themeIcon');
-
-                const syncIcon = (theme) => {
-                    if (!icon) return;
-                    if (theme === 'light') {
-                        icon.className = 'bi bi-sun-fill fs-6';
-                        if (btn) btn.title = 'Switch to dark mode';
-                    } else {
-                        icon.className = 'bi bi-moon-fill fs-6';
-                        if (btn) btn.title = 'Switch to light mode';
-                    }
-                };
-
-                // Sync icon to current theme
-                syncIcon(getPreferredTheme());
-
-                // Mark active nav link
-                const currentPath = window.location.pathname;
-                const navLinks = document.querySelectorAll('.navbar-nav .nav-link');
-                navLinks.forEach(link => {
-                    const href = link.getAttribute('href') || '';
-                    if (href === currentPath || (currentPath.startsWith(href) && href !== '/')) {
-                        link.classList.add('active');
+            // ---- THEME MANAGEMENT ----
+            GR.utils.initTheme = function() {
+                // Check localStorage first, then system preference
+                const saved = localStorage.getItem('gr_theme');
+                const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                const theme = saved || (systemDark ? 'dark' : 'light');
+                GR.utils.setTheme(theme);
+                
+                // Listen for system changes
+                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+                    if (!localStorage.getItem('gr_theme')) {
+                        GR.utils.setTheme(e.matches ? 'dark' : 'light');
                     }
                 });
-                // Exact match for home
-                const homeLink = document.getElementById('nav-home');
-                if (homeLink && currentPath === '/') {
-                    homeLink.classList.add('active');
-                }
+            };
 
-                // Toggle on button click
-                if (btn) {
-                    btn.addEventListener('click', () => {
-                        const current = document.documentElement.getAttribute('data-bs-theme') || 'dark';
-                        const next = current === 'dark' ? 'light' : 'dark';
-                        localStorage.setItem('ghanaride-theme', next);
-                        applyTheme(next);
-                        syncIcon(next);
+            GR.utils.setTheme = function(theme) {
+                GR.state.theme = theme;
+                document.documentElement.setAttribute('data-bs-theme', theme);
+                localStorage.setItem('gr_theme', theme);
+                
+                // Update icon
+                const icon = document.getElementById('themeIcon');
+                if (icon) {
+                    icon.className = theme === 'dark' ? 'bi bi-sun-fill fs-6' : 'bi bi-moon-fill fs-6';
+                }
+                
+                // Dispatch event for other components
+                window.dispatchEvent(new CustomEvent('gr:themechange', { detail: { theme } }));
+            };
+
+            GR.utils.toggleTheme = function() {
+                GR.utils.setTheme(GR.state.theme === 'dark' ? 'light' : 'dark');
+            };
+
+            // ---- TOAST NOTIFICATIONS ----
+            GR.utils.showToast = function(message, type = 'info', duration = GR.config.toastDuration) {
+                const container = GR.utils.getToastContainer();
+                const toastEl = document.createElement('div');
+                
+                const icons = {
+                    success: 'bi-check-circle-fill',
+                    error: 'bi-x-circle-fill',
+                    warning: 'bi-exclamation-triangle-fill',
+                    info: 'bi-info-circle-fill'
+                };
+                
+                const bgClasses = {
+                    success: 'bg-success',
+                    error: 'bg-danger',
+                    warning: 'bg-warning text-dark',
+                    info: 'bg-info'
+                };
+                
+                toastEl.className = `toast ${bgClasses[type] || 'bg-info'} text-white`;
+                toastEl.setAttribute('role', 'alert');
+                toastEl.setAttribute('aria-live', 'assertive');
+                toastEl.setAttribute('aria-atomic', 'true');
+                toastEl.innerHTML = `
+                    <div class="toast-header ${bgClasses[type] || 'bg-info'} text-white">
+                        <i class="bi ${icons[type] || icons.info} me-2"></i>
+                        <strong class="me-auto">${type.charAt(0).toUpperCase() + type.slice(1)}</strong>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                    <div class="toast-body">${message}</div>
+                `;
+                
+                container.appendChild(toastEl);
+                const toast = new bootstrap.Toast(toastEl, { delay: duration });
+                toast.show();
+                
+                // Remove from DOM after hidden
+                toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+                
+                return toast;
+            };
+
+            GR.utils.getToastContainer = function() {
+                let container = document.getElementById('gr-toast-container');
+                if (!container) {
+                    container = document.createElement('div');
+                    container.id = 'gr-toast-container';
+                    container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+                    container.style.zIndex = '1080';
+                    document.body.appendChild(container);
+                }
+                return container;
+            };
+
+            // Auto-show flash messages from server (Thymeleaf session attributes)
+            GR.utils.showFlashMessages = function() {
+                // Success messages
+                const successEl = document.getElementById('gr-flash-success');
+                if (successEl && successEl.textContent.trim()) {
+                    GR.utils.showToast(successEl.textContent.trim(), 'success');
+                    successEl.remove();
+                }
+                
+                // Error messages
+                const errorEl = document.getElementById('gr-flash-error');
+                if (errorEl && errorEl.textContent.trim()) {
+                    GR.utils.showToast(errorEl.textContent.trim(), 'error');
+                    errorEl.remove();
+                }
+            };
+
+            // ---- PASSWORD VISIBILITY TOGGLE ----
+            GR.utils.initPasswordToggles = function() {
+                document.querySelectorAll('[data-toggle-password]').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const targetId = this.getAttribute('data-toggle-password');
+                        const input = document.getElementById(targetId);
+                        const icon = this.querySelector('i');
+                        
+                        if (input && icon) {
+                            if (input.type === 'password') {
+                                input.type = 'text';
+                                icon.classList.replace('bi-eye', 'bi-eye-slash');
+                            } else {
+                                input.type = 'password';
+                                icon.classList.replace('bi-eye-slash', 'bi-eye');
+                            }
+                        }
+                    });
+                });
+            };
+
+            // ---- FORM LOADING STATES ----
+            GR.utils.initFormLoading = function() {
+                document.querySelectorAll('form[data-loading]').forEach(form => {
+                    form.addEventListener('submit', function(e) {
+                        const submitBtn = form.querySelector('button[type="submit"], input[type="submit"]');
+                        if (submitBtn && !submitBtn.disabled) {
+                            submitBtn.disabled = true;
+                            submitBtn.dataset.originalText = submitBtn.innerHTML;
+                            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing...';
+                            
+                            // Re-enable after 10s as safety net
+                            setTimeout(() => {
+                                if (submitBtn.disabled) {
+                                    submitBtn.disabled = false;
+                                    submitBtn.innerHTML = submitBtn.dataset.originalText;
+                                }
+                            }, 10000);
+                        }
+                    });
+                });
+            };
+
+            // ---- NAVBAR SCROLL EFFECT ----
+            GR.utils.initNavbarScroll = function() {
+                const navbar = document.getElementById('mainNavbar');
+                if (!navbar) return;
+                
+                let lastScroll = 0;
+                window.addEventListener('scroll', () => {
+                    const currentScroll = window.pageYOffset;
+                    
+                    if (currentScroll > 100) {
+                        navbar.classList.add('navbar-scrolled');
+                    } else {
+                        navbar.classList.remove('navbar-scrolled');
+                    }
+                    
+                    lastScroll = currentScroll;
+                }, { passive: true });
+            };
+
+            // ---- PWA INSTALL PROMPT ----
+            GR.utils.initPWA = function() {
+                let deferredPrompt;
+                
+                window.addEventListener('beforeinstallprompt', (e) => {
+                    e.preventDefault();
+                    deferredPrompt = e;
+                    
+                    const installBtn = document.getElementById('installAppBtn');
+                    if (installBtn) {
+                        installBtn.classList.remove('d-none');
+                        installBtn.onclick = async () => {
+                            installBtn.classList.add('d-none');
+                            deferredPrompt.prompt();
+                            const { outcome } = await deferredPrompt.userChoice;
+                            console.log('PWA install outcome:', outcome);
+                            deferredPrompt = null;
+                        };
+                    }
+                });
+
+                window.addEventListener('appinstalled', () => {
+                    console.log('GhanaRide PWA installed');
+                    GR.utils.showToast('App installed! Enjoy offline access.', 'success');
+                });
+
+                // Register Service Worker
+                if ('serviceWorker' in navigator) {
+                    window.addEventListener('load', () => {
+                        navigator.serviceWorker.register('/sw.js')
+                            .then(reg => console.log('SW registered:', reg.scope))
+                            .catch(err => console.log('SW registration failed:', err));
                     });
                 }
-
-                // Listen for system preference change
-                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-                    if (!getStoredTheme()) {
-                        const systemTheme = e.matches ? 'dark' : 'light';
-                        applyTheme(systemTheme);
-                        syncIcon(systemTheme);
-                    }
-                });
-            });
-        })();
-    </script>
-
-    <!-- ============================================================
-         PWA SERVICE WORKER & INSTALL PROMPT
-         ============================================================ -->
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(() => console.log('SW registered'))
-                    .catch(err => console.log('SW registration failed:', err));
-            });
-        }
-
-        let deferredPrompt;
-        const installBtn = document.getElementById('installAppBtn');
-
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            if (installBtn) installBtn.classList.remove('d-none');
-        });
-
-        if (installBtn) {
-            installBtn.addEventListener('click', () => {
-                installBtn.classList.add('d-none');
-                if (deferredPrompt) {
-                    deferredPrompt.prompt();
-                    deferredPrompt.userChoice.then(() => { deferredPrompt = null; });
-                }
-            });
-        }
-
-        window.addEventListener('appinstalled', () => {
-            console.log('PWA installed');
-            if (installBtn) installBtn.classList.add('d-none');
-        });
-    </script>
-
-    <!-- ============================================================
-         AUTO-DISMISS ALERTS after 5 seconds
-         ============================================================ -->
-    <script>
-        window.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('.alert.auto-dismiss').forEach(alert => {
-                setTimeout(() => {
-                    const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
-                    if (bsAlert) bsAlert.close();
-                }, 5000);
-            });
-        });
-    </script>
-
-    <!-- ============================================================
-         GHANARIDE v5 – LIVE NOTIFICATIONS + UX POLISH
-         ============================================================ -->
-    <script>
-        (function(){
-            // notification badge polling
-            async function pollNotif(){
-                const badge = document.getElementById('notifBadge');
-                if(!badge) return;
-                try{
-                    const r = await fetch('/api/notifications/unread-count', {credentials:'include'});
-                    if(r.ok){
-                        const j = await r.json();
-                        const n = j.unread || 0;
-                        badge.textContent = n;
-                        badge.style.display = n>0 ? 'inline-block':'none';
-                    }
-                }catch(e){}
-            }
-            pollNotif();
-            setInterval(pollNotif, 45000);
-
-            // PWA prompt bridge
-            window.addEventListener('beforeinstallprompt', e=>{
-                e.preventDefault();
-                window.pwaPrompt = e;
-                const cta = document.getElementById('pwa-install-cta');
-                if(cta) cta.style.display='inline-block';
-            });
-
-            // Smooth scroll, toast helper
-            window.GhanaRide = window.GhanaRide || {};
-            window.GhanaRide.toast = (msg, type='success')=>{
-                const t = document.createElement('div');
-                t.className='toast align-items-center text-bg-'+(type==='success'?'success':'dark')+' border-0 show position-fixed';
-                t.style.cssText='top:90px;right:20px;z-index:9999;min-width:280px';
-                t.innerHTML='<div class="d-flex"><div class="toast-body">'+msg+'</div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div>';
-                document.body.appendChild(t);
-                setTimeout(()=>t.remove(), 4200);
             };
-            console.log('%c🇬🇭 GhanaRide v5 World Class','color:#FCD116;font-weight:800;font-size:14px','• seat maps • live tracking • wallet •');
+
+            // ---- WEBSOCKET REAL-TIME UPDATES ----
+            GR.utils.initWebSocket = function() {
+                if (!window.WebSocket) return;
+                
+                // Only connect if authenticated (check for user dropdown)
+                if (!document.querySelector('[sec\\:authorize="isAuthenticated()"]')) return;
+                
+                GR.state.ws = new WebSocket(GR.config.wsUrl);
+                
+                GR.state.ws.onopen = () => {
+                    console.log('WebSocket connected');
+                    GR.state.wsReconnectAttempts = 0;
+                };
+                
+                GR.state.ws.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        GR.utils.handleWSMessage(data);
+                    } catch (err) {
+                        console.warn('WS message parse error:', err);
+                    }
+                };
+                
+                GR.state.ws.onclose = () => {
+                    console.log('WebSocket disconnected');
+                    GR.utils.reconnectWS();
+                };
+                
+                GR.state.ws.onerror = (err) => {
+                    console.error('WebSocket error:', err);
+                };
+            };
+
+            GR.utils.reconnectWS = function() {
+                if (GR.state.wsReconnectAttempts < GR.state.wsMaxReconnectAttempts) {
+                    GR.state.wsReconnectAttempts++;
+                    const delay = Math.min(1000 * Math.pow(2, GR.state.wsReconnectAttempts), 30000);
+                    console.log(`Reconnecting in ${delay}ms (attempt ${GR.state.wsReconnectAttempts})`);
+                    setTimeout(GR.utils.initWebSocket, delay);
+                }
+            };
+
+            GR.utils.handleWSMessage = function(data) {
+                switch (data.type) {
+                    case 'booking_update':
+                        GR.utils.showToast(`Booking ${data.bookingRef}: ${data.status}`, 'info');
+                        // Refresh booking badge if on dashboard
+                        GR.utils.updateBookingBadge();
+                        break;
+                    case 'trip_update':
+                        GR.utils.showToast(`Trip update: ${data.message}`, 'info');
+                        break;
+                    case 'notification':
+                        GR.utils.showToast(data.message, data.level || 'info');
+                        GR.utils.updateNotificationBadge(data.unreadCount);
+                        break;
+                    case 'wallet_update':
+                        GR.utils.updateWalletBalance(data.newBalance);
+                        break;
+                }
+            };
+
+            GR.utils.updateNotificationBadge = function(count) {
+                const badge = document.getElementById('notifBadge');
+                if (badge) {
+                    badge.textContent = count;
+                    badge.style.display = count > 0 ? 'block' : 'none';
+                }
+            };
+
+            GR.utils.updateBookingBadge = function() {
+                // Could fetch via HTMX or simple fetch
+                fetch('/api/user/booking-count')
+                    .then(r => r.json())
+                    .then(data => {
+                        const badge = document.getElementById('bookingBadge');
+                        if (badge) badge.textContent = data.count;
+                    })
+                    .catch(() => {});
+            };
+
+            GR.utils.updateWalletBalance = function(balance) {
+                const el = document.getElementById('walletBalance');
+                if (el) el.textContent = `GH₵${balance.toFixed(2)}`;
+            };
+
+            // ---- AUTOCOMPLETE / INPUTMODE FOR MOBILE ----
+            GR.utils.enhanceFormInputs = function() {
+                // Phone inputs
+                document.querySelectorAll('input[type="tel"], input[name*="phone"], input[name*="Phone"]').forEach(input => {
+                    input.setAttribute('inputmode', 'tel');
+                    input.setAttribute('autocomplete', 'tel');
+                });
+                
+                // Email inputs
+                document.querySelectorAll('input[type="email"]').forEach(input => {
+                    input.setAttribute('autocomplete', 'email');
+                });
+                
+                // Name inputs
+                document.querySelectorAll('input[name*="name"], input[name*="Name"]').forEach(input => {
+                    input.setAttribute('autocomplete', 'name');
+                });
+                
+                // Address inputs
+                document.querySelectorAll('input[name*="address"], input[name*="Address"], textarea[name*="address"]').forEach(input => {
+                    input.setAttribute('autocomplete', 'street-address');
+                });
+            };
+
+            // ---- INITIALIZATION ----
+            document.addEventListener('DOMContentLoaded', function() {
+                GR.utils.initTheme();
+                GR.utils.showFlashMessages();
+                GR.utils.initPasswordToggles();
+                GR.utils.initFormLoading();
+                GR.utils.initNavbarScroll();
+                GR.utils.initPWA();
+                GR.utils.initWebSocket();
+                GR.utils.enhanceFormInputs();
+                
+                // Initialize Bootstrap tooltips
+                document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => new bootstrap.Tooltip(el));
+                
+                // Initialize Bootstrap popovers
+                document.querySelectorAll('[data-bs-toggle="popover"]').forEach(el => new bootstrap.Popover(el));
+                
+                console.log('GhanaRide Design System initialized v5.2');
+            });
+
         })();
     </script>
-</th:block>
 
+    <!-- Page-specific inline scripts (if any) -->
+    <th:block th:if="${pageScript != null}" th:inline="javascript">
+        [[${pageScript}]]
+    </th:block>
+
+</th:block>
 </body>
 </html>

@@ -1,34 +1,30 @@
 package com.ghanaride.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
- * Represents a vehicle used for trips.
- * Belongs to either an individual driver OR a company.
+ * Car/Vehicle entity.
  */
 @Getter
 @Setter
 @NoArgsConstructor
-@ToString(exclude = {"driver", "company"})
+@AllArgsConstructor
+@SuperBuilder
+@ToString(exclude = {"driver", "company", "trips", "seatMaps"})
 @Entity
 @Table(
-        name = "cars",
-        indexes = {
-                @Index(name = "idx_car_number_plate",
-                        columnList = "number_plate"),
-                @Index(name = "idx_car_driver",
-                        columnList = "driver_id"),
-                @Index(name = "idx_car_company",
-                        columnList = "company_id"),
-                @Index(name = "idx_car_status",
-                        columnList = "status")
-        }
+    name = "cars",
+    indexes = {
+        @Index(name = "idx_car_driver", columnList = "driver_id"),
+        @Index(name = "idx_car_company", columnList = "company_id"),
+        @Index(name = "idx_car_plate", columnList = "plate_number", unique = true),
+        @Index(name = "idx_car_status", columnList = "status")
+    }
 )
 public class Car {
 
@@ -36,56 +32,69 @@ public class Car {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Individual driver (null for company vehicles)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "driver_id")
     private User driver;
 
-    // Company (null for individual driver vehicles)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "company_id")
     private Company company;
 
-    @Column(
-            name = "car_brand",
-            length = 100,
-            nullable = false
-    )
+    @Column(name = "plate_number", length = 20, unique = true, nullable = false)
+    private String plateNumber;
+
+    @Column(name = "car_brand", length = 50, nullable = false)
     private String carBrand;
 
-    @Column(name = "model", length = 100)
+    @Column(name = "model", length = 50, nullable = false)
     private String model;
-
-    @Column(
-            name = "number_plate",
-            length = 20,
-            unique = true,
-            nullable = false
-    )
-    private String numberPlate;
-
-    @Column(name = "car_image_path")
-    private String carImagePath;
-
-    @Column(name = "color", length = 50)
-    private String color;
 
     @Column(name = "year")
     private Integer year;
 
-    @Enumerated(EnumType.STRING)
-    @Column(
-            name = "status",
-            length = 20,
-            nullable = false
-    )
-    private CarStatus status = CarStatus.APPROVED;
+    @Column(name = "color", length = 30)
+    private String color;
 
-    @Column(
-            name = "created_at",
-            nullable = false,
-            updatable = false
-    )
+    @Builder.Default
+    @Column(name = "total_seats", nullable = false)
+    private Integer totalSeats = 18;
+
+    @Column(name = "vin", length = 50)
+    private String vin;
+
+    @Column(name = "chassis_number", length = 50)
+    private String chassisNumber;
+
+    @Column(name = "engine_number", length = 50)
+    private String engineNumber;
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", length = 20, nullable = false)
+    private CarStatus status = CarStatus.ACTIVE;
+
+    @Column(name = "roadworthy_expiry")
+    private LocalDateTime roadworthyExpiry;
+
+    @Column(name = "insurance_expiry")
+    private LocalDateTime insuranceExpiry;
+
+    @Column(name = "last_inspection_date")
+    private LocalDateTime lastInspectionDate;
+
+    @Column(name = "image_path")
+    private String imagePath;
+
+    @Column(name = "description", length = 500)
+    private String description;
+
+    @OneToMany(mappedBy = "car", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Trip> trips;
+
+    @OneToMany(mappedBy = "car", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<SeatMap> seatMaps;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
@@ -95,9 +104,7 @@ public class Car {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
-        if (status == null) {
-            status = CarStatus.APPROVED;
-        }
+        if (status == null) status = CarStatus.ACTIVE;
     }
 
     @PreUpdate
@@ -105,22 +112,10 @@ public class Car {
         updatedAt = LocalDateTime.now();
     }
 
-    // =========================================================
-    // CONVENIENCE
-    // =========================================================
-
-    /**
-     * Display name: "Toyota Camry (GR-1234-22)"
-     */
     public String getDisplayName() {
-        return carBrand +
-                (model != null ? " " + model : "") +
-                " (" + numberPlate + ")";
+        return carBrand + " " + model + " (" + plateNumber + ")";
     }
 
-    // =========================================================
-    // EQUALS & HASHCODE (ID-based)
-    // =========================================================
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

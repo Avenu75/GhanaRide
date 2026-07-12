@@ -132,27 +132,27 @@ public class CompanyController {
 
             // Check duplicate number plate
             if (carService.existsByNumberPlate(
-                    car.getNumberPlate())) {
+                    car.getPlateNumber())) {
                 redirectAttributes.addFlashAttribute("error",
                         "A vehicle with number plate '" +
-                                car.getNumberPlate() +
+                                car.getPlateNumber() +
                                 "' is already registered.");
                 return "redirect:/company/vehicles";
             }
 
             car.setCompany(company);
-            car.setStatus(CarStatus.APPROVED);
-            car.setNumberPlate(
-                    car.getNumberPlate().trim().toUpperCase()
+            car.setStatus(CarStatus.ACTIVE);
+            car.setPlateNumber(
+                    car.getPlateNumber().trim().toUpperCase()
             );
             carService.saveCar(car);
 
             log.info("Company {} added vehicle: {}",
                     company.getCompanyName(),
-                    car.getNumberPlate());
+                    car.getPlateNumber());
 
             redirectAttributes.addFlashAttribute("success",
-                    "Vehicle '" + car.getNumberPlate() +
+                    "Vehicle '" + car.getPlateNumber() +
                             "' added successfully.");
 
         } catch (Exception e) {
@@ -188,7 +188,7 @@ public class CompanyController {
 
             log.info("Company {} removed vehicle: {}",
                     company.getCompanyName(),
-                    car.getNumberPlate());
+                    car.getPlateNumber());
 
             redirectAttributes.addFlashAttribute("success",
                     "Vehicle removed successfully.");

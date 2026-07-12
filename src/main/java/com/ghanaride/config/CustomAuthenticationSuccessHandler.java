@@ -15,7 +15,7 @@ import org.springframework.security.web.savedrequest.RequestCache;
 import org.springframework.security.web.savedrequest.SavedRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-
+import com.ghanaride.repository.UserRepository;
 import java.io.IOException;
 import java.time.LocalDateTime;
 

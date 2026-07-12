@@ -1,21 +1,24 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" th:fragment="layout(title, content)">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" th:fragment="layout(title, content)">
 <head th:replace="~{fragments/head :: head(${title})}"></head>
-<body class="d-flex flex-column min-vh-100">
+<body class="d-flex flex-column min-vh-100" data-bs-theme="light">
+    
+    <!-- Navigation Bar -->
+    <nav th:replace="~{fragments/navbar :: navbar}"></nav>
 
-<!-- Navigation Bar -->
-<nav th:replace="~{fragments/navbar :: navbar}"></nav>
+    <!-- Main Content with padding for fixed navbar -->
+    <main class="flex-shrink-0" style="padding-top: 76px;">
+        <th:block th:replace="${content}"/>
+    </main>
 
-<!-- Main Content with padding for fixed navbar -->
-<main class="flex-shrink-0" style="padding-top: 76px;">
-    <th:block th:replace="${content}"/>
-</main>
+    <!-- Footer -->
+    <footer th:replace="~{fragments/footer :: footer}"></footer>
 
-<!-- Footer -->
-<footer th:replace="~{fragments/footer :: footer}"></footer>
+    <!-- Toast Container (for flash messages) -->
+    <div th:replace="~{fragments/toasts :: toasts}"></div>
 
-<!-- Shared Scripts (Bootstrap, Theme, PWA) -->
-<th:block th:replace="~{fragments/scripts :: scripts}"></th:block>
+    <!-- Shared Scripts (Bootstrap, Theme, PWA, WebSocket) -->
+    <th:block th:replace="~{fragments/scripts :: scripts}"></th:block>
 
 </body>
 </html>

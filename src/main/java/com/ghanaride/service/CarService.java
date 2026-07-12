@@ -30,14 +30,14 @@ public class CarService {
     @Transactional
     public Car saveCar(Car car) {
         // Normalize number plate
-        if (car.getNumberPlate() != null) {
-            car.setNumberPlate(
-                    car.getNumberPlate().trim().toUpperCase()
+        if (car.getPlateNumber() != null) {
+            car.setPlateNumber(
+                    car.getPlateNumber().trim().toUpperCase()
             );
         }
         Car saved = carRepository.save(car);
         log.info("Car saved: plate={} driver={}",
-                saved.getNumberPlate(),
+                saved.getPlateNumber(),
                 saved.getDriver() != null
                         ? saved.getDriver().getEmail() : "company"
         );
@@ -65,7 +65,7 @@ public class CarService {
 
     public boolean existsByNumberPlate(String plate) {
         if (plate == null || plate.isBlank()) return false;
-        return carRepository.existsByNumberPlate(
+        return carRepository.existsByPlateNumber(
                 plate.trim().toUpperCase()
         );
     }
@@ -85,7 +85,7 @@ public class CarService {
                 );
 
         log.warn("Car deleted: id={} plate={}",
-                carId, car.getNumberPlate());
+                carId, car.getPlateNumber());
 
         carRepository.delete(car);
     }

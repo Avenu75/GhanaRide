@@ -1,43 +1,52 @@
-{
-  "name": "Ghanaride",
-  "short_name": "Ghanaride",
-  "description": "Book rides across Ghana — campus and intercity transport at your fingertips",
-  "start_url": "/",
-  "display": "standalone",
-  "orientation": "portrait",
-  "theme_color": "#0F9D58",
-  "background_color": "#0f0f1a",
-  "lang": "en",
-  "categories": ["travel", "transportation"],
-  "icons": [
-    {
-      "src": "/images/icon-192.svg",
-      "sizes": "192x192",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/images/icon-512.svg",
-      "sizes": "512x512",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/images/apple-touch-icon.svg",
-      "sizes": "180x180",
-      "type": "image/svg+xml"
-    }
-  ],
-  "shortcuts": [
-    {
-      "name": "Book a Ride",
-      "url": "/dashboard",
-      "description": "Browse available trips"
-    },
-    {
-      "name": "My Bookings",
-      "url": "/my-bookings",
-      "description": "View your bookings"
-    }
-  ]
-}
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest xmlns:dist="http://www.w3.org/ns/dist#" xmlns:fl="http://www.w3.org/ns/fl#">
+  <application>
+    <name>GhanaRide</name>
+    <short_name>GhanaRide</short_name>
+    <description>Ghana's Trusted Intercity Transport Booking Platform</description>
+    <start_url>/rides</start_url>
+    <display>standalone</display>
+    <background_color>#FAFAFC</background_color>
+    <theme_color>#FCD116</theme_color>
+    <orientation>portrait-primary</orientation>
+    <scope>/</scope>
+    <icons>
+      <icon src="/images/icon-72.png" sizes="72x72" type="image/png" purpose="any maskable"/>
+      <icon src="/images/icon-96.png" sizes="96x96" type="image/png" purpose="any maskable"/>
+      <icon src="/images/icon-128.png" sizes="128x128" type="image/png" purpose="any maskable"/>
+      <icon src="/images/icon-144.png" sizes="144x144" type="image/png" purpose="any maskable"/>
+      <icon src="/images/icon-152.png" sizes="152x152" type="image/png" purpose="any maskable"/>
+      <icon src="/images/icon-192.png" sizes="192x192" type="image/png" purpose="any maskable"/>
+      <icon src="/images/icon-384.png" sizes="384x384" type="image/png" purpose="any maskable"/>
+      <icon src="/images/icon-512.png" sizes="512x512" type="image/png" purpose="any maskable"/>
+    </icons>
+    <categories>
+      <category>travel</category>
+      <category>navigation</category>
+      <category>lifestyle</category>
+    </categories>
+    <shortcuts>
+      <shortcut>
+        <name>Book a Ride</name>
+        <short_name>Book</short_name>
+        <description>Find and book your next trip</description>
+        <url>/rides</url>
+        <icon>/images/icon-192.png</icon>
+      </shortcut>
+      <shortcut>
+        <name>My Bookings</name>
+        <short_name>Bookings</short_name>
+        <description>View your upcoming trips</description>
+        <url>/my-bookings</url>
+        <icon>/images/icon-192.png</icon>
+      </shortcut>
+      <shortcut>
+        <name>Wallet</name>
+        <short_name>Wallet</short_name>
+        <description>Check balance and top up</description>
+        <url>/wallet</url>
+        <icon>/images/icon-192.png</icon>
+      </shortcut>
+    </shortcuts>
+  </application>
+</manifest>

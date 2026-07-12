@@ -115,13 +115,9 @@ public class PasswordResetService {
             tokenRepository.save(resetToken);
 
             // Send real email (async — non-blocking)
-            String fullName =
-                    user.getFullName() != null
-                            ? user.getFullName()
-                            : user.getUsername();
-
+            String resetLink = baseUrl + "/reset-password?token=" + token;
             emailService.sendPasswordResetEmail(
-                    user.getEmail(), fullName, token
+                    user, resetLink
             );
 
             log.info(

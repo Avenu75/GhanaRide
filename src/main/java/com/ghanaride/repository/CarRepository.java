@@ -34,7 +34,7 @@ public interface CarRepository
     List<Car> findByCompany(Company company);
 
     @Transactional(readOnly = true)
-    Optional<Car> findByNumberPlate(String numberPlate);
+    Optional<Car> findByPlateNumber(String plateNumber);
 
     /**
      * Find cars for driver ordered by creation date.
@@ -54,7 +54,7 @@ public interface CarRepository
     // =========================================================
 
     @Transactional(readOnly = true)
-    boolean existsByNumberPlate(String numberPlate);
+    boolean existsByPlateNumber(String plateNumber);
 
     /**
      * Check if number plate belongs to a specific driver.
@@ -63,10 +63,10 @@ public interface CarRepository
     @Transactional(readOnly = true)
     @Query("""
         SELECT COUNT(c) > 0 FROM Car c
-        WHERE c.numberPlate = :plate
+        WHERE c.plateNumber = :plate
         AND c.driver = :driver
         """)
-    boolean existsByNumberPlateAndDriver(
+    boolean existsByPlateNumberAndDriver(
             @Param("plate") String plate,
             @Param("driver") User driver
     );

@@ -10,7 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import com.ghanaride.repository.UserRepository;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -57,6 +57,14 @@ public class SeatService {
 
     public List<SeatMap> getSeatMap(Long tripId) {
         return seatMapRepository.findByTripIdOrderByRowNumberAscColumnLabelAsc(tripId);
+    }
+
+    public java.util.Optional<String> getFirstAvailableSeat(Long tripId) {
+        return seatMapRepository.findByTripIdOrderByRowNumberAscColumnLabelAsc(tripId)
+                .stream()
+                .filter(s -> s.getStatus() == SeatMap.SeatStatus.AVAILABLE)
+                .map(SeatMap::getSeatNumber)
+                .findFirst();
     }
 
     @Transactional

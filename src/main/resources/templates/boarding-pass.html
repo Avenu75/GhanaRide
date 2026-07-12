@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" th:replace="~{layout :: layout(~{::title}, ~{::main})}">
+<head>
+    <title>Boarding Pass <span th:text="${booking.bookingReference}">GR-XXXXXX</span> — GhanaRide</title>
+    <meta name="description" content="GhanaRide boarding pass with QR code for scanning at departure.">
+    <meta name="theme-color" content="#1A1A2E">
+    
+    <style th:inline="css">
+        .boarding-page {
+            min-height: calc(100vh - var(--header-height));
+            display: flex;
+            align-items: center;
+            padding: var(--space-8) 0;
+        }
+        
+        .boarding-pass {
+            background: linear-gradient(135deg, var(--black) 0%, var(--black-light) 100%);
+            color: white;
+            border-radius: var(--radius-xl);
+            padding: var(--space-8);
+            max-width: 480px;
+            width: 100%;
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow-xl);
+        }
+        
+        .boarding-pass::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(252, 209, 22, 0.15) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        
+        .boarding-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--space-6);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .boarding-brand {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+        
+        .boarding-brand img { width: 40px; height: 40px; }
+        .boarding-brand-text {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--gold);
+        }
+        
+        .boarding-badge {
+            background: var(--gold);
+            color: var(--black);
+            padding: var(--space-1) var(--space-3);
+            border-radius: var(--radius-full);
+            font-size: 0.6875rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .boarding-route {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+            margin-bottom: var(--space-6);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .boarding-route-line {
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--space-2);
+        }
+        
+        .boarding-route-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            position: relative;
+        }
+        
+        .boarding-route-dot:first-child { background: var(--green-light); }
+        .boarding-route-dot:last-child { background: var(--red-light); }
+        
+        .boarding-route-line::before {
+            content: '';
+            width: 3px;
+            height: 50px;
+            background: rgba(255,255,255,0.2);
+        }
+        
+        .boarding-route-info { flex: 1; min-width: 0; }
+        .boarding-from { font-weight: 700; font-size: 1.5rem; letter-spacing: 0.02em; }
+        .boarding-to { font-weight: 700; font-size: 1.5rem; letter-spacing: 0.02em; opacity: 0.9; }
+        
+        .boarding-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--space-4);
+            margin-bottom: var(--space-6);
+            padding: var(--space-4);
+            background: rgba(255,255,255,0.05);
+            border-radius: var(--radius);
+            border: 1px solid rgba(255,255,255,0.1);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .boarding-detail {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-1);
+        }
+        
+        .boarding-detail-label {
+            font-size: 0.6875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            opacity: 0.6;
+        }
+        
+        .boarding-detail-value {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        
+        .boarding-qr-section {
+            text-align: center;
+            padding: var(--space-4);
+            background: white;
+            border-radius: var(--radius);
+            margin-bottom: var(--space-6);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .boarding-qr {
+            width: 200px;
+            height: 200px;
+            margin: 0 auto;
+            background: white;
+            padding: var(--space-3);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .boarding-qr img { width: 100%; height: 100%; }
+        
+        .boarding-qr-ref {
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--black);
+            margin-top: var(--space-3);
+            letter-spacing: 0.1em;
+        }
+        
+        .boarding-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: var(--space-4);
+            border-top: 1px solid rgba(255,255,255,0.1);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .boarding-instructions {
+            font-size: 0.8125rem;
+            opacity: 0.7;
+            max-width: 60%;
+        }
+        
+        .boarding-scan-info {
+            text-align: right;
+        }
+        
+        .boarding-scan-label {
+            font-size: 0.6875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            opacity: 0.5;
+        }
+        
+        .boarding-scan-time {
+            font-family: var(--font-display);
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--gold);
+        }
+        
+        /* Print Styles */
+        @media print {
+            .navbar, .footer, .btn, .no-print { display: none !important; }
+            body { background: white !important; color: black !important; }
+            .boarding-page { padding: 0 !important; }
+            .boarding-pass {
+                box-shadow: none !important;
+                border: 2px solid #333 !important;
+                background: white !important;
+                color: black !important;
+                max-width: none !important;
+                padding: 30mm !important;
+            }
+            .boarding-pass::before { display: none !important; }
+            .boarding-brand-text { color: #FCD116 !important; }
+            .boarding-badge { background: #FCD116 !important; color: #1A1A2E !important; }
+            .boarding-from, .boarding-to { color: black !important; }
+            .boarding-details { background: #f5f5f5 !important; border-color: #ccc !important; }
+            .boarding-detail-label { color: #666 !important; }
+            .boarding-detail-value { color: black !important; }
+            .boarding-qr-section { background: white !important; border-color: #ccc !important; }
+            .boarding-qr-ref { color: black !important; }
+            .boarding-footer { border-color: #ccc !important; }
+            .boarding-instructions { color: #666 !important; }
+            .boarding-scan-time { color: #FCD116 !important; }
+            .boarding-qr img { filter: none !important; }
+            
+            /* QR Code for print */
+            .boarding-qr { 
+                background: white !important; 
+                border: 1px solid #ccc !important;
+            }
+        }
+        
+        /* Wallet Pass Styles */
+        .wallet-actions { display: flex; gap: var(--space-3); justify-content: center; margin-top: var(--space-6); }
+        .wallet-btn {
+            padding: var(--space-3) var(--space-5);
+            border-radius: var(--radius);
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            text-decoration: none;
+            transition: all var(--transition-fast);
+        }
+        
+        .wallet-btn-apple {
+            background: black;
+            color: white;
+            border: 1px solid black;
+        }
+        
+        .wallet-btn-google {
+            background: white;
+            color: black;
+            border: 1px solid #ddd;
+        }
+        
+        .wallet-btn:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+    </style>
+</head>
+<body>
+<main th:fragment="main" class="boarding-page">
+    <div class="container">
+        <div class="boarding-pass animate-scale-in" id="boardingPass">
+            <!-- Header -->
+            <div class="boarding-header">
+                <div class="boarding-brand">
+                    <img th:src="@{/images/icon-192.svg}" alt="GhanaRide" width="40" height="40" class="rounded-circle bg-gold-subtle p-1">
+                    <span class="boarding-brand-text">GhanaRide</span>
+                </div>
+                <span class="boarding-badge">Boarding Pass</span>
+            </div>
+            
+            <!-- Route -->
+            <div class="boarding-route">
+                <div class="boarding-route-line">
+                    <div class="boarding-route-dot"></div>
+                    <div class="boarding-route-dot"></div>
+                </div>
+                <div class="boarding-route-info">
+                    <div class="boarding-from" th:text="${booking.trip.fromLocation}">Accra</div>
+                    <div class="boarding-to" th:text="${booking.trip.toLocation}">Kumasi</div>
+                </div>
+            </div>
+            
+            <!-- Details -->
+            <div class="boarding-details">
+                <div class="boarding-detail">
+                    <span class="boarding-detail-label">Departure</span>
+                    <span class="boarding-detail-value" th:text="${#temporals.format(booking.trip.departureTime, 'MMM dd, yyyy \'at\' HH:mm')}">Date & Time</span>
+                </div>
+                <div class="boarding-detail">
+                    <span class="boarding-detail-label">Seat</span>
+                    <span class="boarding-detail-value" th:text="'Seat ' + ${booking.seatNumber}">Seat 1A</span>
+                </div>
+                <div class="boarding-detail">
+                    <span class="boarding-detail-label">Passenger</span>
+                    <span class="boarding-detail-value" th:text="${booking.bookingType == 'RELATIVE' ? booking.passengerName : currentUser.fullName}">Name</span>
+                </div>
+                <div class="boarding-detail">
+                    <span class="boarding-detail-label">Booking Ref</span>
+                    <span class="boarding-detail-value" th:text="${booking.bookingReference}">GR-XXXXXX</span>
+                </div>
+            </div>
+            
+            <!-- QR Code -->
+            <div class="boarding-qr-section">
+                <div class="boarding-qr" id="qrCode">
+                    <!-- QR Code generated by JS -->
+                </div>
+                <div class="boarding-qr-ref" th:text="${booking.bookingReference}">GR-XXXXXX</div>
+            </div>
+            
+            <!-- Footer -->
+            <div class="boarding-footer">
+                <div class="boarding-instructions">
+                    <i class="bi bi-info-circle me-1"></i> Show this QR code to the driver at boarding. Scan takes <strong>0.4s</strong>.
+                </div>
+                <div class="boarding-scan-info">
+                    <div class="boarding-scan-label">Scan Time</div>
+                    <div class="boarding-scan-time">< 0.4s</div>
+                </div>
+            </div>
+            
+            <!-- Wallet Buttons (hidden in print) -->
+            <div class="wallet-actions no-print">
+                <a href="#" class="wallet-btn wallet-btn-apple" onclick="addToAppleWallet(); return false;">
+                    <i class="bi bi-apple"></i> Add to Apple Wallet
+                </a>
+                <a href="#" class="wallet-btn wallet-btn-google" onclick="addToGoogleWallet(); return false;">
+                    <i class="bi bi-google-play"></i> Add to Google Wallet
+                </a>
+            </div>
+        </div>
+        
+        <!-- Actions -->
+        <div class="text-center mt-4 no-print">
+            <button class="btn btn-primary btn-pill me-2" onclick="window.print()">
+                <i class="bi bi-printer me-2"></i> Print / Save as PDF
+            </button>
+            <button class="btn btn-secondary btn-pill me-2" onclick="downloadPNG()">
+                <i class="bi bi-download me-2"></i> Download Image
+            </button>
+            <a th:href="@{/my-bookings}" class="btn btn-ghost btn-pill">
+                <i class="bi bi-arrow-left me-2"></i> Back to Bookings
+            </a>
+        </div>
+    </div>
+</main>
+
+<script th:inline="javascript">
+    // Generate QR Code
+    document.addEventListener('DOMContentLoaded', function() {
+        const qrContainer = document.getElementById('qrCode');
+        if (!qrContainer) return;
+        
+        // QR Data: JSON with booking info
+        const qrData = JSON.stringify({
+            type: 'ghanaride_boarding_pass',
+            ref: /*[[${booking.bookingReference}]]*/ 'GR-XXXXXX',
+            passenger: /*[[${booking.bookingType == 'RELATIVE' ? booking.passengerName : currentUser.fullName}]]*/ 'Passenger',
+            seat: /*[[${booking.seatNumber}]]*/ '1A',
+            trip: {
+                from: /*[[${booking.trip.fromLocation}]]*/ 'Accra',
+                to: /*[[${booking.trip.toLocation}]]*/ 'Kumasi',
+                departure: /*[[${#temporals.format(booking.trip.departureTime, 'yyyy-MM-dd\'T\'HH:mm')}]]*/ '2025-01-15T08:00:00'
+            },
+            issued: new Date().toISOString()
+        });
+        
+        // Use Google Charts API for QR (or load qrcode.js)
+        const qrUrl = 'https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=' + encodeURIComponent(qrData) + '&choe=UTF-8&chld=M|2';
+        
+        const img = document.createElement('img');
+        img.src = qrUrl;
+        img.alt = 'Boarding Pass QR Code';
+        img.width = 200;
+        img.height = 200;
+        qrContainer.appendChild(img);
+        
+        // Wallet Integration
+        window.addToAppleWallet = function() {
+            // In production, serve a .pkpass file
+            alert('Apple Wallet integration requires a .pkpass file served from /api/wallet/pass/' + /*[[${booking.id}]]*/ 0);
+        };
+        
+        window.addToGoogleWallet = function() {
+            // In production, use Google Wallet API
+            alert('Google Wallet integration requires JWT signed with service account');
+        };
+        
+        window.downloadPNG = function() {
+            html2canvas(document.getElementById('boardingPass'), {
+                backgroundColor: '#1A1A2E',
+                scale: 2,
+                useCORS: true
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'GhanaRide-Boarding-Pass-' + /*[[${booking.bookingReference}]]*/ 'GR-XXXXXX' + '.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        };
+    });
+    
+    // Load html2canvas for image download
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+    script.onload = () => console.log('html2canvas loaded');
+    document.head.appendChild(script);
+</script>
+</body>
+</html>

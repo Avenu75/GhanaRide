@@ -1,7 +1,6 @@
 package com.ghanaride.repository;
 
-import com.ghanaride.entity.Role;
-import com.ghanaride.entity.User;
+import com.ghanaride.entity.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -10,140 +9,77 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 /**
- * Repository for User entity.
- *
- * Key queries:
- * - findByUsernameOrEmail(): Supports login with
- *   either username or email
- * - searchByNameOrEmail(): Admin user search
- * - countByRoleAndEmailVerified(): Homepage stats
+ * User Repository - Core user queries.
  */
 @Repository
-public interface UserRepository
-        extends JpaRepository<User, Long> {
+@Transactional(readOnly = true)
+public interface UserRepository extends JpaRepository<User, Long> {
 
-    // =========================================================
-    // FIND SINGLE USER
-    // =========================================================
-
-    @Transactional(readOnly = true)
-    Optional<User> findByUsername(String username);
-
-    @Transactional(readOnly = true)
     Optional<User> findByEmail(String email);
 
-    /**
-     * Find by username OR email.
-     * Used for login (supports both formats).
-     */
-    @Transactional(readOnly = true)
-    Optional<User> findByUsernameOrEmail(
-            String username, String email
-    );
+    Optional<User> findByUsername(String username);
 
-    // =========================================================
-    // FIND MULTIPLE USERS
-    // =========================================================
+    Optional<User> findByUsernameOrEmail(String username, String email);
 
-    @Transactional(readOnly = true)
-    List<User> findByRole(Role role);
-
-    @Transactional(readOnly = true)
-    Page<User> findByRole(Role role, Pageable pageable);
-
-    /**
-     * Admin user search by name, email, or username.
-     * Case-insensitive partial match.
-     */
-    @Transactional(readOnly = true)
-    @Query("""
-        SELECT u FROM User u
-        WHERE LOWER(u.fullName)
-              LIKE LOWER(CONCAT('%', :query, '%'))
-        OR LOWER(u.email)
-              LIKE LOWER(CONCAT('%', :query, '%'))
-        OR LOWER(u.username)
-              LIKE LOWER(CONCAT('%', :query, '%'))
-        ORDER BY u.createdAt DESC
-        """)
-    Page<User> searchByNameOrEmail(
-            @Param("query") String query,
-            Pageable pageable
-    );
-
-    /**
-     * Find all users with a specific role
-     * and paginate.
-     */
-    @Transactional(readOnly = true)
-    @Query("""
-        SELECT u FROM User u
-        WHERE u.role = :role
-        ORDER BY u.createdAt DESC
-        """)
-    Page<User> findByRoleOrderByCreatedAtDesc(
-            @Param("role") Role role,
-            Pageable pageable
-    );
-
-    // =========================================================
-    // EXISTENCE CHECKS
-    // =========================================================
-
-    @Transactional(readOnly = true)
-    boolean existsByUsername(String username);
-
-    @Transactional(readOnly = true)
     boolean existsByEmail(String email);
 
+    boolean existsByUsername(String username);
+
+    @Query("SELECT u FROM User u WHERE u.role = :role AND u.enabled = true")
+    List<User> findByRole(Role role);
+
+    Page<User> findByRole(Role role, Pageable pageable);
+
+    List<User> findByRoleAndAccountType(Role role, String accountType);
+
+    boolean existsByPhoneNumber(String phoneNumber);
+
+    @Query("SELECT u FROM User u WHERE u.role IN :roles AND u.enabled = true")
+    List<User> findByRoleIn(List<Role> roles);
+
+    List<User> findByRoleAndEnabledTrue(Role role);
+
+    @Query("SELECT u FROM User u WHERE u.phoneNumber IS NOT NULL AND u.phoneNumber != ''")
+    List<User> findUsersWithPhone();
+
+    @Query("SELECT u FROM User u WHERE u.lastLoginAt >= :since")
+    List<User> findActiveSince(@Param("since") LocalDateTime since);
+
+    @Query("SELECT u FROM User u WHERE u.enabled = true")
+    List<User> findActiveUsers();
+
     // =========================================================
-    // COUNTS
+    // DRIVER SPECIFIC
     // =========================================================
 
-    @Transactional(readOnly = true)
-    long countByRole(Role role);
+    @Query("SELECT u FROM User u WHERE u.role = 'DRIVER' AND u.enabled = true")
+    List<User> findActiveDrivers();
 
-    /**
-     * Count verified users by role.
-     * Used for homepage stats
-     * (e.g., "200+ verified drivers").
-     */
-    @Transactional(readOnly = true)
-    @Query("""
-        SELECT COUNT(u) FROM User u
-        WHERE u.role = :role
-        AND u.emailVerified = :emailVerified
-        AND u.enabled = true
-        """)
-    long countByRoleAndEmailVerified(
-            @Param("role") Role role,
-            @Param("emailVerified") boolean emailVerified
-    );
+    @Query("SELECT u FROM User u WHERE u.role = 'DRIVER' AND u.enabled = true AND u.phoneNumber IS NOT NULL AND u.phoneNumber != ''")
+    List<User> findVerifiedDrivers();
 
-    /**
-     * Count active (enabled) users.
-     */
-    @Transactional(readOnly = true)
-    @Query("""
-        SELECT COUNT(u) FROM User u
-        WHERE u.enabled = true
-        """)
-    long countActiveUsers();
+    // =========================================================
+    // COMPANY SPECIFIC
+    // =========================================================
 
-    /**
-     * Count users registered in last N days.
-     * For admin growth metrics.
-     */
-    @Transactional(readOnly = true)
-    @Query("""
-        SELECT COUNT(u) FROM User u
-        WHERE u.createdAt >= :since
-        """)
-    long countNewUsersSince(
-            @Param("since") java.time.LocalDateTime since
-    );
+    @Query("SELECT u FROM User u WHERE u.role = 'COMPANY' AND u.enabled = true")
+    List<User> findActiveCompanies();
+
+    // =========================================================
+    // ADMIN QUERIES
+    // =========================================================
+
+    @Query("SELECT u FROM User u ORDER BY u.createdAt DESC")
+    Page<User> findAllOrderByCreatedDesc(Pageable pageable);
+
+    @Query("SELECT COUNT(u) FROM User u WHERE u.role = :role")
+    long countByRole(@Param("role") Role role);
+
+    @Query("SELECT COUNT(u) FROM User u WHERE u.createdAt >= :since")
+    long countRegisteredSince(@Param("since") LocalDateTime since);
 }
