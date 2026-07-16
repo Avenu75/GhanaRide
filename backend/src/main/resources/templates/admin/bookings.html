@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html th:replace="~{layout :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Manage Bookings - GhanaRide</title>
+</head>
+<body>
+<main th:fragment="main">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="text-light fw-bold mb-1">
+                <i class="bi bi-ticket-perforated text-warning me-2"></i>Manage Bookings
+            </h2>
+            <p class="text-muted mb-0">View and manage all bookings in the system</p>
+        </div>
+        <a th:href="@{/admin/dashboard}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i>Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Flash Messages -->
+    <div th:if="${success}" class="alert alert-success d-flex align-items-center gap-2 mb-4">
+        <i class="bi bi-check-circle-fill"></i>
+        <span th:text="${success}"></span>
+    </div>
+    <div th:if="${error}" class="alert alert-danger d-flex align-items-center gap-2 mb-4">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span th:text="${error}"></span>
+    </div>
+
+    <!-- Bookings Table -->
+    <div class="card border-0 shadow" style="background: var(--card-bg);">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead style="background: rgba(252,209,22,0.1); border-bottom: 2px solid rgba(252,209,22,0.3);">
+                    <tr>
+                        <th class="text-warning py-3 ps-3">Ref</th>
+                        <th class="text-warning py-3">Passenger</th>
+                        <th class="text-warning py-3">Route</th>
+                        <th class="text-warning py-3">Driver</th>
+                        <th class="text-warning py-3">Seat</th>
+                        <th class="text-warning py-3">Amount</th>
+                        <th class="text-warning py-3">Booked At</th>
+                        <th class="text-warning py-3">Status</th>
+                        <th class="text-warning py-3">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="booking : ${bookings}"
+                        style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+
+                        <!-- Reference -->
+                        <td class="ps-3">
+                            <span class="text-warning fw-bold small"
+                                  th:text="${booking.bookingReference}">REF</span>
+                        </td>
+
+                        <!-- Passenger -->
+                        <td>
+                            <div class="text-light fw-bold"
+                                 th:text="${booking.user.fullName}">Name</div>
+                            <div class="small text-muted"
+                                 th:text="${booking.user.phoneNumber}">Phone</div>
+                        </td>
+
+                        <!-- Route -->
+                        <td>
+                            <div class="text-light small"
+                                 th:text="${booking.trip.fromLocation}">From</div>
+                            <div class="small text-muted">
+                                <i class="bi bi-arrow-down text-warning"></i>
+                                <span th:text="${booking.trip.toLocation}">To</span>
+                            </div>
+                        </td>
+
+                        <!-- Driver -->
+                        <td>
+                            <div class="text-light small"
+                                 th:text="${booking.trip.driver != null ? booking.trip.driver.fullName : 'To Be Assigned'}">Driver</div>
+                            <div class="small text-muted"
+                                 th:text="${booking.trip.car != null ? booking.trip.car.numberPlate : 'To Be Assigned'}">Plate</div>
+                        </td>
+
+                        <!-- Seat -->
+                        <td>
+                            <span class="badge rounded-pill"
+                                  style="background: rgba(59,130,246,0.2); color: #3b82f6; border: 1px solid #3b82f6;"
+                                  th:text="'Seat ' + ${booking.seatNumber}">Seat</span>
+                        </td>
+
+                        <!-- Amount -->
+                        <td>
+                            <span class="text-success fw-bold">
+                                GHC <span th:text="${booking.totalAmount}">0</span>
+                            </span>
+                        </td>
+
+                        <!-- Booked At -->
+                        <td class="small text-muted"
+                            th:text="${booking.bookingDate != null ?
+                                #temporals.format(booking.bookingDate, 'dd MMM yyyy, h:mm a') :
+                                'N/A'}">Date</td>
+
+                        <!-- Status -->
+                        <td>
+                            <span th:if="${booking.status.name() == 'CONFIRMED'}"
+                                  class="badge rounded-pill"
+                                  style="background: rgba(0,200,83,0.2); color: #00c853; border: 1px solid #00c853;">
+                                <i class="bi bi-check me-1"></i>CONFIRMED
+                            </span>
+                            <span th:if="${booking.status.name() == 'CANCELLED'}"
+                                  class="badge rounded-pill"
+                                  style="background: rgba(206,17,38,0.2); color: #ff5252; border: 1px solid #ff5252;">
+                                <i class="bi bi-x me-1"></i>CANCELLED
+                            </span>
+                        </td>
+
+                        <!-- Actions -->
+                        <td>
+                            <button type="button"
+                                    class="btn btn-sm btn-danger"
+                                    title="Delete Booking"
+                                    th:data-id="${booking.id}"
+                                    th:data-ref="${booking.bookingReference}"
+                                    th:data-passenger="${booking.user.fullName}"
+                                    onclick="confirmDeleteBooking(this)">
+                                <i class="bi bi-trash"></i>
+                            </button>
+
+                            <form th:id="'deleteBookingForm-' + ${booking.id}"
+                                  th:action="@{/admin/bookings/{id}/delete(id=${booking.id})}"
+                                  method="post"
+                                  style="display:none;">
+                            </form>
+                        </td>
+                    </tr>
+
+                    <!-- Empty State -->
+                    <tr th:if="${#lists.isEmpty(bookings)}">
+                        <td colspan="9" class="text-center text-muted py-5">
+                            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                            No bookings found in the system.
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="card-footer border-top px-4 py-3"
+             style="background: rgba(0,0,0,0.3); border-color: var(--border-color) !important;">
+            <span class="text-muted small">Total bookings: </span>
+            <span class="text-light fw-bold" th:text="${#lists.size(bookings)}">0</span>
+        </div>
+    </div>
+
+    <!-- Delete Booking Modal -->
+    <div class="modal fade" id="deleteBookingModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0"
+                 style="background: var(--card-bg); border: 1px solid rgba(206,17,38,0.3) !important;">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title text-danger">
+                        <i class="bi bi-exclamation-triangle me-2"></i>Delete Booking
+                    </h5>
+                    <button type="button" class="btn-close btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-light">Are you sure you want to delete this booking?</p>
+                    <div class="p-3 rounded mb-3"
+                         style="background: rgba(206,17,38,0.1); border: 1px solid rgba(206,17,38,0.2);">
+                        <div class="mb-2">
+                            <small class="text-muted">Reference</small>
+                            <div class="text-warning fw-bold" id="deleteBookingRef">REF</div>
+                        </div>
+                        <div>
+                            <small class="text-muted">Passenger</small>
+                            <div class="text-light" id="deleteBookingPassenger">Name</div>
+                        </div>
+                    </div>
+                    <p class="text-muted small mb-0">
+                        <i class="bi bi-info-circle me-1"></i>
+                        The seat will be restored to the trip on deletion.
+                    </p>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x me-1"></i>Cancel
+                    </button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBookingBtn">
+                        <i class="bi bi-trash me-1"></i>Yes, Delete Booking
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let bookingIdToDelete = null;
+
+        // Move modal to body to avoid z-index/transform issues from parent containers
+        document.body.appendChild(document.getElementById('deleteBookingModal'));
+
+        function confirmDeleteBooking(btn) {
+            bookingIdToDelete = btn.getAttribute('data-id');
+            document.getElementById('deleteBookingRef').textContent = btn.getAttribute('data-ref');
+            document.getElementById('deleteBookingPassenger').textContent = btn.getAttribute('data-passenger');
+            new bootstrap.Modal(document.getElementById('deleteBookingModal')).show();
+        }
+
+        document.getElementById('confirmDeleteBookingBtn').addEventListener('click', function () {
+            if (bookingIdToDelete) {
+                document.getElementById('deleteBookingForm-' + bookingIdToDelete).submit();
+            }
+        });
+    </script>
+
+</main>
+</body>
+</html>

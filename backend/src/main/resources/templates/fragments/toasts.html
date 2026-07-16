@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+<div th:fragment="toasts" id="gr-flash-container" style="display: none;">
+    <!-- Server-side flash messages (rendered by Thymeleaf) -->
+    <div id="gr-flash-success" th:if="${success}" th:text="${success}" class="d-none"></div>
+    <div id="gr-flash-error" th:if="${error}" th:text="${error}" class="d-none"></div>
+</div>
+
+<!-- Toast Container (managed by JS) -->
+<div id="gr-toast-container" class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1080;"></div>
+</body>
+</html>

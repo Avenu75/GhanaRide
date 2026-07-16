@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline — GhanaRide</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #0F0F1A 0%, #1A1A2E 100%);
+            color: #F5F5F5;
+            padding: 20px;
+        }
+        .container { text-align: center; max-width: 400px; }
+        .icon {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: rgba(252, 209, 22, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 32px;
+        }
+        .icon svg { width: 60px; height: 60px; color: #FCD116; }
+        h1 { font-family: 'Outfit', sans-serif; font-size: 2rem; font-weight: 800; margin-bottom: 16px; }
+        p { color: #9A9AB5; font-size: 1.125rem; line-height: 1.6; margin-bottom: 32px; }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 16px 32px;
+            background: linear-gradient(135deg, #FCD116 0%, #E6B800 100%);
+            color: #1A1A2E;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            text-decoration: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(252, 209, 22, 0.4); }
+        .btn:active { transform: translateY(0); }
+        .retry { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(252, 209, 22, 0.4); } 50% { box-shadow: 0 0 0 12px rgba(252, 209, 22, 0); } }
+        .features { margin-top: 48px; padding-top: 32px; border-top: 1px solid #2D2D44; }
+        .features h3 { font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.1em; color: #6B6B8A; margin-bottom: 16px; }
+        .feature-list { display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; }
+        .feature { display: flex; align-items: center; gap: 8px; color: #9A9AB5; font-size: 0.875rem; }
+        .feature svg { color: #FCD116; }
+        @media (max-width: 480px) {
+            h1 { font-size: 1.5rem; }
+            .btn { padding: 14px 24px; }
+            .feature-list { flex-direction: column; gap: 12px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="1" y1="1" x2="23" y2="23"></line>
+                <path d="M16.72 11.06A10.94 10.94 0 0 1 12 18.96"></path>
+                <path d="M5 12.04a10.94 10.94 0 0 1 5.14-2.15"></path>
+                <path d="M12 2.04a10.94 10.94 0 0 1 0 19.92"></path>
+                <path d="M18.96 12.04a10.94 10.94 0 0 1-5.14 2.15"></path>
+            </svg>
+        </div>
+        
+        <h1>You're Offline</h1>
+        
+        <p>No internet connection detected. Some features may be unavailable until you're back online.</p>
+        
+        <button class="btn retry" onclick="window.location.reload()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+            </svg>
+            Try Again
+        </button>
+        
+        <div class="features">
+            <h3>Available Offline</h3>
+            <div class="feature-list">
+                <div class="feature">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="3" width="20" height="14" rx="2"></rect>
+                        <path d="M8 21h8"></path>
+                        <path d="M12 17v4"></path>
+                    </svg>
+                    View cached trips
+                </div>
+                <div class="feature">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    Access wallet balance
+                </div>
+                <div class="feature">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 10V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h10"></path>
+                    </svg>
+                    View booking history
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Auto-retry when online
+        window.addEventListener('online', () => {
+            window.location.reload();
+        });
+        
+        // Register service worker if not already
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.ready.then(registration => {
+                console.log('SW ready for offline support');
+            });
+        }
+    </script>
+</body>
+</html>

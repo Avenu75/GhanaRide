@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html th:replace="~{layout :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Schedule Trip - GhanaRide</title>
+</head>
+<body>
+<main th:fragment="main">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="text-light"><i class="bi bi-plus-circle text-warning"></i> Schedule New Trip</h2>
+                <a th:href="@{/company/dashboard}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+
+            <div th:if="${error}" class="alert alert-danger" role="alert" th:text="${error}"></div>
+            <div th:if="${success}" class="alert alert-success" role="alert" th:text="${success}"></div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <div th:if="${#lists.isEmpty(vehicles)}" class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i> You need to <a th:href="@{/company/vehicles}" class="alert-link">add a vehicle</a> before you can schedule a trip.
+                    </div>
+
+                    <form th:if="${!#lists.isEmpty(vehicles)}" th:action="@{/company/trips/add}" method="post" th:object="${trip}">
+                        <div class="row g-3">
+                            <!-- Vehicle Selection -->
+                            <div class="col-12 mb-3">
+                                <label for="vehicleId" class="form-label text-light">Assign Vehicle</label>
+                                <select class="form-select" id="vehicleId" name="vehicleId" required>
+                                    <option value="" disabled selected>Select a vehicle...</option>
+                                    <option th:each="vehicle : ${vehicles}"
+                                            th:value="${vehicle.id}"
+                                            th:text="${vehicle.carBrand + ' ' + vehicle.model + ' (' + vehicle.numberPlate + ')'}">
+                                    </option>
+                                </select>
+                            </div>
+
+                            <!-- Route Info -->
+                            <h5 class="text-warning mt-4 mb-2 border-bottom border-secondary pb-2">Route Details</h5>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="fromLocation" class="form-label text-light">From (City)</label>
+                                <input type="text" class="form-control" id="fromLocation" th:field="*{fromLocation}" required placeholder="e.g. Accra">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="toLocation" class="form-label text-light">To (City)</label>
+                                <input type="text" class="form-control" id="toLocation" th:field="*{toLocation}" required placeholder="e.g. Kumasi">
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="pickupStation" class="form-label text-light">Pickup Station</label>
+                                <input type="text" class="form-control" id="pickupStation" th:field="*{pickupStation}" required placeholder="e.g. VIP Station, Circle">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="dropoffStation" class="form-label text-light">Dropoff Station</label>
+                                <input type="text" class="form-control" id="dropoffStation" th:field="*{dropoffStation}" required placeholder="e.g. Asafo VIP Station">
+                            </div>
+
+                            <!-- Schedule & Pricing -->
+                            <h5 class="text-warning mt-4 mb-2 border-bottom border-secondary pb-2">Schedule & Pricing</h5>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="departureTime" class="form-label text-light">Departure Time</label>
+                                <input type="datetime-local" class="form-control" id="departureTime" th:field="*{departureTime}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="arrivalTime" class="form-label text-light">Estimated Arrival Time</label>
+                                <input type="datetime-local" class="form-control" id="arrivalTime" th:field="*{arrivalTime}" required>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="tripAmount" class="form-label text-light">Ticket Price (₵)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">₵</span>
+                                    <input type="number" step="0.01" min="1" class="form-control" id="tripAmount" th:field="*{tripAmount}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label for="availableSeats" class="form-label text-light">Total Seats Available</label>
+                                <input type="number" min="1" max="100" class="form-control" id="availableSeats" th:field="*{availableSeats}" required>
+                                <div class="form-text text-muted">This will be set as both the total capacity and available seats.</div>
+                            </div>
+
+                            <div class="col-12 mt-4 text-end">
+                                <button type="submit" class="btn btn-warning btn-lg px-5">
+                                    <i class="bi bi-send"></i> Submit Trip for Approval
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>

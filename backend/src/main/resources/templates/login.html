@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" th:replace="~{layout :: layout(~{::title}, ~{::main})}">
+<head>
+    <title>Login — GhanaRide</title>
+    <meta name="description" content="Sign in to your GhanaRide account to book rides, manage bookings, and access your wallet.">
+    
+    <style th:inline="css">
+        .auth-page {
+            min-height: calc(100vh - var(--header-height));
+            display: flex;
+            align-items: center;
+            padding: var(--space-10) 0;
+        }
+        
+        .auth-card {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+            padding: var(--space-8);
+            width: 100%;
+            max-width: 440px;
+            margin: 0 auto;
+        }
+        
+        .auth-header {
+            text-align: center;
+            margin-bottom: var(--space-6);
+        }
+        
+        .auth-logo {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            margin-bottom: var(--space-4);
+        }
+        
+        .auth-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.75rem;
+            font-weight: 800;
+            margin-bottom: var(--space-2);
+        }
+        
+        .auth-subtitle {
+            color: var(--color-text-muted);
+            margin: 0;
+        }
+        
+        .social-login {
+            display: flex;
+            gap: var(--space-3);
+            margin-bottom: var(--space-6);
+        }
+        
+        .social-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-2);
+            padding: var(--space-3);
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius);
+            font-weight: 500;
+            color: var(--color-text);
+            transition: all var(--transition-fast);
+        }
+        
+        .social-btn:hover {
+            border-color: var(--gold);
+            background: var(--gold-muted);
+            color: var(--gold-dark);
+        }
+        
+        .social-btn img { height: 20px; }
+        
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            margin: var(--space-6) 0;
+            color: var(--color-text-muted);
+            font-size: 0.8125rem;
+        }
+        
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--color-border);
+        }
+        
+        .form-floating > label { padding: 0 var(--space-1); }
+        
+        .remember-forgot {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--space-4);
+        }
+        
+        .form-check { padding: 0; }
+        
+        .forgot-link {
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .btn-submit {
+            width: 100%;
+            padding: var(--space-3) var(--space-5);
+            font-size: 1rem;
+            margin-top: var(--space-2);
+        }
+        
+        .auth-footer {
+            text-align: center;
+            margin-top: var(--space-6);
+            padding-top: var(--space-6);
+            border-top: 1px solid var(--color-border);
+            color: var(--color-text-secondary);
+        }
+        
+        .auth-footer a { font-weight: 600; }
+    </style>
+</head>
+<body>
+<main th:fragment="main">
+    <div class="container auth-page">
+        <div class="auth-card animate-scale-in">
+            <!-- Logo & Title -->
+            <div class="auth-header">
+                <a th:href="@{/}" class="auth-logo text-decoration-none">
+                    <img th:src="@{/images/icon-192.svg}" alt="GhanaRide" width="40" height="40" class="rounded-circle bg-gold-subtle p-1">
+                    <span class="fw-bold fs-4 text-gold" style="font-family: 'Outfit', sans-serif;">GhanaRide</span>
+                </a>
+                <h1 class="auth-title">Welcome Back</h1>
+                <p class="auth-subtitle">Sign in to book rides, manage bookings, and access your wallet</p>
+            </div>
+            
+            <!-- Google OAuth -->
+            <div class="social-login">
+                <a th:href="@{/oauth2/authorization/google}" class="social-btn">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+                    <span>Continue with Google</span>
+                </a>
+            </div>
+            
+            <div class="divider">or</div>
+            
+            <!-- Login Form -->
+            <form th:action="@{/login}" method="post" class="needs-validation" novalidate data-loading>
+                <input type="hidden" name="_csrf" th:value="${_csrf.token}"/>
+                
+                <!-- Username/Email -->
+                <div class="form-floating mb-3">
+                    <input type="text" name="username" class="form-control" id="username" placeholder="Username or Email" required autocomplete="username" th:value="${#request.getParameter('username')}">
+                    <label for="username"><i class="bi bi-person me-2"></i>Username or Email</label>
+                    <div class="invalid-feedback">Please enter your username or email</div>
+                </div>
+                
+                <!-- Password -->
+                <div class="form-floating mb-3">
+                    <input type="password" name="password" class="form-control" id="password" placeholder="Password" required autocomplete="current-password">
+                    <label for="password"><i class="bi bi-lock me-2"></i>Password</label>
+                    <div class="invalid-feedback">Please enter your password</div>
+                    <button type="button" class="password-toggle" data-toggle-password="password" aria-label="Show password">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                </div>
+                
+                <!-- Remember Me & Forgot Password -->
+                <div class="remember-forgot">
+                    <div class="form-check">
+                        <input type="checkbox" name="remember-me" class="form-check-input" id="rememberMe">
+                        <label class="form-check-label" for="rememberMe">Remember me (14 days)</label>
+                    </div>
+                    <a th:href="@{/forgot-password}" class="forgot-link">Forgot password?</a>
+                </div>
+                
+                <!-- Submit Button -->
+                <button type="submit" class="btn btn-primary btn-pill btn-submit">
+                    <span class="btn-text">Sign In</span>
+                    <span class="btn-loading d-none"><i class="bi bi-arrow-clockwise spin me-2"></i>Signing in...</span>
+                </button>
+            </form>
+            
+            <!-- Footer -->
+            <div class="auth-footer">
+                Don't have an account? <a th:href="@{/register}">Create one free</a>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script th:inline="javascript">
+    // Password Toggle
+    document.querySelectorAll('.password-toggle').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const targetId = this.dataset.togglePassword;
+            const target = document.getElementById(targetId);
+            const icon = this.querySelector('i');
+            
+            if (target.type === 'password') {
+                target.type = 'text';
+                icon.classList.remove('bi-eye');
+                icon.classList.add('bi-eye-slash');
+            } else {
+                target.type = 'password';
+                icon.classList.remove('bi-eye-slash');
+                icon.classList.add('bi-eye');
+            }
+        });
+    });
+    
+    // Form Loading State
+    document.querySelector('form[data-loading]').addEventListener('submit', function(e) {
+        const submitBtn = this.querySelector('button[type="submit"]');
+        if (submitBtn && this.checkValidity()) {
+            submitBtn.disabled = true;
+            submitBtn.querySelector('.btn-text').classList.add('d-none');
+            submitBtn.querySelector('.btn-loading').classList.remove('d-none');
+        }
+    });
+    
+    // Bootstrap Validation
+    (function() {
+        'use strict';
+        const forms = document.querySelectorAll('.needs-validation');
+        Array.prototype.slice.call(forms).forEach(function(form) {
+            form.addEventListener('submit', function(event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    })();
+</script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+target/
+*.class
+*.jar
+*.war
+*.ear
+.idea/
+*.iml
+.vscode/
+uploads/
+*.log
+application-local.properties
+HELP.md
+.mvn/
+mvnw
+mvnw.cmd 

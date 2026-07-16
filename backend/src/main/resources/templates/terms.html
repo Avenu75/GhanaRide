@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html th:replace="~{layout :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Terms of Service — GhanaRide</title>
+</head>
+<body>
+<main th:fragment="main">
+    <div class="container py-5">
+        <div class="legal-page">
+
+            <!-- Header -->
+            <div class="text-center mb-5">
+                <span class="badge bg-success mb-3 px-3 py-2 rounded-pill">Legal</span>
+                <h1 class="display-5 fw-bold" style="font-family: 'Outfit', sans-serif;">Terms of Service</h1>
+                <p class="text-muted">Last updated: <span th:text="${lastUpdated}">January 2025</span></p>
+                <p class="text-muted">Please read these terms carefully before using GhanaRide.</p>
+            </div>
+
+            <div class="card p-4 p-md-5 mb-4">
+
+                <h2>1. Acceptance of Terms</h2>
+                <p>By accessing or using GhanaRide ("the Platform"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, please do not use our Platform.</p>
+
+                <h2>2. Description of Service</h2>
+                <p>GhanaRide is an intercity and campus transportation booking platform that connects passengers with verified drivers and transport companies across Ghana. We do not directly operate transport vehicles but facilitate bookings between passengers and service providers.</p>
+
+                <h2>3. User Accounts</h2>
+                <ul>
+                    <li>You must be at least 18 years old to create an account.</li>
+                    <li>You are responsible for maintaining the confidentiality of your account credentials.</li>
+                    <li>You must provide accurate and truthful information during registration.</li>
+                    <li>One person may not operate multiple accounts.</li>
+                    <li>GhanaRide reserves the right to suspend or terminate accounts that violate these terms.</li>
+                </ul>
+
+                <h2>4. Booking & Payments</h2>
+                <ul>
+                    <li>All bookings are subject to seat availability.</li>
+                    <li>Payments are processed securely via Paystack. GhanaRide does not store card details.</li>
+                    <li>Booking confirmation is sent via email and is available in your dashboard.</li>
+                    <li>Prices displayed are final and inclusive of all applicable charges.</li>
+                    <li>You must present your booking reference or QR code at the point of departure.</li>
+                </ul>
+
+                <h2>5. Cancellations & Refunds</h2>
+                <ul>
+                    <li>Cancellations made more than 24 hours before departure may qualify for a refund.</li>
+                    <li>Cancellations within 24 hours of departure are non-refundable.</li>
+                    <li>In the event a driver or company cancels a trip, passengers will receive a full refund.</li>
+                    <li>Refunds are processed within 5–10 business days to the original payment method.</li>
+                    <li>Please refer to our <a th:href="@{/refunds}" class="text-success">Refund Policy</a> for full details.</li>
+                </ul>
+
+                <h2>6. Driver & Company Responsibilities</h2>
+                <ul>
+                    <li>Drivers must hold a valid Ghanaian driver's license.</li>
+                    <li>All vehicles must have valid roadworthy certificates and insurance.</li>
+                    <li>Drivers must complete the onboarding verification process before operating.</li>
+                    <li>Drivers must not engage in price gouging or unauthorized route changes.</li>
+                    <li>Companies are responsible for their fleet's compliance with road safety regulations.</li>
+                </ul>
+
+                <h2>7. Passenger Conduct</h2>
+                <ul>
+                    <li>Passengers must treat drivers and fellow travellers with respect.</li>
+                    <li>Smoking, alcohol consumption, and disruptive behaviour are prohibited in vehicles.</li>
+                    <li>Passengers must arrive at the departure point on time.</li>
+                    <li>GhanaRide is not responsible for personal items lost during transit.</li>
+                </ul>
+
+                <h2>8. Limitation of Liability</h2>
+                <p>GhanaRide acts as an intermediary platform and is not liable for any accidents, injuries, delays, or losses that occur during transit. Our liability in any dispute is limited to the value of the booking in question.</p>
+
+                <h2>9. Privacy</h2>
+                <p>Your use of this Platform is also governed by our <a th:href="@{/privacy}" class="text-success">Privacy Policy</a>, which is incorporated into these Terms by reference.</p>
+
+                <h2>10. Changes to Terms</h2>
+                <p>GhanaRide reserves the right to modify these Terms at any time. Continued use of the Platform after changes constitutes acceptance of the new Terms.</p>
+
+                <h2>11. Governing Law</h2>
+                <p>These Terms shall be governed by and construed in accordance with the laws of the Republic of Ghana. Any disputes shall be subject to the exclusive jurisdiction of Ghanaian courts.</p>
+
+                <h2>12. Contact Us</h2>
+                <p>For questions about these Terms, please contact us at:</p>
+                <ul>
+                    <li>Email: <a href="mailto:legal@ghanaride.me" class="text-success">legal@ghanaride.me</a></li>
+                    <li>Or use our <a th:href="@{/contact}" class="text-success">Contact Page</a></li>
+                </ul>
+
+            </div>
+
+            <!-- Navigation Buttons -->
+            <div class="d-flex flex-wrap gap-3 justify-content-center">
+                <a th:href="@{/privacy}" class="btn btn-outline-secondary px-4">
+                    <i class="bi bi-shield-lock me-2"></i>Privacy Policy
+                </a>
+                <a th:href="@{/refunds}" class="btn btn-outline-secondary px-4">
+                    <i class="bi bi-arrow-return-left me-2"></i>Refund Policy
+                </a>
+                <a th:href="@{/}" class="btn btn-primary px-4">
+                    <i class="bi bi-house me-2"></i>Back to Home
+                </a>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>

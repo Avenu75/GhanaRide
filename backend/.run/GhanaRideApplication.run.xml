@@ -1,0 +1,13 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="GhanaRideApplication" type="Application" factoryName="Application">
+    <envs>
+      <env name="ADMIN_PASSWORD" value="Avenubright75$@ghanaride" />
+      <env name="LOCAL_DB_PASSWORD" value="Avenubright75$" />
+    </envs>
+    <option name="MAIN_CLASS_NAME" value="com.ghanaride.GhanaRideApplication" />
+    <module name="ghanaride" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html th:replace="~{layout :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Manage Fleet - GhanaRide</title>
+</head>
+<body>
+<main th:fragment="main">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-light"><i class="bi bi-car-front text-warning"></i> Manage Fleet</h2>
+        <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#addVehicleModal">
+            <i class="bi bi-plus-lg"></i> Add Vehicle
+        </button>
+    </div>
+
+    <div th:if="${success}" class="alert alert-success" role="alert" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" role="alert" th:text="${error}"></div>
+
+    <!-- Vehicles List -->
+    <div class="row g-4">
+        <div th:each="vehicle : ${vehicles}" class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h5 class="card-title text-light mb-0" th:text="${vehicle.carBrand + ' ' + vehicle.model}">Vehicle Name</h5>
+                        <span class="badge bg-success" th:if="${vehicle.status.name() == 'APPROVED'}">Active</span>
+                        <span class="badge bg-warning text-dark" th:if="${vehicle.status.name() == 'PENDING'}">Pending</span>
+                        <span class="badge bg-danger" th:if="${vehicle.status.name() == 'REJECTED'}">Rejected</span>
+                    </div>
+
+                    <ul class="list-unstyled mb-4">
+                        <li class="mb-2 text-muted"><i class="bi bi-hash text-warning me-2"></i> Plate: <strong class="text-light" th:text="${vehicle.numberPlate}"></strong></li>
+                        <li class="mb-2 text-muted"><i class="bi bi-palette text-warning me-2"></i> Color: <span class="text-light" th:text="${vehicle.carColor}"></span></li>
+                        <li class="mb-2 text-muted"><i class="bi bi-person text-warning me-2"></i> Driver:
+                            <span class="text-light" th:if="${vehicle.driver != null}" th:text="${vehicle.driver.fullName}"></span>
+                            <span class="text-muted fst-italic" th:if="${vehicle.driver == null}">Unassigned</span>
+                        </li>
+                    </ul>
+
+                    <div class="d-flex gap-2">
+                        <form th:action="@{'/company/vehicles/remove/' + ${vehicle.id}}" method="post" onsubmit="return confirm('Are you sure you want to remove this vehicle?');" class="w-100">
+                            <button type="submit" class="btn btn-outline-danger w-100 btn-sm"><i class="bi bi-trash"></i> Remove</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div th:if="${#lists.isEmpty(vehicles)}" class="col-12">
+            <div class="card border-0 shadow-sm text-center py-5">
+                <div class="card-body">
+                    <i class="bi bi-car-front display-1 text-muted mb-3"></i>
+                    <h4 class="text-light">No Vehicles Yet</h4>
+                    <p class="text-muted">Add your first vehicle to start scheduling trips.</p>
+                    <button class="btn btn-warning mt-2" data-bs-toggle="modal" data-bs-target="#addVehicleModal">
+                        <i class="bi bi-plus-lg"></i> Add Vehicle
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Vehicle Modal -->
+    <div class="modal fade" id="addVehicleModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New Vehicle</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form th:action="@{/company/vehicles/add}" method="post" th:object="${newCar}">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="carBrand" class="form-label">Brand / Make</label>
+                            <input type="text" class="form-control" id="carBrand" th:field="*{carBrand}" required placeholder="e.g. Toyota">
+                        </div>
+                        <div class="mb-3">
+                            <label for="model" class="form-label">Model</label>
+                            <input type="text" class="form-control" id="model" th:field="*{model}" required placeholder="e.g. Hiace">
+                        </div>
+                        <div class="mb-3">
+                            <label for="numberPlate" class="form-label">Number Plate</label>
+                            <input type="text" class="form-control" id="numberPlate" th:field="*{numberPlate}" required placeholder="e.g. GR-1234-22">
+                        </div>
+                        <div class="mb-3">
+                            <label for="carColor" class="form-label">Color</label>
+                            <input type="text" class="form-control" id="carColor" th:field="*{carColor}" required placeholder="e.g. White">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-warning">Save Vehicle</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>

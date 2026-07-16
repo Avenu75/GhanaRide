@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" th:replace="~{layout :: layout(~{::title}, ~{::main})}">
+<head>
+    <title>Register — GhanaRide</title>
+    <meta name="description" content="Create your GhanaRide account to book rides, become a driver, or manage your fleet. Join thousands of travelers across Ghana.">
+    
+    <style th:inline="css">
+        .auth-page {
+            min-height: calc(100vh - var(--header-height));
+            display: flex;
+            align-items: flex-start;
+            padding: var(--space-8) 0 var(--space-12);
+        }
+        
+        .auth-card {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+            padding: var(--space-6);
+            width: 100%;
+            max-width: 520px;
+            margin: 0 auto;
+        }
+        
+        .auth-header {
+            text-align: center;
+            margin-bottom: var(--space-5);
+        }
+        
+        .auth-logo {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            margin-bottom: var(--space-3);
+        }
+        
+        .auth-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.75rem;
+            font-weight: 800;
+            margin-bottom: var(--space-1);
+        }
+        
+        .auth-subtitle {
+            color: var(--color-text-muted);
+            margin: 0;
+        }
+        
+        .role-tabs {
+            display: flex;
+            gap: var(--space-1);
+            background: var(--color-surface-hover);
+            border-radius: var(--radius);
+            padding: var(--space-1);
+            margin-bottom: var(--space-5);
+        }
+        
+        .role-tab {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-2);
+            padding: var(--space-2) var(--space-3);
+            background: transparent;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-weight: 500;
+            color: var(--color-text-secondary);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+        
+        .role-tab:hover { color: var(--color-text); }
+        .role-tab.active {
+            background: var(--gold);
+            color: var(--black);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .role-tab i { font-size: 1.125rem; }
+        
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            margin: var(--space-4) 0 var(--space-5);
+            color: var(--color-text-muted);
+            font-size: 0.8125rem;
+        }
+        
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--color-border);
+        }
+        
+        .social-login {
+            display: flex;
+            gap: var(--space-3);
+            margin-bottom: var(--space-5);
+        }
+        
+        .social-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-2);
+            padding: var(--space-3);
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius);
+            font-weight: 500;
+            color: var(--color-text);
+            transition: all var(--transition-fast);
+        }
+        
+        .social-btn:hover {
+            border-color: var(--gold);
+            background: var(--gold-muted);
+            color: var(--gold-dark);
+        }
+        
+        .social-btn img { height: 20px; }
+        
+        .form-floating > label { padding: 0 var(--space-1); }
+        
+        .password-strength {
+            height: 4px;
+            background: var(--color-border);
+            border-radius: var(--radius-full);
+            margin-top: var(--space-2);
+            overflow: hidden;
+        }
+        
+        .password-strength-bar {
+            height: 100%;
+            width: 0%;
+            border-radius: var(--radius-full);
+            transition: all var(--transition);
+        }
+        
+        .strength-weak { background: var(--color-error); width: 25%; }
+        .strength-fair { background: var(--color-warning); width: 50%; }
+        .strength-good { background: var(--color-info); width: 75%; }
+        .strength-strong { background: var(--color-success); width: 100%; }
+        
+        .strength-text {
+            font-size: 0.75rem;
+            color: var(--color-text-muted);
+            margin-top: var(--space-1);
+            text-align: right;
+        }
+        
+        /* Conditional fields */
+        .conditional-fields {
+            display: none;
+            animation: fadeIn var(--transition) ease;
+        }
+        
+        .conditional-fields.active { display: block; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .btn-submit {
+            width: 100%;
+            padding: var(--space-3) var(--space-5);
+            font-size: 1rem;
+            margin-top: var(--space-3);
+        }
+        
+        .auth-footer {
+            text-align: center;
+            margin-top: var(--space-5);
+            padding-top: var(--space-5);
+            border-top: 1px solid var(--color-border);
+            color: var(--color-text-secondary);
+        }
+        
+        .auth-footer a { font-weight: 600; }
+        
+        .terms-notice {
+            font-size: 0.75rem;
+            color: var(--color-text-muted);
+            text-align: center;
+            margin-top: var(--space-3);
+        }
+        
+        .terms-notice a { color: var(--gold-dark); }
+        
+        /* Input group password toggle */
+        .input-group .form-control { border-radius: var(--radius) 0 0 var(--radius); }
+        .input-group .password-toggle { border-radius: 0 var(--radius) var(--radius) 0; border-left: none; }
+    </style>
+</head>
+<body>
+<main th:fragment="main">
+    <div class="container auth-page">
+        <div class="auth-card animate-scale-in">
+            <!-- Logo & Title -->
+            <div class="auth-header">
+                <a th:href="@{/}" class="auth-logo text-decoration-none">
+                    <img th:src="@{/images/icon-192.svg}" alt="GhanaRide" width="40" height="40" class="rounded-circle bg-gold-subtle p-1">
+                    <span class="fw-bold fs-4 text-gold" style="font-family: 'Outfit', sans-serif;">GhanaRide</span>
+                </a>
+                <h1 class="auth-title">Create Account</h1>
+                <p class="auth-subtitle">Join thousands of travelers across Ghana</p>
+            </div>
+            
+            <!-- Role Selection Tabs -->
+            <div class="role-tabs" role="tablist" aria-label="Account type">
+                <button type="button" class="role-tab active" role="tab" data-role="PASSENGER" aria-selected="true" aria-controls="passenger-panel">
+                    <i class="bi bi-person"></i> Passenger
+                </button>
+                <button type="button" class="role-tab" role="tab" data-role="DRIVER" aria-selected="false" aria-controls="driver-panel">
+                    <i class="bi bi-car-front"></i> Driver
+                </button>
+                <button type="button" class="role-tab" role="tab" data-role="COMPANY" aria-selected="false" aria-controls="company-panel">
+                    <i class="bi bi-building"></i> Company
+                </button>
+            </div>
+            
+            <!-- Google OAuth -->
+            <div class="social-login">
+                <a th:href="@{/oauth2/authorization/google}" class="social-btn">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+                    <span>Continue with Google</span>
+                </a>
+            </div>
+            
+            <div class="divider">or continue with email</div>
+            
+            <!-- Registration Form -->
+            <form th:action="@{/register}" method="post" class="needs-validation" novalidate data-loading>
+                <input type="hidden" name="_csrf" th:value="${_csrf.token}"/>
+                <input type="hidden" name="role" id="roleInput" value="PASSENGER">
+                
+                <!-- Personal Information -->
+                <fieldset>
+                    <legend class="form-label fw-semibold mb-3">Personal Information</legend>
+                    
+                    <div class="form-floating mb-3">
+                        <input type="text" class="form-control" id="fullName" name="fullName" placeholder="Full Name" required autocomplete="name">
+                        <label for="fullName"><i class="bi bi-person me-2"></i>Full Name</label>
+                        <div class="invalid-feedback">Please enter your full name</div>
+                    </div>
+                    
+                    <div class="form-floating mb-3">
+                        <input type="text" class="form-control" id="username" name="username" placeholder="Username" required autocomplete="username" minlength="3" maxlength="30" pattern="[a-zA-Z0-9_]+">
+                        <label for="username"><i class="bi bi-at me-2"></i>Username</label>
+                        <div class="invalid-feedback">Username must be 3-30 characters (letters, numbers, underscore)</div>
+                    </div>
+                    
+                    <div class="form-floating mb-3">
+                        <input type="email" class="form-control" id="email" name="email" placeholder="Email Address" required autocomplete="email">
+                        <label for="email"><i class="bi bi-envelope me-2"></i>Email Address</label>
+                        <div class="invalid-feedback">Please enter a valid email address</div>
+                    </div>
+                    
+                    <div class="form-floating mb-3">
+                        <input type="tel" class="form-control" id="phoneNumber" name="phoneNumber" placeholder="Phone Number" required autocomplete="tel" inputmode="tel" pattern="[0-9+\s-]{10,20}">
+                        <label for="phoneNumber"><i class="bi bi-phone me-2"></i>Phone Number (Ghana format)</label>
+                        <div class="invalid-feedback">Please enter a valid Ghana phone number</div>
+                    </div>
+                </fieldset>
+                
+                <!-- Company Fields (conditional) -->
+                <fieldset class="conditional-fields" id="companyFields" aria-label="Company information">
+                    <legend class="form-label fw-semibold mb-3">Company Information</legend>
+                    
+                    <div class="form-floating mb-3">
+                        <input type="text" class="form-control" id="companyName" name="companyName" placeholder="Company Name" autocomplete="organization">
+                        <label for="companyName"><i class="bi bi-building me-2"></i>Company Name</label>
+                    </div>
+                    
+                    <div class="form-floating mb-3">
+                        <input type="email" class="form-control" id="companyEmail" name="companyEmail" placeholder="Company Email" autocomplete="email">
+                        <label for="companyEmail"><i class="bi bi-envelope me-2"></i>Company Email</label>
+                    </div>
+                    
+                    <div class="form-floating mb-3">
+                        <input type="tel" class="form-control" id="companyPhone" name="companyPhone" placeholder="Company Phone" inputmode="tel" autocomplete="tel">
+                        <label for="companyPhone"><i class="bi bi-phone me-2"></i>Company Phone</label>
+                    </div>
+                    
+                    <div class="form-floating mb-3">
+                        <input type="text" class="form-control" id="registrationNo" name="registrationNo" placeholder="Registration No. (Optional)" autocomplete="off">
+                        <label for="registrationNo"><i class="bi bi-badge-cc me-2"></i>Registration No. (Optional)</label>
+                    </div>
+                    
+                    <div class="form-floating mb-3">
+                        <input type="text" class="form-control" id="location" name="location" placeholder="Location / Address" autocomplete="street-address">
+                        <label for="location"><i class="bi bi-geo-alt me-2"></i>Location / Address</label>
+                    </div>
+                    
+                    <div class="form-floating mb-3">
+                        <textarea class="form-control" id="companyDescription" name="companyDescription" placeholder="Company Description" style="height: 80px;" autocomplete="off"></textarea>
+                        <label for="companyDescription"><i class="bi bi-info-circle me-2"></i>Company Description</label>
+                    </div>
+                </fieldset>
+                
+                <!-- Security -->
+                <fieldset>
+                    <legend class="form-label fw-semibold mb-3">Security</legend>
+                    
+                    <div class="form-floating mb-3 position-relative">
+                        <input type="password" class="form-control" id="password" name="password" placeholder="Password" required autocomplete="new-password" minlength="8" data-strength-meter="passwordStrength">
+                        <label for="password"><i class="bi bi-lock me-2"></i>Password</label>
+                        <div class="invalid-feedback">Password must be at least 8 characters</div>
+                    </div>
+                    
+                    <div class="password-strength" id="passwordStrength">
+                        <div class="password-strength-bar"></div>
+                    </div>
+                    <div class="strength-text" id="strengthText"></div>
+                    
+                    <div class="form-floating mb-3">
+                        <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" placeholder="Confirm Password" required autocomplete="new-password">
+                        <label for="confirmPassword"><i class="bi bi-lock-fill me-2"></i>Confirm Password</label>
+                        <div class="invalid-feedback">Passwords do not match</div>
+                    </div>
+                </fieldset>
+                
+                <!-- Terms & Submit -->
+                <div class="form-check mb-3">
+                    <input type="checkbox" class="form-check-input" id="terms" name="terms" value="true" required>
+                    <label class="form-check-label" for="terms">
+                        I agree to the <a th:href="@{/terms}" target="_blank">Terms of Service</a> and <a th:href="@{/privacy}" target="_blank">Privacy Policy</a>
+                    </label>
+                    <div class="invalid-feedback">You must accept the terms and conditions</div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-submit btn-pill">
+                    <span class="btn-text">Create Account</span>
+                    <span class="btn-loading d-none"><i class="bi bi-arrow-clockwise spin me-2"></i>Creating...</span>
+                </button>
+            </form>
+            
+            <div class="auth-footer">
+                Already have an account? <a th:href="@{/login}">Sign in</a>
+            </div>
+            
+            <p class="terms-notice">
+                By creating an account, you agree to receive booking confirmations and updates via email/SMS.
+            </p>
+        </div>
+    </div>
+</main>
+
+<script th:inline="javascript">
+    // Role Tab Switching
+    document.addEventListener('DOMContentLoaded', function() {
+        const roleTabs = document.querySelectorAll('.role-tab');
+        const companyFields = document.getElementById('companyFields');
+        const roleInput = document.getElementById('roleInput');
+        
+        roleTabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                // Update active tab
+                roleTabs.forEach(t => {
+                    t.classList.remove('active');
+                    t.setAttribute('aria-selected', 'false');
+                });
+                this.classList.add('active');
+                this.setAttribute('aria-selected', 'true');
+                
+                // Update hidden role input
+                const role = this.dataset.role;
+                roleInput.value = role;
+                
+                // Show/hide company fields
+                if (role === 'COMPANY') {
+                    companyFields.classList.add('active');
+                    // Make company fields required
+                    document.querySelectorAll('#companyFields input, #companyFields textarea').forEach(field => {
+                        if (field.hasAttribute('data-required')) field.required = true;
+                    });
+                } else {
+                    companyFields.classList.remove('active');
+                    // Remove required from company fields
+                    document.querySelectorAll('#companyFields input, #companyFields textarea').forEach(field => {
+                        field.required = false;
+                    });
+                }
+            });
+        });
+        
+        // Password Strength Meter
+        const passwordInput = document.getElementById('password');
+        const strengthBar = document.querySelector('#passwordStrength .password-strength-bar');
+        const strengthText = document.getElementById('strengthText');
+        
+        if (passwordInput && strengthBar) {
+            passwordInput.addEventListener('input', function() {
+                const password = this.value;
+                let strength = 0;
+                let label = '';
+                
+                if (password.length >= 8) strength++;
+                if (password.length >= 12) strength++;
+                if (/[A-Z]/.test(password)) strength++;
+                if (/[a-z]/.test(password)) strength++;
+                if (/[0-9]/.test(password)) strength++;
+                if (/[^A-Za-z0-9]/.test(password)) strength++;
+                
+                strengthBar.className = 'password-strength-bar';
+                if (strength <= 2) {
+                    strengthBar.classList.add('strength-weak');
+                    label = 'Weak';
+                } else if (strength === 3) {
+                    strengthBar.classList.add('strength-fair');
+                    label = 'Fair';
+                } else if (strength === 4) {
+                    strengthBar.classList.add('strength-good');
+                    label = 'Good';
+                } else {
+                    strengthBar.classList.add('strength-strong');
+                    label = 'Strong';
+                }
+                
+                strengthText.textContent = password ? `Strength: ${label}` : '';
+            });
+        }
+        
+        // Confirm Password Validation
+        const confirmPassword = document.getElementById('confirmPassword');
+        if (confirmPassword) {
+            confirmPassword.addEventListener('input', function() {
+                if (this.value !== passwordInput.value) {
+                    this.setCustomValidity('Passwords do not match');
+                } else {
+                    this.setCustomValidity('');
+                }
+            });
+        }
+        
+        // Password Toggle
+        document.querySelectorAll('.password-toggle').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const targetId = this.dataset.togglePassword;
+                const target = document.getElementById(targetId);
+                const icon = this.querySelector('i');
+                
+                if (target.type === 'password') {
+                    target.type = 'text';
+                    icon.classList.remove('bi-eye');
+                    icon.classList.add('bi-eye-slash');
+                } else {
+                    target.type = 'password';
+                    icon.classList.remove('bi-eye-slash');
+                    icon.classList.add('bi-eye');
+                }
+            });
+        });
+        
+        // Form Loading State
+        document.querySelector('form[data-loading]').addEventListener('submit', function(e) {
+            const submitBtn = this.querySelector('button[type="submit"]');
+            if (submitBtn && this.checkValidity()) {
+                submitBtn.disabled = true;
+                submitBtn.querySelector('.btn-text').classList.add('d-none');
+                submitBtn.querySelector('.btn-loading').classList.remove('d-none');
+            }
+        });
+        
+        // Bootstrap Validation
+        (function() {
+            'use strict';
+            const forms = document.querySelectorAll('.needs-validation');
+            Array.prototype.slice.call(forms).forEach(function(form) {
+                form.addEventListener('submit', function(event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        })();
+    });
+</script>
+</body>
+</html>

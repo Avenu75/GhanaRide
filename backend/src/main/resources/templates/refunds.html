@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html th:replace="~{layout :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Refund Policy — GhanaRide</title>
+</head>
+<body>
+<main th:fragment="main">
+    <div class="container py-5">
+        <div class="legal-page">
+
+            <!-- Header -->
+            <div class="text-center mb-5">
+                <span class="badge bg-warning mb-3 px-3 py-2 rounded-pill" style="color: #1a1a2e;">Legal</span>
+                <h1 class="display-5 fw-bold" style="font-family: 'Outfit', sans-serif;">Refund Policy</h1>
+                <p class="text-muted">Last updated: January 2025</p>
+                <p class="text-muted">We strive to make every trip smooth. Here's what happens when things don't go as planned.</p>
+            </div>
+
+            <div class="card p-4 p-md-5 mb-4">
+
+                <h2>1. Cancellations by Passengers</h2>
+                <p>If you wish to cancel a booking, the following policy applies:</p>
+                <div class="table-responsive mt-3 mb-4">
+                    <table class="table table-bordered">
+                        <thead>
+                        <tr>
+                            <th>Time of Cancellation</th>
+                            <th>Refund Amount</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td>More than 48 hours before departure</td>
+                            <td class="text-success fw-bold">100% Full Refund</td>
+                        </tr>
+                        <tr>
+                            <td>24–48 hours before departure</td>
+                            <td class="text-warning fw-bold">50% Refund</td>
+                        </tr>
+                        <tr>
+                            <td>Less than 24 hours before departure</td>
+                            <td class="text-danger fw-bold">No Refund</td>
+                        </tr>
+                        <tr>
+                            <td>No-show (did not board the vehicle)</td>
+                            <td class="text-danger fw-bold">No Refund</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h2>2. Cancellations by Drivers or Companies</h2>
+                <p>If your trip is cancelled by the driver or transport company for any reason:</p>
+                <ul>
+                    <li>You will receive a <strong class="text-success">100% full refund</strong> automatically.</li>
+                    <li>You will be notified immediately via email and your GhanaRide dashboard.</li>
+                    <li>Refunds are initiated within 24 hours of the cancellation.</li>
+                    <li>GhanaRide will assist in finding an alternative trip where possible.</li>
+                </ul>
+
+                <h2>3. Delays</h2>
+                <ul>
+                    <li>If a trip is delayed by more than 3 hours and you choose not to travel, you are entitled to a full refund.</li>
+                    <li>Partial delays do not qualify for a refund.</li>
+                    <li>Contact our support team immediately to initiate a delay-related refund.</li>
+                </ul>
+
+                <h2>4. How to Request a Refund</h2>
+                <ol>
+                    <li>Log in to your GhanaRide account.</li>
+                    <li>Navigate to <strong>My Bookings</strong>.</li>
+                    <li>Select the booking you wish to cancel.</li>
+                    <li>Click <strong>"Cancel Booking"</strong> and confirm.</li>
+                    <li>If eligible, your refund will be processed automatically.</li>
+                    <li>For issues, contact us at <a href="mailto:support@ghanaride.me" class="text-success">support@ghanaride.me</a>.</li>
+                </ol>
+
+                <h2>5. Refund Processing Time</h2>
+                <ul>
+                    <li>Approved refunds are processed within <strong>5–10 business days</strong>.</li>
+                    <li>Refunds are returned to the original payment method (Mobile Money, Card, etc.).</li>
+                    <li>Processing times may vary depending on your bank or mobile money provider.</li>
+                    <li>GhanaRide will send you an email confirmation when your refund is processed.</li>
+                </ul>
+
+                <h2>6. Non-Refundable Situations</h2>
+                <ul>
+                    <li>Booking fees and processing charges (if applicable) are non-refundable.</li>
+                    <li>Trips cancelled within 24 hours of departure.</li>
+                    <li>No-shows without prior notice.</li>
+                    <li>Violations of our Terms of Service that result in trip termination.</li>
+                </ul>
+
+                <h2>7. Disputes</h2>
+                <p>If you believe you are entitled to a refund that was not issued, please contact our support team with:</p>
+                <ul>
+                    <li>Your booking reference number.</li>
+                    <li>Date and route of the trip.</li>
+                    <li>Reason for the refund request.</li>
+                    <li>Any supporting evidence (screenshots, communications, etc.).</li>
+                </ul>
+                <p>We aim to resolve all disputes within 7 business days.</p>
+
+                <h2>8. Contact Us</h2>
+                <p>For refund inquiries, reach us via:</p>
+                <ul>
+                    <li>Email: <a href="mailto:support@ghanaride.me" class="text-success">support@ghanaride.me</a></li>
+                    <li>WhatsApp: <a href="https://wa.me/233595873230" class="text-success">+233 595 873 230</a></li>
+                    <li>Or use our <a th:href="@{/contact}" class="text-success">Contact Page</a></li>
+                </ul>
+
+            </div>
+
+            <!-- Navigation Buttons -->
+            <div class="d-flex flex-wrap gap-3 justify-content-center">
+                <a th:href="@{/terms}" class="btn btn-outline-secondary px-4">
+                    <i class="bi bi-file-text me-2"></i>Terms of Service
+                </a>
+                <a th:href="@{/privacy}" class="btn btn-outline-secondary px-4">
+                    <i class="bi bi-shield-lock me-2"></i>Privacy Policy
+                </a>
+                <a th:href="@{/}" class="btn btn-primary px-4">
+                    <i class="bi bi-house me-2"></i>Back to Home
+                </a>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>

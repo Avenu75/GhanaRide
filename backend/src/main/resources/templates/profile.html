@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" th:replace="~{layout :: layout(~{::title}, ~{::main})}">
+<head>
+    <title>Profile Settings — GhanaRide</title>
+    <meta name="description" content="Manage your GhanaRide profile, security settings, notifications, and preferences.">
+    
+    <style th:inline="css">
+        .profile-layout {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: var(--space-6);
+            align-items: start;
+        }
+        
+        @media (max-width: 992px) {
+            .profile-layout { grid-template-columns: 1fr; }
+        }
+        
+        .profile-sidebar { position: sticky; top: calc(var(--header-height) + var(--space-6)); }
+        .profile-main { min-width: 0; }
+        
+        /* Profile Card */
+        .profile-card {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-xl);
+            padding: var(--space-6);
+            text-align: center;
+            margin-bottom: var(--space-4);
+        }
+        
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: var(--radius-full);
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--black);
+            margin-bottom: var(--space-4);
+        }
+        
+        .profile-name { font-family: 'Outfit', sans-serif; font-size: 1.5rem; font-weight: 800; margin-bottom: var(--space-1); }
+        .profile-email { color: var(--color-text-muted); font-size: 0.9375rem; margin-bottom: var(--space-3); }
+        .profile-role {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-1);
+            padding: 0.375rem 0.875rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: var(--radius-full);
+            background: var(--gold-muted);
+            color: var(--gold-dark);
+        }
+        
+        .profile-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--space-3);
+            margin-top: var(--space-5);
+            padding-top: var(--space-5);
+            border-top: 1px solid var(--color-border);
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: var(--space-3);
+            background: var(--color-surface-hover);
+            border-radius: var(--radius);
+        }
+        
+        .stat-value { font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; color: var(--color-text); }
+        .stat-label { font-size: 0.6875rem; text-transform: uppercase; color: var(--color-text-muted); }
+        
+        /* Nav Pills */
+        .profile-nav {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            padding: var(--space-3);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-1);
+        }
+        
+        .nav-pill {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            padding: var(--space-3) var(--space-4);
+            border-radius: var(--radius);
+            color: var(--color-text-secondary);
+            font-weight: 500;
+            text-decoration: none;
+            transition: all var(--transition-fast);
+        }
+        
+        .nav-pill:hover {
+            background: var(--gold-muted);
+            color: var(--gold-dark);
+        }
+        
+        .nav-pill.active {
+            background: var(--gold);
+            color: var(--black);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .nav-pill i { font-size: 1.125rem; width: 24px; text-align: center; }
+        
+        /* Section Cards */
+        .section-card {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-xl);
+            padding: var(--space-6);
+            margin-bottom: var(--space-5);
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--space-5);
+            padding-bottom: var(--space-4);
+            border-bottom: 1px solid var(--color-border);
+            flex-wrap: wrap;
+            gap: var(--space-3);
+        }
+        
+        .section-title { font-family: 'Outfit', sans-serif; font-size: 1.25rem; font-weight: 700; margin: 0; }
+        .section-subtitle { color: var(--color-text-muted); margin: 0; }
+        
+        /* Form Sections */
+        .form-section { margin-bottom: var(--space-6); }
+        .form-section-title { font-weight: 600; margin-bottom: var(--space-3); color: var(--color-text); }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: var(--space-4);
+        }
+        
+        /* Avatar Upload */
+        .avatar-upload {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+        }
+        
+        .avatar-preview {
+            width: 80px;
+            height: 80px;
+            border-radius: var(--radius-full);
+            background: var(--gold-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--gold-dark);
+            flex-shrink: 0;
+            position: relative;
+        }
+        
+        .avatar-preview img { width: 100%; height: 100%; border-radius: var(--radius-full); object-fit: cover; }
+        
+        .avatar-upload-btn {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-1);
+        }
+        
+        .file-input { display: none; }
+        
+        /* Security Cards */
+        .security-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--space-4);
+            background: var(--color-surface-hover);
+            border-radius: var(--radius);
+            margin-bottom: var(--space-3);
+            transition: all var(--transition-fast);
+        }
+        
+        .security-item:hover { background: var(--color-surface); border: 1px solid var(--color-border); }
+        
+        .security-info { display: flex; align-items: center; gap: var(--space-4); flex: 1; }
+        .security-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+        
+        .security-icon.password { background: var(--color-info-bg); color: var(--color-info); }
+        .security-icon.twofa { background: var(--gold-muted); color: var(--gold-dark); }
+        .security-icon.sessions { background: var(--color-success-bg); color: var(--color-success); }
+        .security-icon.devices { background: var(--color-warning-bg); color: var(--color-warning); }
+        
+        .security-title { font-weight: 600; color: var(--color-text); margin-bottom: var(--space-1); }
+        .security-desc { font-size: 0.8125rem; color: var(--color-text-muted); margin: 0; }
+        
+        .security-status {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-1);
+            padding: 0.25rem 0.625rem;
+            font-size: 0.6875rem;
+            font-weight: 600;
+            border-radius: var(--radius-full);
+            text-transform: uppercase;
+        }
+        
+        .status-enabled { background: var(--color-success-bg); color: var(--color-success); }
+        .status-disabled { background: var(--color-surface); color: var(--color-text-muted); border: 1px solid var(--color-border); }
+        
+        /* Notification Toggles */
+        .notification-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--space-4);
+            background: var(--color-surface-hover);
+            border-radius: var(--radius);
+            margin-bottom: var(--space-3);
+        }
+        
+        .notification-info { flex: 1; }
+        .notification-title { font-weight: 600; margin-bottom: var(--space-1); }
+        .notification-desc { font-size: 0.8125rem; color: var(--color-text-muted); margin: 0; }
+        
+        /* Sessions List */
+        .session-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+            padding: var(--space-4);
+            background: var(--color-surface-hover);
+            border-radius: var(--radius);
+            margin-bottom: var(--space-3);
+        }
+        
+        .session-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: var(--radius);
+            background: var(--gold-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gold-dark);
+            font-size: 1.25rem;
+        }
+        
+        .session-info { flex: 1; min-width: 0; }
+        .session-device { font-weight: 600; color: var(--color-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .session-meta { font-size: 0.8125rem; color: var(--color-text-muted); }
+        .session-current { 
+            display: inline-flex; 
+            align-items: center; 
+            gap: var(--space-1);
+            padding: 0.125rem 0.5rem; 
+            font-size: 0.625rem; 
+            font-weight: 600; 
+            border-radius: var(--radius-full); 
+            background: var(--gold-muted); 
+            color: var(--gold-dark);
+            text-transform: uppercase;
+        }
+        
+        /* Delete Account */
+        .danger-zone {
+            border: 1px solid var(--color-error);
+            border-radius: var(--radius-lg);
+            padding: var(--space-6);
+            background: var(--color-error-bg);
+        }
+        
+        .danger-title { color: var(--color-error); margin-bottom: var(--space-3); }
+        .danger-text { color: var(--color-text-muted); margin-bottom: var(--space-4); }
+        
+        /* Preferences */
+        .preference-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--space-4);
+            background: var(--color-surface-hover);
+            border-radius: var(--radius);
+            margin-bottom: var(--space-3);
+        }
+        
+        .preference-info { flex: 1; }
+        .preference-title { font-weight: 600; margin-bottom: var(--space-1); }
+        .preference-desc { font-size: 0.8125rem; color: var(--color-text-muted); margin: 0; }
+        
+        /* Theme Selector */
+        .theme-options {
+            display: flex;
+            gap: var(--space-3);
+        }
+        
+        .theme-option {
+            flex: 1;
+            position: relative;
+        }
+        
+        .theme-option input { position: absolute; opacity: 0; pointer-events: none; }
+        
+        .theme-card {
+            display: block;
+            padding: var(--space-4);
+            border: 2px solid var(--color-border);
+            border-radius: var(--radius);
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+        
+        .theme-option input:checked + .theme-card {
+            border-color: var(--gold);
+            background: var(--gold-muted);
+        }
+        
+        .theme-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: var(--space-2);
+        }
+        
+        .theme-light .theme-icon { background: var(--color-surface); color: var(--color-text); }
+        .theme-dark .theme-icon { background: var(--black); color: white; }
+        .theme-system .theme-icon { background: var(--color-surface-hover); color: var(--color-text-secondary); }
+    </style>
+</head>
+<body>
+<main th:fragment="main">
+    <div class="container py-4">
+        <!-- Breadcrumb -->
+        <nav aria-label="Breadcrumb" class="mb-4">
+            <ol class="breadcrumb mb-0" style="background: transparent; padding: 0;">
+                <li class="breadcrumb-item"><a th:href="@{/}">Home</a></li>
+                <li class="breadcrumb-item"><a th:href="@{/dashboard}">Dashboard</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Profile</li>
+            </ol>
+        </nav>
+        
+        <div class="profile-layout">
+            <!-- Sidebar -->
+            <aside class="profile-sidebar">
+                <!-- Profile Card -->
+                <div class="profile-card animate-slide-up">
+                    <div class="profile-avatar" th:if="${currentUser.profileImagePath == null}" th:text="${#strings.substring(currentUser.fullName, 0, 1).toUpperCase()}">U</div>
+                    <img th:if="${currentUser.profileImagePath != null}" th:src="@{${currentUser.profileImagePath}}" alt="Profile" class="profile-avatar" style="object-fit: cover;">
+                    
+                    <h2 class="profile-name" th:text="${currentUser.fullName}">User Name</h2>
+                    <p class="profile-email" th:text="${currentUser.email}">email@ghanaride.me</p>
+                    
+                    <span class="profile-role" th:switch="${currentUser.role}">
+                        <span th:case="'USER'"><i class="bi bi-person-circle"></i> Passenger</span>
+                        <span th:case="'DRIVER'"><i class="bi bi-car-front"></i> Driver</span>
+                        <span th:case="'COMPANY'"><i class="bi bi-building"></i> Company</span>
+                        <span th:case="'ADMIN'"><i class="bi bi-shield-lock"></i> Admin</span>
+                        <span th:case="*"><i class="bi bi-person"></i> User</span>
+                    </span>
+                    
+                    <div class="profile-stats">
+                        <div class="stat-item">
+                            <div class="stat-value" th:text="${totalBookings != null ? #numbers.formatInteger(totalBookings) : '0'}">0</div>
+                            <div class="stat-label">Bookings</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" th:text="${completedBookings != null ? #numbers.formatInteger(completedBookings) : '0'}">0</div>
+                            <div class="stat-label">Completed</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" th:text="${totalPoints != null ? #numbers.formatInteger(totalPoints) : '0'}">0</div>
+                            <div class="stat-label">Points</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Navigation -->
+                <nav class="profile-nav animate-slide-up stagger-1" aria-label="Profile sections">
+                    <a href="#account" class="nav-pill active" data-section="account">
+                        <i class="bi bi-person"></i> Account
+                    </a>
+                    <a href="#security" class="nav-pill" data-section="security">
+                        <i class="bi bi-shield-lock"></i> Security
+                    </a>
+                    <a href="#notifications" class="nav-pill" data-section="notifications">
+                        <i class="bi bi-bell"></i> Notifications
+                    </a>
+                    <a href="#preferences" class="nav-pill" data-section="preferences">
+                        <i class="bi bi-gear"></i> Preferences
+                    </a>
+                    <a href="#sessions" class="nav-pill" data-section="sessions">
+                        <i class="bi bi-device-mobile"></i> Sessions
+                    </a>
+                    <a href="#danger" class="nav-pill text-danger" data-section="danger">
+                        <i class="bi bi-trash"></i> Delete Account
+                    </a>
+                </nav>
+            </aside>
+            
+            <!-- Main Content -->
+            <div class="profile-main">
+                <!-- Account Section -->
+                <section id="account" class="section-card animate-slide-up" aria-labelledby="account-title">
+                    <header class="section-header">
+                        <div>
+                            <h2 id="account-title" class="section-title">Account Information</h2>
+                            <p class="section-subtitle">Manage your personal details and contact information</p>
+                        </div>
+                    </header>
+                    
+                    <form th:action="@{/profile/account}" method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        <input type="hidden" name="_csrf" th:value="${_csrf.token}"/>
+                        
+                        <!-- Avatar Upload -->
+                        <div class="form-section">
+                            <h4 class="form-section-title"><i class="bi bi-image me-2"></i> Profile Photo</h4>
+                            <div class="avatar-upload">
+                                <div class="avatar-preview" id="avatarPreview">
+                                    <span th:if="${currentUser.profileImagePath == null}" th:text="${#strings.substring(currentUser.fullName, 0, 1).toUpperCase()}">U</span>
+                                    <img th:if="${currentUser.profileImagePath != null}" th:src="@{${currentUser.profileImagePath}}" alt="Profile" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                                </div>
+                                <div class="avatar-upload-btn">
+                                    <label class="btn btn-secondary btn-pill">
+                                        <i class="bi bi-camera me-1"></i> Change Photo
+                                        <input type="file" class="file-input" name="profileImage" accept="image/*" id="profileImageInput">
+                                    </label>
+                                    <button type="button" class="btn btn-outline-danger btn-sm" id="removeAvatarBtn" th:if="${currentUser.profileImagePath != null}">
+                                        <i class="bi bi-trash me-1"></i> Remove
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Personal Info -->
+                        <div class="form-section">
+                            <h4 class="form-section-title"><i class="bi bi-person me-2"></i> Personal Information</h4>
+                            <div class="form-grid">
+                                <div class="form-floating mb-3">
+                                    <input type="text" class="form-control" name="fullName" id="fullName" placeholder="Full Name" required th:value="${currentUser.fullName}" autocomplete="name">
+                                    <label for="fullName"><i class="bi bi-person me-2"></i>Full Name</label>
+                                    <div class="invalid-feedback">Full name is required</div>
+                                </div>
+                                <div class="form-floating mb-3">
+                                    <input type="text" class="form-control" name="username" id="username" placeholder="Username" required minlength="3" maxlength="30" pattern="[a-zA-Z0-9_]+" th:value="${currentUser.username}" autocomplete="username">
+                                    <label for="username"><i class="bi bi-at me-2"></i>Username</label>
+                                    <div class="invalid-feedback">3-30 characters, letters/numbers/underscore only</div>
+                                </div>
+                                <div class="form-floating mb-3">
+                                    <input type="email" class="form-control" name="email" id="email" placeholder="Email" required th:value="${currentUser.email}" autocomplete="email">
+                                    <label for="email"><i class="bi bi-envelope me-2"></i>Email Address</label>
+                                    <div class="invalid-feedback">Valid email required</div>
+                                </div>
+                                <div class="form-floating mb-3">
+                                    <input type="tel" class="form-control" name="phoneNumber" id="phoneNumber" placeholder="Phone Number" required inputmode="tel" autocomplete="tel" pattern="[0-9+\s-]{10,20}" th:value="${currentUser.phoneNumber}">
+                                    <label for="phoneNumber"><i class="bi bi-phone me-2"></i>Phone Number</label>
+                                    <div class="invalid-feedback">Valid Ghana phone number required</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Additional Info -->
+                        <div class="form-section">
+                            <h4 class="form-section-title"><i class="bi bi-info-circle me-2"></i> Additional Details</h4>
+                            <div class="form-grid">
+                                <div class="form-floating mb-3">
+                                    <input type="date" class="form-control" name="dateOfBirth" id="dateOfBirth" th:value="${currentUser.dateOfBirth}">
+                                    <label for="dateOfBirth"><i class="bi bi-calendar3 me-2"></i>Date of Birth</label>
+                                </div>
+                                <div class="form-floating mb-3">
+                                    <select class="form-select" name="gender" id="gender">
+                                        <option value="">Not specified</option>
+                                        <option value="Male" th:selected="${currentUser.gender == 'Male'}">Male</option>
+                                        <option value="Female" th:selected="${currentUser.gender == 'Female'}">Female</option>
+                                        <option value="Other" th:selected="${currentUser.gender == 'Other'}">Other</option>
+                                        <option value="Prefer not to say" th:selected="${currentUser.gender == 'Prefer not to say'}">Prefer not to say</option>
+                                    </select>
+                                    <label for="gender"><i class="bi bi-gender-ambiguous me-2"></i>Gender</label>
+                                </div>
+                                <div class="form-floating mb-3" style="grid-column: 1 / -1;">
+                                    <input type="text" class="form-control" name="address" id="address" placeholder="Address" th:value="${currentUser.address}" autocomplete="street-address">
+                                    <label for="address"><i class="bi bi-geo-alt me-2"></i>Address</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex gap-3">
+                            <button type="submit" class="btn btn-primary btn-pill flex-grow-1">
+                                <span class="btn-text">Save Changes</span>
+                                <span class="btn-loading d-none"><i class="bi bi-arrow-clockwise spin me-2"></i>Saving...</span>
+                            </button>
+                        </div>
+                    </form>
+                </section>
+                
+                <!-- Security Section -->
+                <section id="security" class="section-card animate-slide-up" aria-labelledby="security-title" style="display: none;">
+                    <header class="section-header">
+                        <div>
+                            <h2 id="security-title" class="section-title">Security</h2>
+                            <p class="section-subtitle">Manage your password, two-factor authentication, and account security</p>
+                        </div>
+                    </header>
+                    
+                    <div class="security-item">
+                        <div class="security-info">
+                            <div class="security-icon password"><i class="bi bi-key"></i></div>
+                            <div>
+                                <div class="security-title">Password</div>
+                                <p class="security-desc">Last changed 3 months ago</p>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="security-status status-enabled"><i class="bi bi-check"></i> Enabled</span>
+                            <button class="btn btn-sm btn-secondary ms-2" data-bs-toggle="modal" data-bs-target="#changePasswordModal">Change</button>
+                        </div>
+                    </div>
+                    
+                    <div class="security-item">
+                        <div class="security-info">
+                            <div class="security-icon twofa"><i class="bi bi-shield-check"></i></div>
+                            <div>
+                                <div class="security-title">Two-Factor Authentication</div>
+                                <p class="security-desc">Add an extra layer of security with authenticator app</p>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="security-status status-disabled"><i class="bi bi-x"></i> Disabled</span>
+                            <button class="btn btn-sm btn-primary ms-2" data-bs-toggle="modal" data-bs-target="#enable2FAModal">Enable</button>
+                        </div>
+                    </div>
+                    
+                    <div class="security-item">
+                        <div class="security-info">
+                            <div class="security-icon sessions"><i class="bi bi-device-mobile"></i></div>
+                            <div>
+                                <div class="security-title">Active Sessions</div>
+                                <p class="security-desc">3 active sessions across devices</p>
+                            </div>
+                        </div>
+                        <div>
+                            <a href="#sessions" class="btn btn-sm btn-secondary">Manage</a>
+                        </div>
+                    </div>
+                    
+                    <div class="security-item">
+                        <div class="security-info">
+                            <div class="security-icon devices"><i class="bi bi-phone"></i></div>
+                            <div>
+                                <div class="security-title">Trusted Devices</div>
+                                <p class="security-desc">2 trusted devices for faster login</p>
+                            </div>
+                        </div>
+                        <div>
+                            <button class="btn btn-sm btn-secondary" data-bs-toggle="modal" data-bs-target="#trustedDevicesModal">Manage</button>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Notifications Section -->
+                <section id="notifications" class="section-card animate-slide-up" aria-labelledby="notifications-title" style="display: none;">
+                    <header class="section-header">
+                        <div>
+                            <h2 id="notifications-title" class="section-title">Notification Preferences</h2>
+                            <p class="section-subtitle">Choose how you want to stay informed about your bookings and account</p>
+                        </div>
+                    </header>
+                    
+                    <div class="notification-toggle">
+                        <div class="notification-info">
+                            <div class="notification-title">Booking Confirmations</div>
+                            <p class="notification-desc">Receive confirmation when you book a ride</p>
+                        </div>
+                        <label class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="notifyBookingConfirmed" checked>
+                        </label>
+                    </div>
+                    
+                    <div class="notification-toggle">
+                        <div class="notification-info">
+                            <div class="notification-title">Departure Reminders</div>
+                            <p class="notification-desc">Get reminded 2 hours and 30 minutes before your trip</p>
+                        </div>
+                        <label class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="notifyDeparture" checked>
+                        </label>
+                    </div>
+                    
+                    <div class="notification-toggle">
+                        <div class="notification-info">
+                            <div class="notification-title">Payment Receipts</div>
+                            <p class="notification-desc">Receive receipts after successful payments</p>
+                        </div>
+                        <label class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="notifyPayment" checked>
+                        </label>
+                    </div>
+                    
+                    <div class="notification-toggle">
+                        <div class="notification-info">
+                            <div class="notification-title">Promotional Offers</div>
+                            <p class="notification-desc">Occasional discounts and special offers</p>
+                        </div>
+                        <label class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="notifyPromo">
+                        </label>
+                    </div>
+                    
+                    <div class="notification-toggle">
+                        <div class="notification-info">
+                            <div class="notification-title">Price Drop Alerts</div>
+                            <p class="notification-desc">Get notified when prices drop on your saved routes</p>
+                        </div>
+                        <label class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="notifyPriceDrop" checked>
+                        </label>
+                    </div>
+                    
+                    <div class="notification-toggle">
+                        <div class="notification-info">
+                            <div class="notification-title">SMS Notifications</div>
+                            <p class="notification-desc">Receive critical alerts via SMS (data rates may apply)</p>
+                        </div>
+                        <label class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="notifySMS" checked>
+                        </label>
+                    </div>
+                    
+                    <div class="notification-toggle">
+                        <div class="notification-info">
+                            <div class="notification-title">Push Notifications</div>
+                            <p class="notification-desc">Receive real-time updates in the app</p>
+                        </div>
+                        <label class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="notifyPush" checked>
+                        </label>
+                    </div>
+                </section>
+                
+                <!-- Preferences Section -->
+                <section id="preferences" class="section-card animate-slide-up" aria-labelledby="preferences-title" style="display: none;">
+                    <header class="section-header">
+                        <div>
+                            <h2 id="preferences-title" class="section-title">Preferences</h2>
+                            <p class="section-subtitle">Customize your GhanaRide experience</p>
+                        </div>
+                    </header>
+                    
+                    <div class="preference-item">
+                        <div class="preference-info">
+                            <div class="preference-title">Theme</div>
+                            <p class="preference-desc">Choose your preferred color scheme</p>
+                        </div>
+                        <div class="theme-options">
+                            <label class="theme-option">
+                                <input type="radio" name="theme" value="light" th:checked="${theme == 'light'}">
+                                <div class="theme-card theme-light">
+                                    <div class="theme-icon"><i class="bi bi-sun"></i></div>
+                                    <span>Light</span>
+                                </div>
+                            </label>
+                            <label class="theme-option">
+                                <input type="radio" name="theme" value="dark" th:checked="${theme == 'dark'}">
+                                <div class="theme-card theme-dark">
+                                    <div class="theme-icon"><i class="bi bi-moon"></i></div>
+                                    <span>Dark</span>
+                                </div>
+                            </label>
+                            <label class="theme-option">
+                                <input type="radio" name="theme" value="system" th:checked="${theme == 'system'}">
+                                <div class="theme-card theme-system">
+                                    <div class="theme-icon"><i class="bi bi-cpu"></i></div>
+                                    <span>System</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="preference-item">
+                        <div class="preference-info">
+                            <div class="preference-title">Language</div>
+                            <p class="preference-desc">Select your preferred language</p>
+                        </div>
+                        <select class="form-select" style="width: auto; max-width: 200px;">
+                            <option selected>English (Ghana)</option>
+                            <option>Twi</option>
+                            <option>Ga</option>
+                            <option>Ewe</option>
+                        </select>
+                    </div>
+                    
+                    <div class="preference-item">
+                        <div class="preference-info">
+                            <div class="preference-title">Currency</div>
+                            <p class="preference-desc">Display prices in your preferred currency</p>
+                        </div>
+                        <select class="form-select" style="width: auto; max-width: 200px;">
+                            <option selected>GHS - Ghana Cedi</option>
+                            <option>USD - US Dollar</option>
+                        </select>
+                    </div>
+                    
+                    <div class="preference-item">
+                        <div class="preference-info">
+                            <div class="preference-title">Auto-save Payment Method</div>
+                            <p class="preference-desc">Save your last used payment method for faster checkout</p>
+                        </div>
+                        <label class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="autoSavePayment" checked>
+                        </label>
+                    </div>
+                    
+                    <div class="preference-item">
+                        <div class="preference-info">
+                            <div class="preference-title">Seat Preference</div>
+                            <p class="preference-desc">Default seat type when booking</p>
+                        </div>
+                        <select class="form-select" style="width: auto; max-width: 200px;">
+                            <option>No preference</option>
+                            <option>Window seat</option>
+                            <option>Aisle seat</option>
+                            <option>Extra legroom</option>
+                        </select>
+                    </div>
+                </section>
+                
+                <!-- Sessions Section -->
+                <section id="sessions" class="section-card animate-slide-up" aria-labelledby="sessions-title" style="display: none;">
+                    <header class="section-header">
+                        <div>
+                            <h2 id="sessions-title" class="section-title">Active Sessions</h2>
+                            <p class="section-subtitle">Manage devices signed into your account</p>
+                        </div>
+                        <a href="#" class="btn btn-sm btn-danger">Sign Out Everywhere</a>
+                    </header>
+                    
+                    <div class="session-item">
+                        <div class="session-icon"><i class="bi bi-phone"></i></div>
+                        <div class="session-info">
+                            <div class="session-device">iPhone 15 Pro <span class="session-current"><i class="bi bi-check-circle"></i> Current</span></div>
+                            <div class="session-meta">Accra, Ghana • Active 2 minutes ago</div>
+                        </div>
+                        <button class="btn btn-sm btn-outline-danger">Revoke</button>
+                    </div>
+                    
+                    <div class="session-item">
+                        <div class="session-icon"><i class="bi bi-laptop"></i></div>
+                        <div class="session-info">
+                            <div class="session-device">MacBook Pro (Chrome)</div>
+                            <div class="session-meta">Kumasi, Ghana • Active 1 hour ago</div>
+                        </div>
+                        <button class="btn btn-sm btn-outline-danger">Revoke</button>
+                    </div>
+                    
+                    <div class="session-item">
+                        <div class="session-icon"><i class="bi bi-tablet"></i></div>
+                        <div class="session-info">
+                            <div class="session-device">iPad Air (Safari)</div>
+                            <div class="session-meta">Tamale, Ghana • Active 3 days ago</div>
+                        </div>
+                        <button class="btn btn-sm btn-outline-danger">Revoke</button>
+                    </div>
+                </section>
+                
+                <!-- Danger Zone -->
+                <section id="danger" class="section-card animate-slide-up" aria-labelledby="danger-title" style="display: none;">
+                    <div class="danger-zone">
+                        <h3 class="danger-title"><i class="bi bi-exclamation-triangle me-2"></i> Delete Account</h3>
+                        <p class="danger-text">
+                            This action is irreversible. Deleting your account will permanently remove:
+                        </p>
+                        <ul class="danger-text">
+                            <li>All booking history and receipts</li>
+                            <li>Wallet balance and loyalty points</li>
+                            <li>Saved payment methods and preferences</li>
+                            <li>Reviews and ratings you've written</li>
+                        </ul>
+                        <p class="danger-text mb-4">Any upcoming bookings will be cancelled and refunded to your wallet.</p>
+                        
+                        <form th:action="@{/profile/delete}" method="post" onsubmit="return confirmDelete(event)">
+                            <input type="hidden" name="_csrf" th:value="${_csrf.token}"/>
+                            <div class="form-floating mb-3" style="max-width: 300px;">
+                                <input type="text" class="form-control" name="confirmText" id="confirmText" placeholder="Type DELETE to confirm" required pattern="DELETE">
+                                <label for="confirmText">Type "DELETE" to confirm</label>
+                                <div class="invalid-feedback">You must type DELETE exactly</div>
+                            </div>
+                            <button type="submit" class="btn btn-danger btn-pill">
+                                <i class="bi bi-trash me-2"></i> Permanently Delete Account
+                            </button>
+                        </form>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modals -->
+    <!-- Change Password Modal -->
+    <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="changePasswordModalLabel">Change Password</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form th:action="@{/profile/change-password}" method="post">
+                    <input type="hidden" name="_csrf" th:value="${_csrf.token}"/>
+                    <div class="modal-body">
+                        <div class="form-floating mb-3">
+                            <input type="password" class="form-control" name="currentPassword" id="currentPassword" placeholder="Current Password" required autocomplete="current-password">
+                            <label for="currentPassword">Current Password</label>
+                        </div>
+                        <div class="form-floating mb-3">
+                            <input type="password" class="form-control" name="newPassword" id="newPassword" placeholder="New Password" required autocomplete="new-password" minlength="8">
+                            <label for="newPassword">New Password</label>
+                        </div>
+                        <div class="form-floating mb-3">
+                            <input type="password" class="form-control" name="confirmPassword" id="confirmPassword" placeholder="Confirm New Password" required autocomplete="new-password">
+                            <label for="confirmPassword">Confirm New Password</label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Update Password</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Enable 2FA Modal -->
+    <div class="modal fade" id="enable2FAModal" tabindex="-1" aria-labelledby="enable2FAModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="enable2FAModalLabel">Enable Two-Factor Authentication</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-3">Scan the QR code with your authenticator app (Google Authenticator, Authy, 1Password, etc.)</p>
+                    <div class="text-center mb-4">
+                        <div id="qrcode"></div>
+                    </div>
+                    <p class="mb-3"><strong>Backup Code:</strong> <code id="backupCode">XXXX-XXXX-XXXX</code> <button class="btn btn-sm btn-outline-secondary ms-2" onclick="copyBackupCode()">Copy</button></p>
+                    <div class="form-floating mb-3">
+                        <input type="text" class="form-control" name="totpCode" id="totpCode" placeholder="6-digit code" required maxlength="6" pattern="[0-9]{6}" autocomplete="one-time-code">
+                        <label for="totpCode">Enter 6-digit code from app</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="verify2FABtn">Enable 2FA</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Trusted Devices Modal -->
+    <div class="modal fade" id="trustedDevicesModal" tabindex="-1" aria-labelledby="trustedDevicesModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="trustedDevicesModalLabel">Trusted Devices</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-3">These devices won't require 2FA for 30 days.</p>
+                    <div class="session-item mb-3">
+                        <div class="session-icon"><i class="bi bi-phone"></i></div>
+                        <div class="session-info">
+                            <div class="session-device">iPhone 15 Pro <span class="session-current"><i class="bi bi-check-circle"></i> Current</span></div>
+                        </div>
+                    </div>
+                    <div class="session-item mb-3">
+                        <div class="session-icon"><i class="bi bi-laptop"></i></div>
+                        <div class="session-info">
+                            <div class="session-device">MacBook Pro (Chrome)</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-outline-danger w-100" data-bs-dismiss="modal">Remove All Trusted Devices</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script th:inline="javascript">
+    // Section Navigation
+    document.addEventListener('DOMContentLoaded', function() {
+        const navPills = document.querySelectorAll('.nav-pill');
+        const sections = document.querySelectorAll('section[id]');
+        
+        navPills.forEach(pill => {
+            pill.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Update active pill
+                navPills.forEach(p => p.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Show target section
+                const targetId = this.getAttribute('data-section');
+                sections.forEach(section => {
+                    if (section.id === targetId) {
+                        section.style.display = 'block';
+                        section.classList.add('animate-slide-up');
+                    } else {
+                        section.style.display = 'none';
+                    }
+                });
+                
+                // Update URL hash
+                history.replaceState(null, '', '#' + targetId);
+            });
+        });
+        
+        // Load section from hash on page load
+        const hash = window.location.hash.slice(1);
+        if (hash) {
+            const pill = document.querySelector('.nav-pill[data-section="' + hash + '"]');
+            if (pill) pill.click();
+        }
+        
+        // Avatar Preview
+        const avatarInput = document.getElementById('profileImageInput');
+        const avatarPreview = document.getElementById('avatarPreview');
+        
+        if (avatarInput && avatarPreview) {
+            avatarInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    if (file.size > 5 * 1024 * 1024) {
+                        GhanaRide?.utils?.showToast('File too large. Maximum 5MB.', 'error');
+                        this.value = '';
+                        return;
+                    }
+                    
+                    const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+                    if (!validTypes.includes(file.type)) {
+                        GhanaRide?.utils?.showToast('Invalid file type. Use JPEG, PNG, or WebP.', 'error');
+                        this.value = '';
+                        return;
+                    }
+                    
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        avatarPreview.innerHTML = '<img src="' + e.target.result + '" alt="Preview" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">';
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+        
+        // Remove Avatar
+        const removeAvatarBtn = document.getElementById('removeAvatarBtn');
+        if (removeAvatarBtn) {
+            removeAvatarBtn.addEventListener('click', function() {
+                if (confirm('Remove your profile photo?')) {
+                    avatarPreview.innerHTML = '<span>' + /*[[${#strings.substring(currentUser.fullName, 0, 1).toUpperCase()}]*/ 'U' + '</span>';
+                    document.getElementById('profileImageInput').value = '';
+                    // Could add hidden field to signal removal
+                }
+            });
+        }
+        
+        // Theme Selector
+        document.querySelectorAll('input[name="theme"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                GhanaRide?.utils?.setTheme(this.value);
+            });
+        });
+        
+        // 2FA QR Code Generation
+        const enable2FAModal = document.getElementById('enable2FAModal');
+        if (enable2FAModal) {
+            enable2FAModal.addEventListener('shown.bs.modal', function() {
+                if (typeof QRCode !== 'undefined') {
+                    new QRCode(document.getElementById('qrcode'), {
+                        text: 'otpauth://totp/GhanaRide:user@example.com?secret=JBSWY3DPEHPK3PXP&issuer=GhanaRide',
+                        width: 200,
+                        height: 200,
+                        colorDark: "#1A1A2E",
+                        colorLight: "#ffffff",
+                        correctLevel: QRCode.CorrectLevel.M
+                    });
+                }
+                
+                // Generate random backup code
+                const backupCode = Array.from({length: 4}, () => Math.random().toString(36).substring(2, 6).toUpperCase()).join('-');
+                document.getElementById('backupCode').textContent = backupCode;
+            });
+        }
+        
+        // Copy Backup Code
+        window.copyBackupCode = function() {
+            const code = document.getElementById('backupCode').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                GhanaRide?.utils?.showToast('Backup code copied!', 'success');
+            });
+        };
+        
+        // Confirm Delete Account
+        window.confirmDelete = function(e) {
+            const confirmText = document.getElementById('confirmText');
+            if (confirmText && confirmText.value !== 'DELETE') {
+                e.preventDefault();
+                GhanaRide?.utils?.showToast('You must type DELETE exactly', 'error');
+                confirmText.focus();
+                return false;
+            }
+            return confirm('Are you absolutely sure? This cannot be undone.');
+        };
+        
+        // Form Loading States
+        document.querySelectorAll('form[data-loading]').forEach(form => {
+            form.addEventListener('submit', function() {
+                const btn = this.querySelector('button[type="submit"]');
+                if (btn && this.checkValidity()) {
+                    btn.disabled = true;
+                    btn.querySelector('.btn-text')?.classList.add('d-none');
+                    btn.querySelector('.btn-loading')?.classList.remove('d-none');
+                }
+            });
+        });
+        
+        // Bootstrap Validation
+        (function() {
+            'use strict';
+            const forms = document.querySelectorAll('.needs-validation');
+            Array.prototype.slice.call(forms).forEach(function(form) {
+                form.addEventListener('submit', function(event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        })();
+    });
+</script>
+</body>
+</html>

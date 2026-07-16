@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html th:replace="~{layout :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Error — GhanaRide</title>
+</head>
+<body>
+<main th:fragment="main">
+    <div class="container py-5">
+        <div class="error-page flex-column gap-4">
+            <!-- Error Icon -->
+            <div style="font-size: 5rem; line-height: 1;">
+                <i class="bi bi-exclamation-circle" style="color: var(--ghana-gold);"></i>
+            </div>
+            <div>
+                <h1 class="fw-bold mb-3" style="font-family: 'Outfit', sans-serif;">
+                    <span th:text="${status != null ? status : 'Error'}">Error</span>
+                </h1>
+                <p class="text-muted fs-5 mb-3" th:text="${error != null ? error : 'Something went wrong'}">Something went wrong</p>
+                <p class="text-muted mb-5" th:text="${message != null ? message : 'An unexpected error occurred. Please try again.'}">
+                    An unexpected error occurred. Please try again.
+                </p>
+                <div class="d-flex flex-wrap gap-3 justify-content-center">
+                    <button onclick="window.history.back()" class="btn btn-outline-secondary px-4 py-2">
+                        <i class="bi bi-arrow-left me-2"></i>Go Back
+                    </button>
+                    <a th:href="@{/}" class="btn btn-primary px-4 py-2">
+                        <i class="bi bi-house me-2"></i>Go Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>

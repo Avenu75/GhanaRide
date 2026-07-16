@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html th:replace="~{layout :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Manage Trips - GhanaRide</title>
+</head>
+<body>
+<main th:fragment="main">
+
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="text-light fw-bold mb-1">
+                <i class="bi bi-signpost-2 text-warning me-2"></i>Manage Trips
+            </h2>
+            <p class="text-muted mb-0">Approve, reject or delete trips from the system</p>
+        </div>
+        <a th:href="@{/admin/dashboard}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i>Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Success/Error Messages -->
+    <div th:if="${success}" class="alert alert-success d-flex align-items-center gap-2 mb-4">
+        <i class="bi bi-check-circle-fill"></i>
+        <span th:text="${success}"></span>
+    </div>
+    <div th:if="${error}" class="alert alert-danger d-flex align-items-center gap-2 mb-4">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span th:text="${error}"></span>
+    </div>
+
+    <!-- Trips Table -->
+    <div class="card border-0 shadow" style="background: var(--card-bg);">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table   table-hover align-middle mb-0">
+                    <thead style="background: rgba(252,209,22,0.1); border-bottom: 2px solid rgba(252,209,22,0.3);">
+                    <tr>
+                        <th class="text-warning py-3 ps-3">ID</th>
+                        <th class="text-warning py-3">Route</th>
+                        <th class="text-warning py-3">Driver</th>
+                        <th class="text-warning py-3">Car</th>
+                        <th class="text-warning py-3">Date / Price</th>
+                        <th class="text-warning py-3">Seats</th>
+                        <th class="text-warning py-3">Status</th>
+                        <th class="text-warning py-3">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="trip : ${trips}" style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+
+                        <!-- ID -->
+                        <td class="ps-3 text-muted" th:text="${trip.id}">1</td>
+
+                        <!-- Route -->
+                        <td>
+                            <div class="fw-bold text-light">
+                                <i class="bi bi-geo-alt text-warning me-1"></i>
+                                <span th:text="${trip.fromLocation}">From</span>
+                            </div>
+                            <div class="small text-muted">
+                                <i class="bi bi-geo-alt-fill text-danger me-1"></i>
+                                <span th:text="${trip.toLocation}">To</span>
+                            </div>
+                        </td>
+
+                        <!-- Driver (nullable FK: company-owned trips have no driver) -->
+                        <td>
+                            <div class="text-light" th:if="${trip.driver != null}" th:text="${trip.driver.fullName}">Driver</div>
+                            <div class="small text-muted" th:if="${trip.driver != null}" th:text="${trip.driver.phoneNumber}">Phone</div>
+                            <div class="text-muted small" th:if="${trip.driver == null}">
+                                <i class="bi bi-building me-1"></i>Company trip
+                            </div>
+                        </td>
+
+                        <!-- Car -->
+                        <td>
+                            <div class="text-light" th:if="${trip.car != null}" th:text="${trip.car.carBrand}">Car</div>
+                            <div class="small text-muted" th:if="${trip.car != null}" th:text="${trip.car.numberPlate}">Plate</div>
+                            <div class="text-muted small" th:if="${trip.car == null}">—</div>
+                        </td>
+
+                        <!-- Date / Price -->
+                        <td>
+                            <div class="text-light small"
+                                 th:text="${#temporals.format(trip.departureTime, 'dd MMM yyyy')}">Date</div>
+                            <div class="small text-warning"
+                                 th:text="${#temporals.format(trip.departureTime, 'h:mm a')}">Time</div>
+                            <div class="text-success small fw-bold">
+                                GHC <span th:text="${trip.tripAmount}">0</span>
+                            </div>
+                        </td>
+
+                        <!-- Seats -->
+                        <td>
+                                    <span class="text-light"
+                                          th:text="${trip.totalSeats - trip.availableSeats}">0</span>
+                            <span class="text-muted">/</span>
+                            <span class="text-muted" th:text="${trip.totalSeats}">0</span>
+                            <div class="small text-muted">booked</div>
+                        </td>
+
+                        <!-- Status -->
+                        <td>
+                            <span th:if="${trip.status.name() == 'PENDING'}"
+                                  class="badge rounded-pill"
+                                  style="background: rgba(252,209,22,0.2); color: #fcd116; border: 1px solid #fcd116;">
+                                <i class="bi bi-hourglass me-1"></i>PENDING
+                            </span>
+                            <span th:if="${trip.status.name() == 'APPROVED'}"
+                                  class="badge rounded-pill"
+                                  style="background: rgba(0,107,63,0.2); color: #00c853; border: 1px solid #00c853;">
+                                <i class="bi bi-check me-1"></i>APPROVED
+                            </span>
+                            <span th:if="${trip.status.name() == 'REJECTED'}"
+                                  class="badge rounded-pill"
+                                  style="background: rgba(206,17,38,0.2); color: #ff5252; border: 1px solid #ff5252;">
+                                <i class="bi bi-x me-1"></i>REJECTED
+                            </span>
+                            <span th:if="${trip.status.name() == 'COMPLETED'}"
+                                  class="badge rounded-pill"
+                                  style="background: rgba(255,255,255,0.1); color: #94a3b8; border: 1px solid #94a3b8;">
+                                <i class="bi bi-check-all me-1"></i>COMPLETED
+                            </span>
+                            <span th:if="${trip.status.name() == 'EXPIRED'}"
+                                  class="badge bg-secondary rounded-pill">
+                                <i class="bi bi-clock-history me-1"></i>EXPIRED
+                            </span>
+                            <span th:if="${trip.status.name() == 'CANCELLED'}"
+                                  class="badge badge-rejected rounded-pill">
+                                <i class="bi bi-x-circle me-1"></i>CANCELLED
+                            </span>
+                            <span th:if="${trip.status.name() == 'FAILED_TO_SHOW'}"
+                                  class="badge rounded-pill"
+                                  style="background: rgba(206,17,38,0.2); color: #ff5252; border: 1px solid #ff5252;">
+                                <i class="bi bi-exclamation-octagon me-1"></i>FAILED TO SHOW
+                            </span>
+                            <div th:if="${trip.cancelReason != null}" class="mt-1 small text-danger" style="font-size: 0.75rem;">
+                                <i class="bi bi-info-circle me-1"></i><span th:text="${trip.cancelReason}"></span>
+                            </div>
+                        </td>
+
+                        <!-- Actions -->
+                        <td>
+                            <div class="d-flex gap-1 flex-wrap">
+
+                                <!-- Approve Button (only for PENDING) -->
+                                <form th:if="${trip.status.name() == 'PENDING'}"
+                                      th:action="@{/admin/trips/{id}/approve(id=${trip.id})}"
+                                      method="post">
+                                    <button type="submit"
+                                            class="btn btn-sm btn-success"
+                                            title="Approve Trip">
+                                        <i class="bi bi-check"></i>
+                                    </button>
+                                </form>
+
+                                <!-- Reject Button (only for PENDING) -->
+                                <form th:if="${trip.status.name() == 'PENDING'}"
+                                      th:action="@{/admin/trips/{id}/reject(id=${trip.id})}"
+                                      method="post">
+                                    <button type="submit"
+                                            class="btn btn-sm btn-warning text-light"
+                                            title="Reject Trip">
+                                        <i class="bi bi-x"></i>
+                                    </button>
+                                </form>
+
+                                <!-- Fail Trip Button (only for APPROVED) -->
+                                <button type="button" th:if="${trip.status.name() == 'APPROVED'}"
+                                        class="btn btn-sm btn-outline-warning"
+                                        title="Mark Driver Failed To Show"
+                                        th:attr="onclick='confirmFail(' + ${trip.id} + ', \'' + ${trip.fromLocation} + ' to ' + ${trip.toLocation} + '\')'">
+                                    <i class="bi bi-exclamation-octagon"></i>
+                                </button>
+
+                                <!-- Hidden Fail Form -->
+                                <form th:id="'failForm-' + ${trip.id}"
+                                      th:action="@{/admin/trips/{id}/fail(id=${trip.id})}"
+                                      method="post"
+                                      style="display:none;">
+                                    <input type="hidden" name="failReason" th:id="'failReasonInput-' + ${trip.id}" value="">
+                                </form>
+
+                                <!-- Delete Button (always visible) -->
+                                <button type="button"
+                                        class="btn btn-sm btn-danger"
+                                        title="Delete Trip"
+                                        th:attr="onclick='confirmDelete(' + ${trip.id} + ', \'' + ${trip.fromLocation} + ' to ' + ${trip.toLocation} + '\')'">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+
+                                <!-- Hidden Delete Form -->
+                                <form th:id="'deleteForm-' + ${trip.id}"
+                                      th:action="@{/admin/trips/{id}/delete(id=${trip.id})}"
+                                      method="post"
+                                      style="display:none;">
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Empty State -->
+                    <tr th:if="${#lists.isEmpty(trips)}">
+                        <td colspan="8" class="text-center text-muted py-5">
+                            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                            No trips found in the system.
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mark Failed To Show Modal -->
+    <div class="modal fade" id="failModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0" style="background: var(--card-bg); border: 1px solid rgba(252,209,22,0.3) !important;">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title text-warning">
+                        <i class="bi bi-exclamation-octagon me-2"></i>Mark Failed To Show
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-light">Record that the driver failed to show up for this trip.</p>
+                    <div class="p-3 rounded mb-3"
+                         style="background: rgba(252,209,22,0.1); border: 1px solid rgba(252,209,22,0.2);">
+                        <strong class="text-warning" id="failTripRoute">Route</strong>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="failReasonDetails" class="form-label text-light">Details (Optional)</label>
+                        <textarea class="form-control bg-dark text-light border-secondary" id="failReasonDetails" rows="2" placeholder="Any additional context provided by passengers..."></textarea>
+                    </div>
+
+                    <p class="text-muted small mb-0">
+                        <i class="bi bi-info-circle me-1"></i>
+                        This will cancel the trip and all associated active bookings.
+                    </p>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x me-1"></i>Cancel
+                    </button>
+                    <button type="button" class="btn btn-warning" id="confirmFailBtn">
+                        <i class="bi bi-exclamation-octagon me-1"></i>Confirm Failure
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0" style="background: var(--card-bg); border: 1px solid rgba(206,17,38,0.3) !important;">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title text-danger">
+                        <i class="bi bi-exclamation-triangle me-2"></i>Delete Trip
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-light">Are you sure you want to delete this trip?</p>
+                    <div class="p-3 rounded mb-3"
+                         style="background: rgba(206,17,38,0.1); border: 1px solid rgba(206,17,38,0.2);">
+                        <strong class="text-warning" id="deleteTripRoute">Route</strong>
+                    </div>
+                    <p class="text-muted small mb-0">
+                        <i class="bi bi-info-circle me-1"></i>
+                        This action cannot be undone. All bookings for this trip will also be affected.
+                    </p>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button"
+                            class="btn btn-outline-secondary"
+                            data-bs-dismiss="modal">
+                        <i class="bi bi-x me-1"></i>Cancel
+                    </button>
+                    <button type="button"
+                            class="btn btn-danger"
+                            id="confirmDeleteBtn">
+                        <i class="bi bi-trash me-1"></i>Yes, Delete Trip
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        let tripIdToDelete = null;
+        let tripIdToFail = null;
+
+        // Move modals to body to avoid z-index/transform issues from parent containers
+        document.body.appendChild(document.getElementById('deleteModal'));
+        document.body.appendChild(document.getElementById('failModal'));
+
+        function confirmDelete(tripId, routeName) {
+            tripIdToDelete = tripId;
+            document.getElementById('deleteTripRoute').textContent = routeName;
+            new bootstrap.Modal(document.getElementById('deleteModal')).show();
+        }
+
+        document.getElementById('confirmDeleteBtn').addEventListener('click', function () {
+            if (tripIdToDelete) {
+                document.getElementById('deleteForm-' + tripIdToDelete).submit();
+            }
+        });
+
+        function confirmFail(tripId, routeName) {
+            tripIdToFail = tripId;
+            document.getElementById('failTripRoute').textContent = routeName;
+            new bootstrap.Modal(document.getElementById('failModal')).show();
+        }
+
+        document.getElementById('confirmFailBtn').addEventListener('click', function () {
+            if (tripIdToFail) {
+                const reason = document.getElementById('failReasonDetails').value;
+                document.getElementById('failReasonInput-' + tripIdToFail).value = reason;
+                document.getElementById('failForm-' + tripIdToFail).submit();
+            }
+        });
+    </script>
+
+</main>
+</body>
+</html>

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en" th:replace="~{layout :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>GhanaRide — Your Ride Across Ghana, Simplified</title>
+</head>
+<body>
+<main th:fragment="main" class="container-fluid p-0">
+    <!-- Hero Section -->
+    <section class="hero-section text-center text-lg-start" style="position: relative; background-image: url('https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=1920&q=80'); background-size: cover; background-position: center 60%; padding: 120px 0; min-height: 85vh; display: flex; align-items: center; margin-top: -80px;">
+        <div class="hero-overlay" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to right, rgba(11, 11, 18, 0.9) 0%, rgba(11, 11, 18, 0.6) 50%, rgba(11, 11, 18, 0.3) 100%); z-index: 1;"></div>
+        <div class="container hero-content" style="position: relative; z-index: 2;">
+            <div class="row align-items-center">
+                <div class="col-lg-7 text-white">
+                    <h1 class="display-3 fw-bold mb-3" style="color: #ffffff !important; text-shadow: 2px 2px 8px rgba(0,0,0,0.8); font-family: 'Outfit', sans-serif;">
+                        Your Ride Across Ghana,
+                        <span style="color: #FCD116 !important; text-shadow: 2px 2px 8px rgba(0,0,0,0.8);">Simplified</span>
+                    </h1>
+                    <p class="lead mb-4 fs-4" style="color: #f8f9fa !important; text-shadow: 1px 1px 4px rgba(0,0,0,0.8); max-width: 600px;">
+                        Book affordable intercity and campus rides with trusted drivers. Safe, timely, and easy.
+                    </p>
+                    <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center justify-content-lg-start">
+                        <a th:href="@{/register}" class="btn btn-warning btn-lg fs-5 px-4 fw-bold shadow-lg" style="background-color: #FCD116; color: #111; border: none;">
+                            <i class="bi bi-person-plus me-2"></i>Book a Ride
+                        </a>
+                        <a th:href="@{/login}" class="btn btn-outline-light btn-lg fs-5 px-4 fw-medium shadow-lg backdrop-blur">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>Login
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== PHOTO SHOWCASE ===== -->
+    <section class="py-5 bg-card">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="display-5 fw-bold text-body">
+                    Experience the <span style="color: #FCD116;">GhanaRide</span> Difference
+                </h2>
+                <p class="fs-5 text-muted">Real rides. Real drivers. Real comfort across Ghana.</p>
+            </div>
+
+            <!-- Top Row -->
+            <div class="row g-3 mb-3">
+                <div class="col-md-7">
+                    <div class="position-relative overflow-hidden rounded-4 shadow-sm h-100 photo-hover" style="cursor: pointer; min-height: 400px;">
+                        <img th:src="@{/images/Find_a_comfort_ride.jpg}" class="w-100 h-100 object-fit-cover" alt="Ghana Trotro Fleet" style="transition: transform 0.5s ease;">
+                        <div class="position-absolute bottom-0 start-0 w-100 p-4" style="background: linear-gradient(transparent, rgba(0,0,0,0.85));">
+                            <span class="badge mb-2 px-3 py-2 rounded-pill" style="background: rgba(252,209,22,0.2); color: #FCD116; border: 1px solid #FCD116;">
+                                <i class="bi bi-bus-front me-1"></i> Fleet Ready
+                            </span>
+                            <h5 class="text-white fw-bold mb-1">Find Your Comfort Ride</h5>
+                            <p class="text-white-50 small mb-0">Hundreds of verified vehicles ready for you</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-5">
+                    <div class="position-relative overflow-hidden rounded-4 shadow-sm h-100 photo-hover" style="cursor: pointer; min-height: 400px;">
+                        <img th:src="@{/images/Enjoy_your_comfort.webp}" class="w-100 h-100 object-fit-cover" alt="Happy Passengers" style="transition: transform 0.5s ease;">
+                        <div class="position-absolute bottom-0 start-0 w-100 p-4" style="background: linear-gradient(transparent, rgba(0,0,0,0.85));">
+                            <span class="badge mb-2 px-3 py-2 rounded-pill" style="background: rgba(0,107,63,0.2); color: #00c853; border: 1px solid #00c853;">
+                                <i class="bi bi-emoji-smile me-1"></i> Comfort First
+                            </span>
+                            <h5 class="text-white fw-bold mb-1">Enjoy Every Journey</h5>
+                            <p class="text-white-50 small mb-0">Relax and travel with friends</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Row -->
+            <div class="row g-3">
+                <div class="col-md-5">
+                    <div class="position-relative overflow-hidden rounded-4 shadow-sm h-100 photo-hover" style="cursor: pointer; min-height: 320px;">
+                        <img th:src="@{/images/Ghanaride.jpg}" class="w-100 h-100 object-fit-cover" alt="Friendly Driver" style="transition: transform 0.5s ease;">
+                        <div class="position-absolute bottom-0 start-0 w-100 p-4" style="background: linear-gradient(transparent, rgba(0,0,0,0.85));">
+                            <span class="badge mb-2 px-3 py-2 rounded-pill" style="background: rgba(206,17,38,0.2); color: #ff5252; border: 1px solid #ff5252;">
+                                <i class="bi bi-person-check me-1"></i> Verified Driver
+                            </span>
+                            <h5 class="text-white fw-bold mb-1">Trusted GhanaRide Drivers</h5>
+                            <p class="text-white-50 small mb-0">Friendly, professional, and on time</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-7">
+                    <div class="position-relative overflow-hidden rounded-4 shadow-sm h-100 photo-hover" style="cursor: pointer; min-height: 320px;">
+                        <img th:src="@{/images/ComfortRide.jpg}" class="w-100 h-100 object-fit-cover" alt="Bus Interior" style="transition: transform 0.5s ease;">
+                        <div class="position-absolute bottom-0 start-0 w-100 p-4" style="background: linear-gradient(transparent, rgba(0,0,0,0.85));">
+                            <span class="badge mb-2 px-3 py-2 rounded-pill" style="background: rgba(59,130,246,0.2); color: #3b82f6; border: 1px solid #3b82f6;">
+                                <i class="bi bi-stars me-1"></i> Premium Comfort
+                            </span>
+                            <h5 class="text-white fw-bold mb-1">Comfortable Seating</h5>
+                            <p class="text-white-50 small mb-0">Spacious and relaxing for long journeys</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <style>
+            .photo-hover:hover img { transform: scale(1.05) !important; }
+        </style>
+    </section>
+
+    <!-- How It Works -->
+    <section class="py-5 bg-body">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="display-5 fw-bold text-body">How It Works</h2>
+                <p class="text-muted fs-5">Get your ride booked in 3 simple steps</p>
+            </div>
+            <div class="row g-4 text-center">
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm rounded-4 p-4 hover-lift">
+                        <div class="display-1 fw-bold mb-3" style="color: rgba(252, 209, 22, 0.3);">01</div>
+                        <h4 class="fw-bold mb-3">Create Account</h4>
+                        <p class="text-muted mb-0">Register in seconds as a passenger or driver using your credentials.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm rounded-4 p-4 hover-lift">
+                        <div class="display-1 fw-bold mb-3" style="color: rgba(15, 157, 88, 0.3);">02</div>
+                        <h4 class="fw-bold mb-3">Find a Ride</h4>
+                        <p class="text-muted mb-0">Browse available trips and routes organized across top locations.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm rounded-4 p-4 hover-lift">
+                        <div class="display-1 fw-bold mb-3" style="color: rgba(206, 17, 38, 0.3);">03</div>
+                        <h4 class="fw-bold mb-3">Book & Go</h4>
+                        <p class="text-muted mb-0">Secure your seat and show up ready for departure.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <style>
+            .hover-lift { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+            .hover-lift:hover { transform: translateY(-8px); box-shadow: 0 1rem 3rem rgba(0,0,0,.175)!important; }
+        </style>
+    </section>
+
+    <!-- Features -->
+    <section class="py-5 bg-card">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="display-5 fw-bold text-body">Why Choose GhanaRide?</h2>
+                <p class="text-muted fs-5">We make intercity travel easy, safe and affordable</p>
+            </div>
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <div class="d-flex flex-column align-items-center text-center p-4 bg-body rounded-4 shadow-sm h-100 border hover-lift">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center mb-4" style="width: 80px; height: 80px; background-color: rgba(252,209,22,0.15); color: #e5bd10;">
+                            <i class="bi bi-shield-check fs-1"></i>
+                        </div>
+                        <h3 class="h4 fw-bold">Safe & Trusted</h3>
+                        <p class="text-muted">We run comprehensive checks on all vehicle plate licenses and driver registrations to ensure a secure transit.</p>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="d-flex flex-column align-items-center text-center p-4 bg-body rounded-4 shadow-sm h-100 border hover-lift">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center mb-4" style="width: 80px; height: 80px; background-color: rgba(15,157,88,0.15); color: #0F9D58;">
+                            <i class="bi bi-wallet2 fs-1"></i>
+                        </div>
+                        <h3 class="h4 fw-bold">Affordable Fares</h3>
+                        <p class="text-muted">Experience standard rates with clear prices prior to reservation. No hidden markups or seat inflation.</p>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="d-flex flex-column align-items-center text-center p-4 bg-body rounded-4 shadow-sm h-100 border hover-lift">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center mb-4" style="width: 80px; height: 80px; background-color: rgba(206,17,38,0.15); color: #CE1126;">
+                            <i class="bi bi-map fs-1"></i>
+                        </div>
+                        <h3 class="h4 fw-bold">Campus & Intercity</h3>
+                        <p class="text-muted">Book direct routes spanning key locations, student hubs, and intercity terminals effortlessly.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Popular Routes -->
+    <section class="py-5 bg-body">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="display-5 fw-bold text-body">Popular Routes</h2>
+                <p class="text-muted fs-5">Frequently travelled pathways across Ghana</p>
+            </div>
+            <div class="d-flex flex-wrap justify-content-center gap-3">
+                <div class="badge bg-card text-body border px-4 py-3 rounded-pill fs-6 hover-lift"><i class="bi bi-geo-alt-fill text-danger me-2"></i>Accra &rarr; Cape Coast</div>
+                <div class="badge bg-card text-body border px-4 py-3 rounded-pill fs-6 hover-lift"><i class="bi bi-geo-alt-fill text-warning me-2"></i>Cape Coast &rarr; Kumasi</div>
+                <div class="badge bg-card text-body border px-4 py-3 rounded-pill fs-6 hover-lift"><i class="bi bi-geo-alt-fill text-success me-2"></i>Accra &rarr; Tamale</div>
+                <div class="badge bg-card text-body border px-4 py-3 rounded-pill fs-6 hover-lift"><i class="bi bi-geo-alt-fill text-primary me-2"></i>Kumasi &rarr; Takoradi</div>
+                <div class="badge bg-card text-body border px-4 py-3 rounded-pill fs-6 hover-lift"><i class="bi bi-geo-alt-fill text-danger me-2"></i>Accra &rarr; Koforidua</div>
+                <div class="badge bg-card text-body border px-4 py-3 rounded-pill fs-6 hover-lift"><i class="bi bi-geo-alt-fill text-warning me-2"></i>Cape Coast &rarr; Accra</div>
+                <div class="badge bg-card text-body border px-4 py-3 rounded-pill fs-6 hover-lift"><i class="bi bi-geo-alt-fill text-success me-2"></i>Accra &rarr; Tema</div>
+                <div class="badge bg-card text-body border px-4 py-3 rounded-pill fs-6 hover-lift"><i class="bi bi-geo-alt-fill text-primary me-2"></i>Sunyani &rarr; Kumasi</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="py-5 text-center position-relative overflow-hidden" style="background: linear-gradient(135deg, #0F9D58 0%, #004d2d 100%);">
+        <div class="position-absolute top-0 start-0 w-100 h-100" style="background: url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.05\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
+        <div class="container py-5 position-relative z-1">
+            <h2 class="display-4 fw-bold text-white mb-3">Ready to Ride?</h2>
+            <p class="fs-4 text-white-50 mb-5 max-w-2xl mx-auto">
+                Join hundreds of travelers booking stress-free journeys every day across Ghana.
+            </p>
+            <div class="d-flex gap-3 justify-content-center flex-wrap">
+                <a th:href="@{/register}" class="btn btn-warning btn-lg px-5 py-3 fs-5 fw-bold shadow-lg" style="background-color: #FCD116; border: none;">
+                    <i class="bi bi-person-plus me-2"></i>Register Now
+                </a>
+                <a th:href="@{/login}" class="btn btn-outline-light btn-lg px-5 py-3 fs-5 fw-bold shadow-sm">
+                    <i class="bi bi-box-arrow-in-right me-2"></i>Login to Account
+                </a>
+            </div>
+        </div>
+    </section>
+</main>
+</body>
+</html>

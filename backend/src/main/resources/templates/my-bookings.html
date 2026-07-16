@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" th:replace="~{layout :: layout(~{::title}, ~{::main})}">
+<head>
+    <title>My Bookings — GhanaRide</title>
+    <meta name="description" content="View and manage all your GhanaRide bookings. Access receipts, boarding passes, and trip history.">
+    
+    <style th:inline="css">
+        .bookings-layout {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: var(--space-6);
+            align-items: start;
+        }
+        
+        @media (max-width: 992px) {
+            .bookings-layout { grid-template-columns: 1fr; }
+        }
+        
+        .bookings-main { min-width: 0; }
+        .bookings-sidebar { position: sticky; top: calc(var(--header-height) + var(--space-6)); }
+        
+        /* Filter Tabs */
+        .filter-tabs {
+            display: flex;
+            gap: var(--space-1);
+            background: var(--color-surface-hover);
+            border-radius: var(--radius);
+            padding: var(--space-1);
+            margin-bottom: var(--space-4);
+            flex-wrap: wrap;
+        }
+        
+        .filter-tab {
+            padding: var(--space-2) var(--space-4);
+            border: none;
+            background: transparent;
+            border-radius: var(--radius-sm);
+            font-weight: 500;
+            color: var(--color-text-secondary);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            white-space: nowrap;
+        }
+        
+        .filter-tab:hover { color: var(--color-text); }
+        .filter-tab.active {
+            background: var(--gold);
+            color: var(--black);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        /* Booking Card */
+        .booking-card {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            margin-bottom: var(--space-4);
+            transition: all var(--transition);
+        }
+        
+        .booking-card:hover {
+            box-shadow: var(--shadow);
+            border-color: var(--color-border-strong);
+        }
+        
+        .booking-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--space-4);
+            border-bottom: 1px solid var(--color-border);
+            background: var(--color-surface-hover);
+        }
+        
+        .booking-ref {
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--gold-dark);
+        }
+        
+        .booking-status {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-1);
+            padding: 0.375rem 0.875rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: var(--radius-full);
+            white-space: nowrap;
+        }
+        
+        .status-active { background: var(--color-success-bg); color: var(--color-success); }
+        .status-confirmed { background: var(--color-info-bg); color: var(--color-info); }
+        .status-completed { background: var(--color-surface-hover); color: var(--color-text-muted); }
+        .status-cancelled { background: var(--color-error-bg); color: var(--color-error); }
+        .status-pending { background: var(--color-warning-bg); color: var(--color-warning); }
+        
+        .booking-body { padding: var(--space-4); }
+        
+        .booking-route {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--space-3);
+            margin-bottom: var(--space-4);
+        }
+        
+        .booking-route-line {
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--space-1);
+        }
+        
+        .booking-route-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            z-index: 1;
+        }
+        
+        .booking-route-dot:first-child { background: var(--green); }
+        .booking-route-dot:last-child { background: var(--red); }
+        
+        .booking-route-line::before {
+            content: '';
+            width: 2px;
+            height: 32px;
+            background: var(--color-border);
+            flex-shrink: 0;
+        }
+        
+        .booking-route-info { flex: 1; min-width: 0; }
+        .booking-route-from { font-weight: 600; font-size: 1.125rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .booking-route-to { font-weight: 600; font-size: 1.125rem; color: var(--color-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        .booking-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: var(--space-3);
+            padding-top: var(--space-3);
+            border-top: 1px solid var(--color-border);
+            margin-bottom: var(--space-4);
+        }
+        
+        .booking-meta-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            font-size: 0.875rem;
+            color: var(--color-text-secondary);
+        }
+        
+        .booking-meta-item i {
+            color: var(--gold);
+            width: 18px;
+            text-align: center;
+        }
+        
+        .booking-actions {
+            display: flex;
+            gap: var(--space-2);
+            flex-wrap: wrap;
+        }
+        
+        .booking-actions .btn { flex: 1; min-width: 120px; }
+        
+        /* Empty State */
+        .empty-bookings {
+            text-align: center;
+            padding: var(--space-12) var(--space-6);
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+        }
+        
+        .empty-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--color-surface-hover);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: var(--space-4);
+            font-size: 2rem;
+            color: var(--color-text-muted);
+        }
+        
+        /* Sidebar: Upcoming Trip */
+        .upcoming-card {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-xl);
+            padding: var(--space-5);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .upcoming-trip {
+            border: 2px solid var(--gold);
+            position: relative;
+        }
+        
+        .upcoming-trip::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            border-radius: var(--radius-xl);
+            background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+            z-index: -1;
+        }
+        
+        .upcoming-countdown {
+            display: flex;
+            gap: var(--space-2);
+            margin: var(--space-4) 0;
+        }
+        
+        .countdown-item {
+            flex: 1;
+            text-align: center;
+            background: var(--color-surface);
+            padding: var(--space-3);
+            border-radius: var(--radius);
+        }
+        
+        .countdown-value {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--gold-dark);
+        }
+        
+        .countdown-label {
+            font-size: 0.6875rem;
+            text-transform: uppercase;
+            color: var(--color-text-muted);
+        }
+        
+        /* Stats Sidebar */
+        .stat-mini {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            padding: var(--space-3);
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius);
+            margin-bottom: var(--space-2);
+        }
+        
+        .stat-mini-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+        
+        .stat-mini-info { flex: 1; min-width: 0; }
+        .stat-mini-value { font-weight: 700; color: var(--color-text); }
+        .stat-mini-label { font-size: 0.75rem; color: var(--color-text-muted); }
+    </style>
+</head>
+<body>
+<main th:fragment="main">
+    <div class="container py-4">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-5">
+            <div>
+                <h1 style="font-family: 'Outfit', sans-serif;">My Bookings</h1>
+                <p class="text-muted mb-0">View and manage all your trips</p>
+            </div>
+            <a th:href="@{/rides}" class="btn btn-primary btn-pill">
+                <i class="bi bi-plus-circle me-2"></i> Book New Ride
+            </a>
+        </div>
+        
+        <!-- Filter Tabs -->
+        <div class="filter-tabs" role="tablist" aria-label="Booking status filters">
+            <button class="filter-tab active" role="tab" data-filter="all" aria-selected="true">All</button>
+            <button class="filter-tab" role="tab" data-filter="ACTIVE" aria-selected="false"><i class="bi bi-ticket-perforated me-1"></i> Active</button>
+            <button class="filter-tab" role="tab" data-filter="CONFIRMED" aria-selected="false"><i class="bi bi-check-circle me-1"></i> Confirmed</button>
+            <button class="filter-tab" role="tab" data-filter="COMPLETED" aria-selected="false"><i class="bi bi-check2-all me-1"></i> Completed</button>
+            <button class="filter-tab" role="tab" data-filter="CANCELLED" aria-selected="false"><i class="bi bi-x-circle me-1"></i> Cancelled</button>
+        </div>
+        
+        <div class="bookings-layout">
+            <!-- Main: Bookings List -->
+            <div class="bookings-main">
+                <div th:if="${bookings == null or bookings.isEmpty()}" class="empty-bookings">
+                    <div class="empty-icon"><i class="bi bi-ticket-perforated"></i></div>
+                    <h4 class="fw-bold">No bookings yet</h4>
+                    <p class="text-muted">Your booking history will appear here once you start traveling with GhanaRide.</p>
+                    <a th:href="@{/rides}" class="btn btn-primary mt-3">
+                        <i class="bi bi-bus-front me-2"></i> Find Your First Ride
+                    </a>
+                </div>
+                
+                <div th:unless="${bookings == null or bookings.isEmpty()}">
+                    <div th:each="booking : ${bookings}" 
+                         class="booking-card animate-fade-up"
+                         data-status="[[${booking.status}]]"
+                         data-ref="[[${booking.bookingReference}]]">
+                        <div class="booking-header">
+                            <span class="booking-ref" th:text="${booking.bookingReference}">GR-XXXXXX</span>
+                            <span class="booking-status" 
+                                  th:classappend="|status-${#strings.toLowerCase(booking.status.name())}|"
+                                  th:text="${booking.status}">Active</span>
+                        </div>
+                        
+                        <div class="booking-body">
+                            <div class="booking-route">
+                                <div class="booking-route-line">
+                                    <div class="booking-route-dot"></div>
+                                    <div class="booking-route-dot"></div>
+                                </div>
+                                <div class="booking-route-info">
+                                    <div class="booking-route-from" th:text="${booking.trip.fromLocation}">Accra</div>
+                                    <div class="booking-route-to" th:text="${booking.trip.toLocation}">Kumasi</div>
+                                </div>
+                            </div>
+                            
+                            <div class="booking-meta">
+                                <div class="booking-meta-item">
+                                    <i class="bi bi-calendar3"></i>
+                                    <span th:text="${#temporals.format(booking.trip.departureTime, 'MMM dd, yyyy \'at\' HH:mm')}">Date & Time</span>
+                                </div>
+                                <div class="booking-meta-item">
+                                    <i class="bi bi-car-front"></i>
+                                    <span th:text="${booking.trip.car != null ? booking.trip.car.model : 'Standard'}">Car Model</span>
+                                </div>
+                                <div class="booking-meta-item">
+                                    <i class="bi bi-123"></i>
+                                    <span th:text="'Seat ' + ${booking.seatNumber}">Seat</span>
+                                </div>
+                                <div class="booking-meta-item">
+                                    <i class="bi bi-cash-stack"></i>
+                                    <span th:text="'GH₵' + ${#numbers.formatDecimal(booking.totalAmount, 1, 2, 'COMMA')}">Amount</span>
+                                </div>
+                                <div class="booking-meta-item">
+                                    <i class="bi bi-credit-card"></i>
+                                    <span th:text="${booking.paymentMethod != null ? booking.paymentMethod.name() : '—'}">Payment</span>
+                                </div>
+                                <div class="booking-meta-item">
+                                    <i class="bi bi-clock"></i>
+                                    <span th:text="${#temporals.format(booking.bookingDate, 'MMM dd, yyyy HH:mm')}">Booked</span>
+                                </div>
+                            </div>
+                            
+                            <div class="booking-actions">
+                                <a th:href="@{/booking/receipt/{id}(id=${booking.id})}" class="btn btn-secondary btn-pill">
+                                    <i class="bi bi-receipt me-1"></i> Receipt
+                                </a>
+                                <a th:href="@{/boarding-pass/{id}(id=${booking.id})}" class="btn btn-primary btn-pill">
+                                    <i class="bi bi-qr-code me-1"></i> Boarding Pass
+                                </a>
+                                <button th:if="${booking.status.name() == 'ACTIVE' or booking.status.name() == 'CONFIRMED'}" 
+                                        class="btn btn-danger btn-pill" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#cancelModal"
+                                        th:data-booking-id="${booking.id}"
+                                        th:data-booking-ref="${booking.bookingReference}">
+                                    <i class="bi bi-x-circle me-1"></i> Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sidebar: Upcoming Trip + Stats -->
+            <div class="bookings-sidebar">
+                <!-- Upcoming Trip Card -->
+                <div th:if="${upcomingBooking != null}" class="upcoming-card upcoming-trip mb-4">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <span class="badge badge-warning"><i class="bi bi-clock me-1"></i> Departing Soon</span>
+                        <span class="booking-ref" th:text="${upcomingBooking.bookingReference}">GR-XXXXXX</span>
+                    </div>
+                    
+                    <div class="booking-route mb-3">
+                        <div class="booking-route-line">
+                            <div class="booking-route-dot"></div>
+                            <div class="booking-route-dot"></div>
+                        </div>
+                        <div class="booking-route-info">
+                            <div class="booking-route-from" th:text="${upcomingBooking.trip.fromLocation}">From</div>
+                            <div class="booking-route-to" th:text="${upcomingBooking.trip.toLocation}">To</div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="booking-meta-item mb-0">
+                            <i class="bi bi-calendar3"></i>
+                            <span th:text="${#temporals.format(upcomingBooking.trip.departureTime, 'MMM dd, yyyy \'at\' HH:mm')}">Date</span>
+                        </div>
+                        <a th:href="@{/boarding-pass/{id}(id=${upcomingBooking.id})}" class="btn btn-primary btn-pill btn-sm">
+                            <i class="bi bi-qr-code me-1"></i> Boarding Pass
+                        </a>
+                    </div>
+                    
+                    <!-- Countdown Timer -->
+                    <div class="upcoming-countdown" id="countdownTimer">
+                        <div class="countdown-item">
+                            <div class="countdown-value" id="daysLeft">00</div>
+                            <div class="countdown-label">Days</div>
+                        </div>
+                        <div class="countdown-item">
+                            <div class="countdown-value" id="hoursLeft">00</div>
+                            <div class="countdown-label">Hours</div>
+                        </div>
+                        <div class="countdown-item">
+                            <div class="countdown-value" id="minutesLeft">00</div>
+                            <div class="countdown-label">Min</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Stats Mini Cards -->
+                <div class="mb-4">
+                    <h6 class="fw-bold mb-3">Your Stats</h6>
+                    <div class="stat-mini">
+                        <div class="stat-mini-icon" style="background: var(--gold-muted); color: var(--gold-dark);"><i class="bi bi-ticket-perforated"></i></div>
+                        <div class="stat-mini-info">
+                            <div class="stat-mini-value" th:text="${totalBookings != null ? #numbers.formatInteger(totalBookings) : '0'}">0</div>
+                            <div class="stat-mini-label">Total Bookings</div>
+                        </div>
+                    </div>
+                    <div class="stat-mini">
+                        <div class="stat-mini-icon" style="background: var(--color-success-bg); color: var(--color-success);"><i class="bi bi-check-circle"></i></div>
+                        <div class="stat-mini-info">
+                            <div class="stat-mini-value" th:text="${completedBookings != null ? #numbers.formatInteger(completedBookings) : '0'}">0</div>
+                            <div class="stat-mini-label">Completed Rides</div>
+                        </div>
+                    </div>
+                    <div class="stat-mini">
+                        <div class="stat-mini-icon" style="background: var(--gold-muted); color: var(--gold-dark);"><i class="bi bi-star"></i></div>
+                        <div class="stat-mini-info">
+                            <div class="stat-mini-value" th:text="${totalPoints != null ? #numbers.formatInteger(totalPoints) : '0'}">0</div>
+                            <div class="stat-mini-label">Loyalty Points</div>
+                        </div>
+                    </div>
+                    <div class="stat-mini">
+                        <div class="stat-mini-icon" style="background: var(--color-info-bg); color: var(--color-info);"><i class="bi bi-cash-stack"></i></div>
+                        <div class="stat-mini-info">
+                            <div class="stat-mini-value" th:text="'GH₵' + ${#numbers.formatDecimal(totalSpent ?: 0, 1, 0, 'COMMA')}">GH₵0</div>
+                            <div class="stat-mini-label">Total Spent</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick Actions -->
+                <div>
+                    <h6 class="fw-bold mb-3">Quick Actions</h6>
+                    <div class="d-grid gap-2">
+                        <a th:href="@{/rides}" class="btn btn-primary btn-pill"><i class="bi bi-plus-circle me-2"></i> Book a Ride</a>
+                        <a th:href="@{/wallet}" class="btn btn-secondary btn-pill"><i class="bi bi-wallet2 me-2"></i> My Wallet</a>
+                        <a th:href="@{/reviews}" class="btn btn-secondary btn-pill"><i class="bi bi-star me-2"></i> Leave a Review</a>
+                        <a th:href="@{/profile}" class="btn btn-secondary btn-pill"><i class="bi bi-gear me-2"></i> Settings</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Cancel Modal -->
+    <div class="modal fade" id="cancelModal" tabindex="-1" aria-labelledby="cancelModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cancelModalLabel">Cancel Booking</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-3">Are you sure you want to cancel booking <strong id="cancelBookingRef"></strong>?</p>
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>Cancellation Policy:</strong> Cancellations made at least 2 hours before departure are eligible for a refund. Refunds are processed to your GhanaRide Wallet instantly.
+                    </div>
+                    <p class="text-muted small mb-0">This action cannot be undone.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Keep Booking</button>
+                    <form id="cancelForm" th:action="@{/booking/__/{id}/cancel(id=${0})}" method="post">
+                        <input type="hidden" name="_csrf" th:value="${_csrf.token}"/>
+                        <button type="submit" class="btn btn-danger">Yes, Cancel Booking</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script th:inline="javascript">
+    // Filter Tabs
+    document.addEventListener('DOMContentLoaded', function() {
+        const tabs = document.querySelectorAll('.filter-tab');
+        const cards = document.querySelectorAll('.booking-card');
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                tabs.forEach(t => {
+                    t.classList.remove('active');
+                    t.setAttribute('aria-selected', 'false');
+                });
+                this.classList.add('active');
+                this.setAttribute('aria-selected', 'true');
+                
+                const filter = this.dataset.filter;
+                cards.forEach(card => {
+                    if (filter === 'all' || card.dataset.status === filter) {
+                        card.style.display = '';
+                        card.classList.add('animate-fade-in');
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        });
+        
+        // Cancel Modal - Update form action and ref
+        const cancelModal = document.getElementById('cancelModal');
+        if (cancelModal) {
+            cancelModal.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                const bookingId = button.getAttribute('data-booking-id');
+                const bookingRef = button.getAttribute('data-booking-ref');
+                
+                document.getElementById('cancelBookingRef').textContent = bookingRef;
+                document.getElementById('cancelForm').action = `/booking/${bookingId}/cancel`;
+            });
+        }
+        
+        // Countdown Timer for Upcoming Trip
+        const departureTimeStr = /*[[${upcomingBooking != null ? upcomingBooking.trip.departureTime : null}]]*/ null;
+        if (departureTimeStr) {
+            const departureTime = new Date(departureTimeStr).getTime();
+            
+            function updateCountdown() {
+                const now = new Date().getTime();
+                const diff = departureTime - now;
+                
+                if (diff <= 0) {
+                    document.getElementById('countdownTimer').innerHTML = '<div class="text-center text-warning"><i class="bi bi-bus-front me-2"></i> Departing now!</div>';
+                    return;
+                }
+                
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                
+                document.getElementById('daysLeft').textContent = String(days).padStart(2, '0');
+                document.getElementById('hoursLeft').textContent = String(hours).padStart(2, '0');
+                document.getElementById('minutesLeft').textContent = String(minutes).padStart(2, '0');
+            }
+            
+            updateCountdown();
+            setInterval(updateCountdown, 60000); // Update every minute
+        }
+    });
+</script>
+</body>
+</html>

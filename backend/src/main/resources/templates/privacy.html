@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html th:replace="~{layout :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Privacy Policy — GhanaRide</title>
+</head>
+<body>
+<main th:fragment="main">
+    <div class="container py-5">
+        <div class="legal-page">
+
+            <!-- Header -->
+            <div class="text-center mb-5">
+                <span class="badge bg-info mb-3 px-3 py-2 rounded-pill">Legal</span>
+                <h1 class="display-5 fw-bold" style="font-family: 'Outfit', sans-serif;">Privacy Policy</h1>
+                <p class="text-muted">Last updated: <span th:text="${lastUpdated}">January 2025</span></p>
+                <p class="text-muted">Your privacy matters to us. Here's how we handle your data.</p>
+            </div>
+
+            <div class="card p-4 p-md-5 mb-4">
+
+                <h2>1. Who We Are</h2>
+                <p>GhanaRide is a transport booking platform operated in Ghana. We are committed to protecting your personal data in accordance with applicable Ghanaian data protection laws and international best practices.</p>
+
+                <h2>2. Information We Collect</h2>
+                <p>We collect the following types of information:</p>
+                <ul>
+                    <li><strong>Account Information:</strong> Full name, email address, phone number, date of birth, and gender when you register.</li>
+                    <li><strong>Trip & Booking Data:</strong> Routes, departure times, seat selections, and booking history.</li>
+                    <li><strong>Payment Information:</strong> Transaction references and payment status. We do not store card numbers — all payment data is handled by Paystack.</li>
+                    <li><strong>Driver Documents:</strong> License details, roadworthy certificates, and vehicle information for drivers.</li>
+                    <li><strong>Location Data:</strong> With your permission, we may access your location to display your real-time position on trip tracking.</li>
+                    <li><strong>Device & Usage Data:</strong> Browser type, IP address, pages visited, and session duration for security and analytics purposes.</li>
+                </ul>
+
+                <h2>3. How We Use Your Information</h2>
+                <ul>
+                    <li>To create and manage your account.</li>
+                    <li>To process and confirm bookings.</li>
+                    <li>To send booking receipts and trip updates via email.</li>
+                    <li>To verify driver and vehicle credentials.</li>
+                    <li>To provide real-time trip tracking.</li>
+                    <li>To detect and prevent fraud and abuse.</li>
+                    <li>To improve platform features and user experience.</li>
+                    <li>To send promotional communications (only if you have opted in).</li>
+                </ul>
+
+                <h2>4. Legal Basis for Processing</h2>
+                <ul>
+                    <li><strong>Contract Performance:</strong> Processing necessary to fulfil your booking.</li>
+                    <li><strong>Legitimate Interests:</strong> Security, fraud prevention, and service improvement.</li>
+                    <li><strong>Legal Obligation:</strong> Compliance with Ghanaian regulations and tax requirements.</li>
+                    <li><strong>Consent:</strong> For marketing communications and optional location tracking.</li>
+                </ul>
+
+                <h2>5. Data Sharing</h2>
+                <p>We do not sell your personal data. We may share data with:</p>
+                <ul>
+                    <li><strong>Drivers/Companies:</strong> Passenger name and phone for trip coordination.</li>
+                    <li><strong>Paystack:</strong> For payment processing (governed by Paystack's privacy policy).</li>
+                    <li><strong>Email Services:</strong> For sending booking confirmations and notifications.</li>
+                    <li><strong>Law Enforcement:</strong> When required by Ghanaian law or court order.</li>
+                </ul>
+
+                <h2>6. Data Retention</h2>
+                <ul>
+                    <li>Account data is retained for as long as your account is active.</li>
+                    <li>Booking records are kept for 7 years for regulatory compliance.</li>
+                    <li>Marketing preferences and consent records are kept until withdrawn.</li>
+                    <li>You may request deletion of your account at any time via the contact page.</li>
+                </ul>
+
+                <h2>7. Your Rights</h2>
+                <p>You have the right to:</p>
+                <ul>
+                    <li><strong>Access:</strong> Request a copy of your personal data.</li>
+                    <li><strong>Correction:</strong> Update inaccurate information in your profile settings.</li>
+                    <li><strong>Deletion:</strong> Request deletion of your account and data.</li>
+                    <li><strong>Portability:</strong> Receive your data in a machine-readable format.</li>
+                    <li><strong>Objection:</strong> Opt out of marketing communications at any time.</li>
+                </ul>
+
+                <h2>8. Security</h2>
+                <p>We implement industry-standard security measures including:</p>
+                <ul>
+                    <li>HTTPS encryption on all pages.</li>
+                    <li>Bcrypt password hashing — we never store plain passwords.</li>
+                    <li>Session timeout and CSRF protection.</li>
+                    <li>Rate limiting on login endpoints.</li>
+                    <li>Regular security audits and updates.</li>
+                </ul>
+
+                <h2>9. Cookies</h2>
+                <p>We use the following cookies:</p>
+                <ul>
+                    <li><strong>Session Cookie (JSESSIONID):</strong> Required for authentication — deleted on logout.</li>
+                    <li><strong>Remember Me Cookie (GHANARIDE_REMEMBER_ME):</strong> Optional — lasts 30 days if you choose "Remember Me" on login.</li>
+                    <li><strong>Theme Preference (localStorage):</strong> Stores your dark/light mode preference locally.</li>
+                    <li>We do not use advertising or tracking cookies.</li>
+                </ul>
+
+                <h2>10. Children's Privacy</h2>
+                <p>GhanaRide is not intended for users under the age of 18. We do not knowingly collect data from children.</p>
+
+                <h2>11. Changes to this Policy</h2>
+                <p>We may update this policy periodically. Significant changes will be communicated via email or a notice on the platform.</p>
+
+                <h2>12. Contact</h2>
+                <p>For privacy-related requests or questions, contact our Data Protection Officer:</p>
+                <ul>
+                    <li>Email: <a href="mailto:privacy@ghanaride.me" class="text-success">privacy@ghanaride.me</a></li>
+                    <li>Or use our <a th:href="@{/contact}" class="text-success">Contact Page</a></li>
+                </ul>
+
+            </div>
+
+            <!-- Navigation Buttons -->
+            <div class="d-flex flex-wrap gap-3 justify-content-center">
+                <a th:href="@{/terms}" class="btn btn-outline-secondary px-4">
+                    <i class="bi bi-file-text me-2"></i>Terms of Service
+                </a>
+                <a th:href="@{/refunds}" class="btn btn-outline-secondary px-4">
+                    <i class="bi bi-arrow-return-left me-2"></i>Refund Policy
+                </a>
+                <a th:href="@{/}" class="btn btn-primary px-4">
+                    <i class="bi bi-house me-2"></i>Back to Home
+                </a>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>
