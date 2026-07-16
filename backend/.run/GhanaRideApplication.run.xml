@@ -3,6 +3,12 @@
     <envs>
       <env name="ADMIN_PASSWORD" value="Avenubright75$@ghanaride" />
       <env name="LOCAL_DB_PASSWORD" value="Avenubright75$" />
+      <env name="SPRING_DATASOURCE_URL" value="jdbc:mysql://localhost:3307/ghanaride?createDatabaseIfNotExist=true&amp;useSSL=false&amp;serverTimezone=UTC&amp;allowPublicKeyRetrieval=true" />
+      <env name="SPRING_DATASOURCE_USERNAME" value="root" />
+      <env name="SPRING_DATASOURCE_PASSWORD" value="Avenubright75$" />
+      <env name="MAIL_USERNAME" value="noreply.ghanaride@gmail.com" />
+      <env name="MAIL_PASSWORD" value="Avenubright75$@ghanaride" />
+      <env name="APP_BASE_URL" value="http://localhost:8088" />
     </envs>
     <option name="MAIN_CLASS_NAME" value="com.ghanaride.GhanaRideApplication" />
     <module name="ghanaride" />

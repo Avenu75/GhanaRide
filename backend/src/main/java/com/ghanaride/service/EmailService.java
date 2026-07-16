@@ -14,6 +14,8 @@ import org.thymeleaf.context.Context;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+
+import java.io.UnsupportedEncodingException;
 import java.util.Map;
 
 /**
@@ -261,6 +263,8 @@ public class EmailService {
         } catch (MessagingException e) {
             log.error("Failed to send template email to {}", to, e);
             throw new RuntimeException("Email send failed", e);
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -279,5 +283,8 @@ public class EmailService {
         } catch (Exception e) {
             log.error("Failed to send admin alert", e);
         }
+    }
+
+    public void sendContactFormEmail(ContactFormDTO form) {
     }
 }

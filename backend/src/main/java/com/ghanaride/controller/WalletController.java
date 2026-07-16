@@ -49,8 +49,7 @@ public class WalletController {
                 return "redirect:/wallet";
             }
             walletService.topup(user, amount, provider, null);
-            notificationService.push(user, com.ghanaride.entity.Notification.Type.PAYMENT_SUCCESS,
-                    "Wallet topped up", "GH₵" + amount + " added successfully.", "/wallet");
+            notificationService.notifyWalletTopup(user, amount);
             ra.addFlashAttribute("success", "GH₵" + amount + " added to your GhanaRide Wallet!");
         } catch (Exception e) {
             ra.addFlashAttribute("error", "Top-up failed: " + e.getMessage());

@@ -3,42 +3,25 @@ package com.ghanaride.repository;
 import com.ghanaride.entity.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
-import com.ghanaride.repository.UserRepository;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
-/**
- * Repository for Trip entity.
- * 
- * CRITICAL: All view-rendering queries MUST use JOIN FETCH for driver, company, car
- * to prevent LazyInitializationException when Thymeleaf accesses lazy associations
- * after the Hibernate session closes.
- */
 @Repository
 public interface TripRepository extends JpaRepository<Trip, Long> {
 
-    // =========================================================
-    // BASIC FINDERS (legacy - use with caution)
-    // =========================================================
-    
     @Transactional(readOnly = true)
     List<Trip> findByStatus(TripStatus status);
 
     @Transactional(readOnly = true)
     Page<Trip> findByStatus(TripStatus status, Pageable pageable);
 
-    /** 
-     * WARNING: Does NOT fetch driver/company/car. 
-     * Only use for internal service logic, NOT for view rendering.
-     */
     @Transactional(readOnly = true)
     List<Trip> findByStatusIn(List<TripStatus> statuses);
 
@@ -54,14 +37,6 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
     @Transactional(readOnly = true)
     List<Trip> findByDriverId(Long driverId);
 
-    // =========================================================
-    // UPCOMING TRIPS - Public browse page (FIXED: with JOIN FETCH)
-    // =========================================================
-
-    /**
-     * All upcoming approved trips with available seats.
-     * Uses JOIN FETCH so template can safely access trip.driver, trip.company, trip.car
-     */
     @Transactional(readOnly = true)
     @Query("""
         SELECT DISTINCT t FROM Trip t
@@ -75,9 +50,7 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
     """)
     List<Trip> findApprovedUpcomingWithDetails();
 
-    /**
-     * Preview for homepage (limited number)
-     */
+    // ---- FIXED: Preview with Pageable + default int overload ----
     @Transactional(readOnly = true)
     @Query("""
         SELECT DISTINCT t FROM Trip t
@@ -89,12 +62,12 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
         AND t.departureTime > CURRENT_TIMESTAMP
         ORDER BY t.departureTime ASC
     """)
-    List<Trip> findApprovedUpcomingPreview(int limit);
+    List<Trip> findApprovedUpcomingPreview(Pageable pageable);
 
-    // =========================================================
-    // PASSENGER DASHBOARD - Approved + Full trips (FIXED)
-    // =========================================================
-    
+    default List<Trip> findApprovedUpcomingPreview(int limit) {
+        return findApprovedUpcomingPreview(PageRequest.of(0, limit));
+    }
+
     @Transactional(readOnly = true)
     @Query("""
         SELECT DISTINCT t FROM Trip t
@@ -105,10 +78,6 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
         ORDER BY t.departureTime ASC
     """)
     List<Trip> findByStatusInWithDetails(@Param("statuses") List<TripStatus> statuses);
-
-    // =========================================================
-    // SEARCH - Flexible filters with JOIN FETCH
-    // =========================================================
 
     @Transactional(readOnly = true)
     @Query("""
@@ -126,32 +95,28 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
         ORDER BY t.departureTime ASC
     """)
     List<Trip> searchTrips(
-        @Param("from") String from,
-        @Param("to") String to,
-        @Param("startDate") LocalDateTime startDate,
-        @Param("endDate") LocalDateTime endDate
+            @Param("from") String from,
+            @Param("to") String to,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
     );
-
-    // =========================================================
-    // ADMIN PAGINATED QUERIES (with JOIN FETCH + countQuery)
-    // =========================================================
 
     @Transactional(readOnly = true)
     @Query(
-        value = """
+            value = """
             SELECT t FROM Trip t
             LEFT JOIN FETCH t.driver
             LEFT JOIN FETCH t.company
             LEFT JOIN FETCH t.car
             ORDER BY t.createdAt DESC
         """,
-        countQuery = "SELECT COUNT(t) FROM Trip t"
+            countQuery = "SELECT COUNT(t) FROM Trip t"
     )
     Page<Trip> findAllWithDetails(Pageable pageable);
 
     @Transactional(readOnly = true)
     @Query(
-        value = """
+            value = """
             SELECT t FROM Trip t
             LEFT JOIN FETCH t.driver
             LEFT JOIN FETCH t.company
@@ -159,55 +124,9 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
             WHERE t.status = :status
             ORDER BY t.createdAt DESC
         """,
-        countQuery = "SELECT COUNT(t) FROM Trip t WHERE t.status = :status"
+            countQuery = "SELECT COUNT(t) FROM Trip t WHERE t.status = :status"
     )
     Page<Trip> findByStatusWithDetails(@Param("status") TripStatus status, Pageable pageable);
-
-    @Transactional(readOnly = true)
-    @Query(
-        value = """
-            SELECT t FROM Trip t
-            LEFT JOIN FETCH t.driver
-            LEFT JOIN FETCH t.company
-            LEFT JOIN FETCH t.car
-            WHERE t.driver = :driver
-            ORDER BY t.departureTime DESC
-        """,
-        countQuery = "SELECT COUNT(t) FROM Trip t WHERE t.driver = :driver"
-    )
-    Page<Trip> findByDriverWithDetails(@Param("driver") User driver, Pageable pageable);
-
-    @Transactional(readOnly = true)
-    @Query(
-        value = """
-            SELECT t FROM Trip t
-            LEFT JOIN FETCH t.driver
-            LEFT JOIN FETCH t.company
-            LEFT JOIN FETCH t.car
-            WHERE t.company = :company
-            ORDER BY t.departureTime DESC
-        """,
-        countQuery = "SELECT COUNT(t) FROM Trip t WHERE t.company = :company"
-    )
-    Page<Trip> findByCompanyWithDetails(@Param("company") Company company, Pageable pageable);
-
-    // =========================================================
-    // RECENT TRIPS - Admin dashboard
-    // =========================================================
-    
-    @Transactional(readOnly = true)
-    @Query("""
-        SELECT DISTINCT t FROM Trip t
-        LEFT JOIN FETCH t.driver
-        LEFT JOIN FETCH t.company
-        LEFT JOIN FETCH t.car
-        ORDER BY t.createdAt DESC
-    """)
-    List<Trip> findRecentTripsWithDetails(int limit);
-
-    // =========================================================
-    // DRIVER QUERIES
-    // =========================================================
 
     @Transactional(readOnly = true)
     @Query("""
@@ -218,40 +137,7 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
     boolean driverHasActiveTrip(@Param("driver") User driver);
 
     @Transactional(readOnly = true)
-    @Query("""
-        SELECT t FROM Trip t
-        LEFT JOIN FETCH t.car
-        WHERE t.driver = :driver
-        ORDER BY t.departureTime DESC
-    """)
-    List<Trip> findByDriverOrderByDepartureDesc(@Param("driver") User driver);
-
-    // =========================================================
-    // STATISTICS
-    // =========================================================
-
-    @Transactional(readOnly = true)
     long countByStatus(TripStatus status);
-
-    @Transactional(readOnly = true)
-    @Query("SELECT COUNT(t) FROM Trip t WHERE t.driver = :driver")
-    long countByDriver(@Param("driver") User driver);
-
-    @Transactional(readOnly = true)
-    @Query("SELECT COUNT(t) FROM Trip t WHERE t.company = :company")
-    long countByCompany(@Param("company") Company company);
-
-    @Transactional(readOnly = true)
-    @Query("""
-        SELECT COALESCE(SUM(t.tripAmount), 0)
-        FROM Trip t
-        WHERE t.status = 'COMPLETED'
-    """)
-    BigDecimal calculateTotalRevenue();
-
-    // =========================================================
-    // DELETE OPERATIONS
-    // =========================================================
 
     @Modifying
     @Transactional
@@ -261,10 +147,23 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
     @Transactional
     void deleteByCompanyId(Long companyId);
 
-    // =========================================================
-    // EXPIRATION SCHEDULER
-    // =========================================================
+    // ---- RECENT TRIPS (FIXED: Pageable + int overload) ----
+    @Transactional(readOnly = true)
+    @Query("""
+        SELECT DISTINCT t FROM Trip t
+        LEFT JOIN FETCH t.driver
+        LEFT JOIN FETCH t.company
+        LEFT JOIN FETCH t.car
+        ORDER BY t.createdAt DESC
+    """)
+    List<Trip> findRecentTripsWithDetails(Pageable pageable);
 
+    default List<Trip> findRecentTripsWithDetails(int limit) {
+        return findRecentTripsWithDetails(PageRequest.of(0, limit));
+    }
+
+    // ---- EXPIRATION QUERIES (FIXED: Both overloads working) ----
+    // Single param version used by new code
     @Transactional(readOnly = true)
     @Query("""
         SELECT t FROM Trip t
@@ -272,14 +171,26 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
         AND t.departureTime < :before
     """)
     List<Trip> findByStatusAndDepartureTimeBefore(
-        @Param("before") LocalDateTime before
+            @Param("before") LocalDateTime before
+    );
+
+    // Two param version for legacy scheduler - NOW FIXED
+    @Transactional(readOnly = true)
+    @Query("""
+        SELECT t FROM Trip t
+        WHERE t.status = :status
+        AND t.departureTime < :before
+    """)
+    List<Trip> findByStatusAndDepartureTimeBefore(
+            @Param("status") TripStatus status,
+            @Param("before") LocalDateTime before
     );
 
     @Transactional(readOnly = true)
     List<Trip> findByStatusAndDepartureTimeBetween(
-        TripStatus status, 
-        LocalDateTime start, 
-        LocalDateTime end
+            TripStatus status,
+            LocalDateTime start,
+            LocalDateTime end
     );
 
     @Modifying

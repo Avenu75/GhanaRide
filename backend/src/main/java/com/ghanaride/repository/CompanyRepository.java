@@ -11,78 +11,65 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Repository for Company entity.
- */
 @Repository
-public interface CompanyRepository
-        extends JpaRepository<Company, Long> {
+public interface CompanyRepository extends JpaRepository<Company, Long> {
 
-    // =========================================================
-    // FIND
-    // =========================================================
+    // FIXED: Company has List<User> users, not single user
+    @Transactional(readOnly = true)
+    @Query("SELECT c FROM Company c JOIN c.users u WHERE u = :user")
+    Optional<Company> findByUser(@Param("user") User user);
+
+    // Alternative derived query that works with List
+    @Transactional(readOnly = true)
+    Optional<Company> findByUsersContaining(User user);
 
     @Transactional(readOnly = true)
-    Optional<Company> findByUser(User user);
+    Optional<Company> findByCompanyEmail(String email);
+
+    // Keep compatibility: old code calls findByEmail
+    default Optional<Company> findByEmail(String email) {
+        return findByCompanyEmail(email);
+    }
 
     @Transactional(readOnly = true)
-    Optional<Company> findByEmail(String email);
+    Optional<Company> findByRegistrationNumber(String registrationNumber);
 
-    @Transactional(readOnly = true)
-    Optional<Company> findByRegistrationNumber(
-            String registrationNumber
-    );
-
-    // =========================================================
-    // SEARCH
-    // =========================================================
-
-    /**
-     * Search companies by name.
-     * For admin company management.
-     */
     @Transactional(readOnly = true)
     @Query("""
         SELECT c FROM Company c
-        WHERE LOWER(c.companyName)
-              LIKE LOWER(CONCAT('%', :name, '%'))
+        WHERE LOWER(c.companyName) LIKE LOWER(CONCAT('%', :name, '%'))
         ORDER BY c.companyName ASC
         """)
-    List<Company> searchByName(
-            @Param("name") String name
-    );
+    List<Company> searchByName(@Param("name") String name);
 
-    /**
-     * Find all verified companies.
-     */
+    // FIXED: Company has no 'verified' boolean, use status = ACTIVE
     @Transactional(readOnly = true)
     @Query("""
         SELECT c FROM Company c
-        WHERE c.verified = true
+        WHERE c.status = 'ACTIVE'
         ORDER BY c.companyName ASC
         """)
     List<Company> findAllVerified();
 
-    // =========================================================
-    // CHECKS
-    // =========================================================
+    @Transactional(readOnly = true)
+    boolean existsByCompanyEmail(String email);
+
+    default boolean existsByEmail(String email) {
+        return existsByCompanyEmail(email);
+    }
 
     @Transactional(readOnly = true)
-    boolean existsByEmail(String email);
-
-    @Transactional(readOnly = true)
-    boolean existsByRegistrationNumber(
-            String registrationNumber
-    );
-
-    // =========================================================
-    // COUNTS
-    // =========================================================
+    boolean existsByRegistrationNumber(String registrationNumber);
 
     @Transactional(readOnly = true)
     @Query("""
         SELECT COUNT(c) FROM Company c
-        WHERE c.verified = true
+        WHERE c.status = 'ACTIVE'
         """)
     long countVerified();
+
+    // Additional safe finder by users id
+    @Transactional(readOnly = true)
+    @Query("SELECT c FROM Company c JOIN c.users u WHERE u.id = :userId")
+    Optional<Company> findByUserId(@Param("userId") Long userId);
 }

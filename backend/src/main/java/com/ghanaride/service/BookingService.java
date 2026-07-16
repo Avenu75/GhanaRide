@@ -325,4 +325,12 @@ public class BookingService {
 
     public void deleteBooking(Long bookingId) {
     }
+
+    public Optional<Booking> findByIdWithDetails(Long bookingId) {
+        return Optional.empty();
+    }
+
+    public long countAllCompleted() {
+        return 0;
+    }
 }

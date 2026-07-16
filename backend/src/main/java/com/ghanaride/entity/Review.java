@@ -38,6 +38,11 @@ public class Review {
     @JoinColumn(name = "trip_id", nullable = false)
     private Trip trip;
 
+    // Owning side of Booking.review (@OneToOne mappedBy = "booking")
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "booking_id", nullable = false, unique = true)
+    private Booking booking;
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
 

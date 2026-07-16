@@ -9,27 +9,9 @@
 spring:
   application:
     name: GhanaRide
-  
+
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
-
-  # -------------------------------------------------------------
-  # SERVER
-  # -------------------------------------------------------------
-  server:
-    port: ${PORT:8088}
-    compression:
-      enabled: true
-      mime-types: text/html,text/css,application/javascript,application/json
-      min-response-size: 1024
-    forward-headers-strategy: framework
-    error:
-      include-message: never
-      include-stacktrace: never
-      include-exception: false
-      include-binding-errors: never
-      whitelabel:
-        enabled: false
 
   # -------------------------------------------------------------
   # DATABASE (MySQL on Railway/Production)
@@ -93,7 +75,7 @@ spring:
     cache: false
 
   # -------------------------------------------------------------
-  # FILE UPLOAD
+  # FILE UPLOAD & SESSION (SERVLET)
   # -------------------------------------------------------------
   servlet:
     multipart:
@@ -101,6 +83,18 @@ spring:
       max-file-size: 5MB
       max-request-size: 10MB
       file-size-threshold: 2KB
+    session:
+      cookie:
+        name: GHANARIDE_SESSION
+        http-only: true
+        secure: true
+        same-site: lax
+
+  # -------------------------------------------------------------
+  # SESSION
+  # -------------------------------------------------------------
+  session:
+    timeout: 30m
 
   # -------------------------------------------------------------
   # EMAIL (Gmail SMTP)
@@ -132,19 +126,6 @@ spring:
       spec: maximumSize=500,expireAfterWrite=10m
 
   # -------------------------------------------------------------
-  # SESSION
-  # -------------------------------------------------------------
-  session:
-    timeout: 30m
-  servlet:
-    session:
-      cookie:
-        name: GHANARIDE_SESSION
-        http-only: true
-        secure: true
-        same-site: lax
-
-  # -------------------------------------------------------------
   # SECURITY OAUTH2 (Google)
   # -------------------------------------------------------------
   security:
@@ -158,6 +139,24 @@ spring:
             redirect-uri: ${APP_BASE_URL}/login/oauth2/code/google
 
 # -------------------------------------------------------------
+# SERVER (top-level, NOT nested under spring)
+# -------------------------------------------------------------
+server:
+  port: ${PORT:8088}
+  compression:
+    enabled: true
+    mime-types: text/html,text/css,application/javascript,application/json
+    min-response-size: 1024
+  forward-headers-strategy: framework
+  error:
+    include-message: never
+    include-stacktrace: never
+    include-exception: false
+    include-binding-errors: never
+    whitelabel:
+      enabled: false
+
+# -------------------------------------------------------------
 # APPLICATION SPECIFIC
 # -------------------------------------------------------------
 app:
@@ -165,7 +164,7 @@ app:
   version: 5.2.2
   description: Ghana's Premium Intercity Booking Super-App – World Class v5
   base-url: ${APP_BASE_URL:https://ghanaride.me}
-  
+
   upload:
     dir: ${UPLOAD_DIR:uploads/cars/}
     dir-profiles: ${UPLOAD_DIR_PROFILES:uploads/profiles/}
@@ -204,7 +203,7 @@ app:
   google:
     maps:
       api-key: ${GOOGLE_MAPS_API_KEY:}
-  
+
   map:
     provider: ${MAP_PROVIDER:google}
 

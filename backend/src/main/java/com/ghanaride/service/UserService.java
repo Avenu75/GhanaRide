@@ -351,4 +351,12 @@ public class UserService implements UserDetailsService {
 
     public void deleteUser(Long userId) {
     }
+
+    public User registerOAuthUser(String email, String displayName, String googleId) {
+        return null;
+    }
+
+    public long countVerifiedDrivers() {
+        return 0;
+    }
 }

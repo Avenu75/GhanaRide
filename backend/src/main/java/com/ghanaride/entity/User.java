@@ -19,17 +19,17 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString(exclude = {"password"})
+@ToString(exclude = {"password", "company"})
 @Entity
 @Table(
-    name = "users",
-    indexes = {
-        @Index(name = "idx_user_email", columnList = "email"),
-        @Index(name = "idx_user_username", columnList = "username"),
-        @Index(name = "idx_user_role", columnList = "role"),
-        @Index(name = "idx_user_account_type", columnList = "account_type"),
-        @Index(name = "idx_user_enabled", columnList = "enabled")
-    }
+        name = "users",
+        indexes = {
+                @Index(name = "idx_user_email", columnList = "email"),
+                @Index(name = "idx_user_username", columnList = "username"),
+                @Index(name = "idx_user_role", columnList = "role"),
+                @Index(name = "idx_user_account_type", columnList = "account_type"),
+                @Index(name = "idx_user_enabled", columnList = "enabled")
+        }
 )
 public class User implements UserDetails {
 
@@ -116,6 +116,14 @@ public class User implements UserDetails {
 
     @Column(name = "company_description", length = 1000)
     private String companyDescription;
+
+    // =========================================================
+    // COMPANY RELATIONSHIP (required by Company.users mappedBy)
+    // =========================================================
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "company_id")
+    private Company company;
 
     // Account status flags
     @Builder.Default
