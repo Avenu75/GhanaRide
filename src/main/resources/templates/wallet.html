@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" th:replace="~{layout :: layout(~{::title}, ~{::main})}">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" th:replace="~{layout :: layout(~{::title}, ~{::head}, ~{::main}, ~{::script})}">
 <head>
     <title>My Wallet — GhanaRide</title>
     <meta name="description" content="Manage your GhanaRide wallet balance, view transaction history, top up, and earn loyalty cashback.">
@@ -388,7 +388,7 @@
                                 <span th:text="${txn.reference}">Reference</span>
                             </div>
                         </div>
-                        <div class="txn-amount" th:classappend="${txn.amount.compareTo(T(0)) > 0 ? 'positive' : (txn.amount.compareTo(T(0)) < 0 ? 'negative' : 'neutral')}" th:text="${txn.amount.compareTo(T(0)) > 0 ? '+' : ''} + ' GH₵' + ${#numbers.formatDecimal(txn.amount.abs(), 1, 2, 'COMMA')}">+ GH₵0.00</div>
+                        <div class="txn-amount" th:classappend="${txn.amount.compareTo(T(0)) > 0 ? 'positive' : (txn.amount.compareTo(T(0)) < 0 ? 'negative' : 'neutral')}" th:text="${(txn.amount.compareTo(T(java.math.BigDecimal).ZERO) > 0 ? '+' : '') + ' GH₵' + #numbers.formatDecimal(txn.amount.abs(), 1, 2, 'COMMA')}"">+ GH₵0.00</div>
                     </div>
                     
                     <div th:if="${transactions == null or transactions.empty}" class="empty-state">

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" th:fragment="layout(title, content)">
-<head th:replace="~{fragments/head :: head(${title})}"></head>
+<html xmlns:th="http://www.thymeleaf.org" th:fragment="layout(title, content)">
+<head th:replace="~{fragments/head :: headContent(${title})}"></head>
 <body class="d-flex flex-column min-vh-100" data-bs-theme="light">
     
     <!-- Navigation Bar -->

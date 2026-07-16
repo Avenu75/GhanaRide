@@ -1,19 +1,22 @@
 package com.ghanaride.entity;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-
 /**
  * Company verification status.
  */
-@Getter
-@RequiredArgsConstructor
 public enum CompanyStatus {
     PENDING("Pending Verification"),
-    VERIFIED("Verified"),
-    REJECTED("Rejected"),
+    ACTIVE("Active"),
     SUSPENDED("Suspended"),
-    INACTIVE("Inactive");
+    REJECTED("Rejected"),
+    CLOSED("Closed");
 
     private final String displayName;
+
+    CompanyStatus(String displayName) {
+        this.displayName = displayName;
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
 }

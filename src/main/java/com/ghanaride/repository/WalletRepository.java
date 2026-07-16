@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Repository for Wallet entity.
+ * Wallet Repository - Wallet queries.
  */
 @Repository
 @Transactional(readOnly = true)

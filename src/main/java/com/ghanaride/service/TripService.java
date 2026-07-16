@@ -2,8 +2,7 @@ package com.ghanaride.service;
 
 import com.ghanaride.entity.*;
 import com.ghanaride.exception.ResourceNotFoundException;
-import com.ghanaride.repository.BookingRepository;
-import com.ghanaride.repository.TripRepository;
+import com.ghanaride.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -11,11 +10,11 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.ghanaride.repository.UserRepository;
+
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -23,12 +22,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Handles all trip business logic.
- * 
- * Caching Strategy:
- * - "routes": Popular routes for homepage fare estimator
- * - "popularRoutes": Cached search results
- * - Cache evicted on trip save/modify/approve/reject
+ * Trip Service - Handles all trip business logic.
  */
 @Slf4j
 @Service
@@ -37,7 +31,11 @@ public class TripService {
 
     private final TripRepository tripRepository;
     private final BookingRepository bookingRepository;
+    private final UserRepository userRepository;
+    private final SeatService seatService;
+    private final WalletService walletService;
     private final EmailService emailService;
+    private final NotificationService notificationService;
 
     // =========================================================
     // SAVE TRIP
@@ -47,7 +45,7 @@ public class TripService {
     @CacheEvict(value = {"routes", "popularRoutes"}, allEntries = true)
     public Trip saveTrip(Trip trip) {
         Trip saved = tripRepository.save(trip);
-        log.info("Trip saved: id={} {} → {} driver={}", 
+        log.info("Trip saved: id={} {} → {} driver={}",
             saved.getId(), saved.getFromLocation(), saved.getToLocation(),
             saved.getDriver() != null ? saved.getDriver().getEmail() : "company");
         return saved;
@@ -69,11 +67,6 @@ public class TripService {
         return tripRepository.findAll(pageable);
     }
 
-    /**
-     * All trips paginated with driver/company/car eagerly fetched.
-     * Use this instead of findAllTrips(Pageable) for any view that
-     * accesses trip.driver.fullName / trip.car.carBrand / trip.company
-     */
     public Page<Trip> findAllTripsWithDetails(Pageable pageable) {
         return tripRepository.findAllWithDetails(pageable);
     }
@@ -82,53 +75,27 @@ public class TripService {
         return tripRepository.findByStatus(status, pageable);
     }
 
-    /**
-     * Trips by status paginated with driver/company/car eagerly fetched.
-     * Use this instead of findByStatus(Pageable) for view rendering.
-     */
     public Page<Trip> findByStatusWithDetails(TripStatus status, Pageable pageable) {
         return tripRepository.findByStatusWithDetails(status, pageable);
     }
 
-    /**
-     * Approved trips with available seats (legacy - no JOIN FETCH).
-     * Use findApprovedTripsWithDetails() for view rendering.
-     */
     public List<Trip> findApprovedTrips() {
-        return tripRepository.findByStatusAndAvailableSeatsGreaterThan(TripStatus.APPROVED, 0);
+        return tripRepository.findApprovedTrips();
     }
 
-    /**
-     * Approved + Full trips for passenger dashboard.
-     * Uses JOIN FETCH so dashboard.html can safely read trip.driver.fullName etc.
-     */
     public List<Trip> findApprovedAndFullTrips() {
-        return tripRepository.findByStatusInWithDetails(
-            List.of(TripStatus.APPROVED, TripStatus.FULL)
-        );
+        return tripRepository.findApprovedAndFullTrips();
     }
 
-    /**
-     * All upcoming approved trips for public browse page (/rides).
-     * FIXED: Uses JOIN FETCH to prevent LazyInitializationException.
-     */
     @Cacheable("routes")
     public List<Trip> findAllApprovedUpcoming() {
-        return tripRepository.findApprovedUpcomingWithDetails();
+        return tripRepository.findAllApprovedUpcoming();
     }
 
-    /**
-     * Preview for homepage (limited number)
-     */
     public List<Trip> findUpcomingApprovedPreview(int limit) {
-        return tripRepository.findApprovedUpcomingPreview(limit);
+        return tripRepository.findUpcomingApprovedPreview(limit);
     }
 
-    /**
-     * Search trips by from/to/date with JOIN FETCH.
-     * All filters optional (null = ignored).
-     * Returns only APPROVED trips with available seats.
-     */
     public List<Trip> searchAvailableTrips(String from, String to, String date) {
         LocalDateTime startOfDay = null;
         LocalDateTime endOfDay = null;
@@ -150,10 +117,6 @@ public class TripService {
         return tripRepository.findByDriver(driver);
     }
 
-    public boolean driverHasActiveTrip(User driver) {
-        return tripRepository.countByDriverAndStatusIn(driver, List.of(TripStatus.PENDING, TripStatus.APPROVED, TripStatus.FULL)) > 0;
-    }
-
     public List<Trip> findByCompany(Company company) {
         return tripRepository.findByCompany(company);
     }
@@ -163,12 +126,9 @@ public class TripService {
     }
 
     public List<Trip> findPendingTrips() {
-        return tripRepository.findByStatus(TripStatus.PENDING);
+        return tripRepository.findPendingTrips();
     }
 
-    /**
-     * Recent trips for admin dashboard with JOIN FETCH.
-     */
     public List<Trip> findRecentTrips(int limit) {
         return tripRepository.findRecentTripsWithDetails(limit);
     }
@@ -258,19 +218,6 @@ public class TripService {
     }
 
     // =========================================================
-    // MARK AS FULL
-    // =========================================================
-
-    @Transactional
-    public void markAsFull(Long id) {
-        Trip trip = tripRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Trip", id));
-        trip.setStatus(TripStatus.FULL);
-        tripRepository.save(trip);
-        log.info("Trip marked as FULL: id={}", id);
-    }
-
-    // =========================================================
     // SEAT MANAGEMENT
     // =========================================================
 
@@ -284,7 +231,7 @@ public class TripService {
         }
 
         trip.setAvailableSeats(trip.getAvailableSeats() - 1);
-        
+
         // Auto-transition to FULL when last seat booked
         if (trip.getAvailableSeats() == 0) {
             trip.setStatus(TripStatus.FULL);
@@ -302,12 +249,12 @@ public class TripService {
         int maxSeats = trip.getTotalSeats() != null ? trip.getTotalSeats() : 18;
         if (trip.getAvailableSeats() != null && trip.getAvailableSeats() < maxSeats) {
             trip.setAvailableSeats(trip.getAvailableSeats() + 1);
-            
+
             // Transition from FULL back to APPROVED if seats available
             if (trip.getStatus() == TripStatus.FULL) {
                 trip.setStatus(TripStatus.APPROVED);
             }
-            
+
             tripRepository.save(trip);
             log.debug("Incremented seats for trip {}: now {}", tripId, trip.getAvailableSeats());
         }
@@ -323,19 +270,6 @@ public class TripService {
 
     public long countByStatus(TripStatus status) {
         return tripRepository.countByStatus(status);
-    }
-
-    public double calculateCompanyEarnings(Company company) {
-        List<Trip> trips = tripRepository.findByCompany(company);
-        double total = 0;
-        for (Trip trip : trips) {
-            if (trip.getTripAmount() != null) {
-                int bookedSeats = (trip.getTotalSeats() != null ? trip.getTotalSeats() : 18) - 
-                                  (trip.getAvailableSeats() != null ? trip.getAvailableSeats() : 0);
-                total += trip.getTripAmount().doubleValue() * Math.max(0, bookedSeats);
-            }
-        }
-        return total;
     }
 
     // =========================================================
@@ -368,12 +302,13 @@ public class TripService {
         try {
             List<Booking> bookings = bookingRepository
                 .findByTripAndStatusIn(trip, List.of(BookingStatus.ACTIVE, BookingStatus.CONFIRMED));
-            
+
             for (Booking booking : bookings) {
-                if (booking.getUser() != null && booking.getUser().getEmail() != null) {
-                    // TODO: Add sendTripCancelledEmail to EmailService
-                    log.info("Passenger notified of cancellation: {}", booking.getUser().getEmail());
-                }
+                notificationService.createNotification(booking.getUser(),
+                    NotificationType.TRIP_CANCELLED,
+                    "Trip Cancelled",
+                    "Your trip " + trip.getFromLocation() + " → " + trip.getToLocation() + " was cancelled. " + reason,
+                    "/my-bookings");
             }
         } catch (Exception e) {
             log.warn("Failed to notify passengers of cancellation", e);
@@ -384,10 +319,6 @@ public class TripService {
     // SCHEDULED TASKS
     // =========================================================
 
-    /**
-     * Runs every 5 minutes to expire trips past departure time.
-     * Transitions APPROVED/FULL → EXPIRED for departed trips.
-     */
     @Scheduled(fixedRate = 300000) // 5 minutes
     @Transactional
     public void expireDepartedTrips() {
@@ -398,21 +329,11 @@ public class TripService {
         }
     }
 
-    /**
-     * Runs daily at 2 AM to clean up old EXPIRED/CANCELLED trips
-     * (keeps last 90 days for audit).
-     */
-    @Scheduled(cron = "0 0 2 * * *")
+    @Scheduled(cron = "0 0 2 * * *") // Daily at 2 AM
     @Transactional
     public void cleanupOldTrips() {
         LocalDateTime cutoff = LocalDateTime.now().minusDays(90);
-        // Implementation would delete or archive old trips
+        // Implementation would delete or archive old EXPIRED/CANCELLED trips
         log.debug("Trip cleanup job ran, cutoff: {}", cutoff);
-    }
-
-    public void markAsFailedToShow(Long tripId, String failReason, User currentUser) {
-    }
-
-    public void deleteTrip(Long tripId) {
     }
 }

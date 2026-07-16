@@ -14,11 +14,16 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import com.ghanaride.repository.UserRepository;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.security.Principal;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Core user management service.
@@ -29,11 +34,14 @@ import java.util.*;
 @RequiredArgsConstructor
 public class UserService implements UserDetailsService {
 
+    private static final Logger log = LoggerFactory.getLogger(UserService.class);
+
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final FileStorageService fileStorageService;
     private final WalletService walletService;
     private final EmailService emailService;
+    private final PasswordResetService passwordResetService;
 
     // =========================================================
     // QUERIES
@@ -95,6 +103,23 @@ public class UserService implements UserDetailsService {
     // =========================================================
 
     @Transactional
+    public User registerOAuthUser(String email, String fullName, String googleId) {
+        User user = new User();
+        user.setUsername(email);
+        user.setFullName(fullName);
+        user.setEmail(email);
+        user.setPassword(passwordEncoder.encode("oauth-" + UUID.randomUUID()));
+        user.setRole(Role.USER);
+        user.setAccountType("PASSENGER");
+        user.setEmailVerified(true);
+        user.setEnabled(true);
+        user.setAccountLocked(false);
+        User saved = userRepository.save(user);
+        walletService.getOrCreateWallet(saved);
+        return saved;
+    }
+
+    @Transactional
     public User registerPassenger(RegisterRequestDTO dto) {
         validateRegistration(dto);
 
@@ -114,7 +139,10 @@ public class UserService implements UserDetailsService {
         walletService.getOrCreateWallet(saved);
 
         // Send welcome email (async)
-        emailService.sendWelcomeEmail(saved);
+        emailService.sendWelcomeEmail(saved).exceptionally(ex -> {
+            log.warn("Failed to send welcome email to {}", saved.getEmail(), ex);
+            return null;
+        });
 
         return saved;
     }
@@ -231,7 +259,12 @@ public class UserService implements UserDetailsService {
     @Transactional
     public void updateNotificationPreferences(User user, NotificationPreferencesDTO dto) {
         // Store in user preferences or separate table
-        log.info("Updated notification preferences for user: {}", user.getEmail());
+        // For now, just log
+        if (dto.getEmailNotifications() != null) log.debug("Email notifications: {}", dto.getEmailNotifications());
+        if (dto.getPushNotifications() != null) log.debug("Push notifications: {}", dto.getPushNotifications());
+        if (dto.getSmsAlerts() != null) log.debug("SMS alerts: {}", dto.getSmsAlerts());
+        if (dto.getPromoEmails() != null) log.debug("Promo emails: {}", dto.getPromoEmails());
+        if (dto.getPriceDropAlerts() != null) log.debug("Price drop alerts: {}", dto.getPriceDropAlerts());
     }
 
     // =========================================================
@@ -277,6 +310,8 @@ public class UserService implements UserDetailsService {
 
         User saved = userRepository.save(company);
         emailService.sendCompanyVerificationEmail(saved, approved, reason);
+        log.info("Company {} verification: {}", company.getEmail(), approved ? "APPROVED" : "REJECTED");
+
         return saved;
     }
 
@@ -307,15 +342,15 @@ public class UserService implements UserDetailsService {
 
     // Password reset
     public void sendPasswordResetEmail(String emailOrUsername) {
-        log.info("Password reset requested for: {}", emailOrUsername);
+        passwordResetService.createPasswordResetToken(emailOrUsername);
     }
 
     public boolean isValidPasswordResetToken(String token) {
-        return true; // Implement actual validation
+        return userService.isValidPasswordResetToken(token);
     }
 
     public void resetPassword(String token, String newPassword) {
-        // Implement actual reset logic
+        userService.resetPassword(token, newPassword);
     }
 
     // =========================================================
@@ -335,20 +370,5 @@ public class UserService implements UserDetailsService {
         if (!dto.isPasswordMatching()) {
             throw new IllegalArgumentException("Passwords do not match");
         }
-    }
-
-    public Object countByRole(Role role) {
-        return null;
-    }
-
-    public Page<User> searchUsers(String trim, Pageable pageable) {
-        return null;
-    }
-
-    public Page<User> findAllUsers(Pageable pageable) {
-        return null;
-    }
-
-    public void deleteUser(Long userId) {
     }
 }

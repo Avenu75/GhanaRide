@@ -1,22 +1,30 @@
 package com.ghanaride.controller;
 
-import com.ghanaride.dto.ContactFormDTO;
-import com.ghanaride.service.ContactService;
+import com.ghanaride.dto.*;
+import com.ghanaride.entity.*;
+import com.ghanaride.service.*;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.security.Principal;
+import java.util.List;
+
 /**
- * Handles all public informational pages:
+ * Page Controller - Handles all public informational pages:
  * About, Contact, Terms, Privacy, FAQ, Routes
- * 
+ *
  * All routes here are permitAll() in SecurityConfig
  */
 @Slf4j
@@ -34,8 +42,7 @@ public class PageController {
     public String showHomePage(Model model) {
         model.addAttribute("pageTitle", "GhanaRide — Ghana's Trusted Transport Platform");
         model.addAttribute("pageDescription", 
-            "Book affordable intercity and campus rides with trusted drivers. " +
-            "Safe, timely, and easy. Accra, Kumasi, Cape Coast, Tamale and more.");
+            "Book affordable intercity and campus rides with trusted drivers. Safe, timely, and easy. Accra, Kumasi, Cape Coast, Tamale and more.");
         model.addAttribute("pageUrl", "https://ghanaride.me/");
         return "index";
     }
@@ -117,24 +124,24 @@ public class PageController {
     }
 
     // =========================================================
-    // TERMS OF SERVICE
-    // FIX #1: Was missing — caused redirect to /login
+    // FIX #1: TERMS OF SERVICE PAGE
+    // Was missing — caused redirect to /login
     // =========================================================
 
     @GetMapping("/terms")
     public String showTermsPage(Model model) {
         model.addAttribute("pageTitle", "Terms of Service — GhanaRide");
         model.addAttribute("pageDescription",
-            "GhanaRide Terms of Service. Read our terms covering ride bookings, " +
-            "cancellations, driver conduct, payments via Paystack, and user responsibilities.");
+            "GhanaRide Terms of Service. Read our terms covering ride bookings, cancellations, " +
+            "driver conduct, payments via Paystack, and user responsibilities.");
         model.addAttribute("pageUrl", "https://ghanaride.me/terms");
         model.addAttribute("lastUpdated", "January 2025");
         return "terms";
     }
 
     // =========================================================
-    // PRIVACY POLICY
-    // FIX #1: Was missing — caused redirect to /login
+    // FIX #1: PRIVACY POLICY PAGE
+    // Was missing — caused redirect to /login
     // =========================================================
 
     @GetMapping("/privacy")
@@ -149,7 +156,7 @@ public class PageController {
     }
 
     // =========================================================
-    // REFUND POLICY
+    // FIX #1: REFUND POLICY PAGE
     // =========================================================
 
     @GetMapping("/refunds")

@@ -1,21 +1,24 @@
 package com.ghanaride.service;
 
+import com.ghanaride.dto.*;
 import com.ghanaride.entity.*;
-import com.ghanaride.repository.NotificationRepository;
-import com.ghanaride.repository.BookingRepository;
-import com.ghanaride.repository.UserRepository;
+import com.ghanaride.exception.*;
+import com.ghanaride.repository.*;
+import com.ghanaride.security.WebSocketService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * Notification Service - Handles in-app notifications and real-time updates.
@@ -38,10 +41,9 @@ public class NotificationService {
             String message,
             String actionUrl
     ) {
-        NotificationType typeype = null;
         Notification notification = Notification.builder()
             .user(user)
-            .type(typeype)
+            .type(type)
             .title(title)
             .message(message)
             .actionUrl(actionUrl)
@@ -64,7 +66,8 @@ public class NotificationService {
 
     @Transactional(readOnly = true)
     public List<Notification> getRecentNotifications(Long userId, int limit) {
-        return notificationRepository.findTop10ByUserIdOrderByCreatedAtDesc(userId, PageRequest.of(0, limit));
+        return notificationRepository.findTop10ByUserIdOrderByCreatedAtDesc(userId, PageRequest.of(0, limit))
+            .getContent();
     }
 
     @Transactional(readOnly = true)
@@ -111,13 +114,13 @@ public class NotificationService {
                 .read(false)
                 .createdAt(LocalDateTime.now())
                 .build())
-            .collect(Collectors.toList());
+            .toList();
 
         notificationRepository.saveAll(notifications);
 
         // Send real-time to all users
-        users.forEach(user -> webSocketService.sendNotification(user.getId(),
-            notifications.stream().filter(n -> n.getUser().getId().equals(user.getId())).findFirst().orElse(null)));
+        users.forEach(user -> webSocketService.sendNotification(user.getId(), 
+            Notification.builder().type(type).title(title).message(message).actionUrl(actionUrl).build()));
     }
 
     // =========================================================
@@ -139,11 +142,10 @@ public class NotificationService {
     }
 
     public void notifyTripCancelled(Trip trip, String reason) {
-        List<Booking> bookings = bookingRepository.findByTripAndStatusIn(trip,
+        List<Booking> bookings = bookingRepository.findByTripAndStatusIn(trip, 
             List.of(BookingStatus.ACTIVE, BookingStatus.CONFIRMED));
 
-        bookings.forEach(booking -> createNotification(booking.getUser(),
-            NotificationType.TRIP_CANCELLED,
+        bookings.forEach(booking -> createNotification(booking.getUser(), NotificationType.TRIP_CANCELLED,
             "Trip Cancelled",
             "Your trip " + trip.getFromLocation() + " → " + trip.getToLocation() + " was cancelled. " + reason,
             "/my-bookings"));
@@ -221,7 +223,6 @@ public class NotificationService {
     }
 
     public void notifySystemMaintenance(String message, LocalDateTime scheduledAt) {
-        // Broadcast to all active users
         List<User> users = userRepository.findActiveUsers();
         createBulkNotifications(users, NotificationType.SYSTEM_MAINTENANCE,
             "Scheduled Maintenance",

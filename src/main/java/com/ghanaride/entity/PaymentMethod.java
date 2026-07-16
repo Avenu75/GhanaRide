@@ -16,10 +16,7 @@ public enum PaymentMethod {
     AIRTEL_TIGO("AirtelTigo Money"),
     CASH("Cash at Pickup"),
     APPLE_PAY("Apple Pay"),
-    GOOGLE_PAY("Google Pay"),
-    MOBILE_MONEY("Mobile Money"),
-    CARD("Card Payment"),
-    BANK_TRANSFER("Bank Transfer");
+    GOOGLE_PAY("Google Pay");
 
     private final String displayName;
 }

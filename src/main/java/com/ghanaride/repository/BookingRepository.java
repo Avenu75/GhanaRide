@@ -209,12 +209,4 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     @Query("SELECT COALESCE(SUM(b.totalAmount), 0) FROM Booking b WHERE b.user = :user AND b.paymentStatus = 'PAID'")
     BigDecimal getUserTotalSpent(@Param("user") User user);
-
-    @Query("SELECT COALESCE(SUM(b.totalAmount), 0) FROM Booking b WHERE b.trip.driver = :driver AND b.paymentStatus = 'PAID'")
-    BigDecimal getDriverTotalEarnings(@Param("driver") User driver);
-
-    @Query("SELECT COALESCE(SUM(b.totalAmount), 0) FROM Booking b WHERE b.trip.company = :company AND b.paymentStatus = 'PAID'")
-    BigDecimal getCompanyTotalRevenue(@Param("company") Company company);
-
-    List<Booking> findByTripId(Long tripId);
 }

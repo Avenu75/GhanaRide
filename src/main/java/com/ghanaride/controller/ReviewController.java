@@ -42,11 +42,12 @@ public class ReviewController {
         Review r = new Review();
         r.setRating(rating);
         r.setComment(comment != null && comment.length() > 500 ? comment.substring(0,500) : comment);
+        r.setBooking(b);
         r.setPassenger(user);
         r.setDriver(b.getTrip().getDriver());
         r.setTrip(b.getTrip());
         reviewRepository.save(r);
-        ra.addFlashAttribute("success", "Thank you! Your 5-star review helps Ghana drivers.");
+        ra.addFlashAttribute("success", "Thank you! Your review has been submitted.");
         return "redirect:/my-bookings";
     }
 }

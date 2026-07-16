@@ -1,13 +1,8 @@
 package com.ghanaride.entity;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-
 /**
  * User roles in the system.
  */
-@Getter
-@RequiredArgsConstructor
 public enum Role {
     USER("Passenger"),
     DRIVER("Driver"),
@@ -16,7 +11,11 @@ public enum Role {
 
     private final String displayName;
 
-    public String toUpperCase() {
-        return "";
+    Role(String displayName) {
+        this.displayName = displayName;
+    }
+
+    public String getDisplayName() {
+        return displayName;
     }
 }

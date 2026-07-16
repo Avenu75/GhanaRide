@@ -1,6 +1,8 @@
 package com.ghanaride.service;
 
 import com.ghanaride.dto.ContactFormDTO;
+import com.ghanaride.entity.Booking;
+import com.ghanaride.entity.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -67,7 +69,7 @@ public class EmailService {
     // =========================================================
 
     @Async
-    public void sendWelcomeEmail(com.ghanaride.entity.User user) {
+    public void sendWelcomeEmail(User user) {
         try {
             sendTemplateEmail(
                 user.getEmail(),
@@ -85,7 +87,7 @@ public class EmailService {
     // =========================================================
 
     @Async
-    public void sendBookingConfirmationEmail(com.ghanaride.entity.Booking booking) {
+    public void sendBookingConfirmationEmail(Booking booking) {
         try {
             sendTemplateEmail(
                 booking.getUser().getEmail(),
@@ -107,7 +109,7 @@ public class EmailService {
     // =========================================================
 
     @Async
-    public void sendPaymentReceiptEmail(com.ghanaride.entity.Booking booking) {
+    public void sendPaymentReceiptEmail(Booking booking) {
         try {
             sendTemplateEmail(
                 booking.getUser().getEmail(),
@@ -129,7 +131,7 @@ public class EmailService {
     // =========================================================
 
     @Async
-    public void sendCancellationEmail(com.ghanaride.entity.Booking booking, String reason) {
+    public void sendCancellationEmail(Booking booking, String reason) {
         try {
             sendTemplateEmail(
                 booking.getUser().getEmail(),
@@ -152,7 +154,7 @@ public class EmailService {
     // =========================================================
 
     @Async
-    public void sendDriverVerificationEmail(com.ghanaride.entity.User driver, boolean approved, String reason) {
+    public void sendDriverVerificationEmail(User driver, boolean approved, String reason) {
         try {
             sendTemplateEmail(
                 driver.getEmail(),
@@ -174,7 +176,7 @@ public class EmailService {
     // =========================================================
 
     @Async
-    public void sendCompanyVerificationEmail(com.ghanaride.entity.User company, boolean approved, String reason) {
+    public void sendCompanyVerificationEmail(User company, boolean approved, String reason) {
         try {
             sendTemplateEmail(
                 company.getEmail(),
@@ -196,7 +198,7 @@ public class EmailService {
     // =========================================================
 
     @Async
-    public void sendPasswordResetEmail(com.ghanaride.entity.User user, String resetLink) {
+    public void sendPasswordResetEmail(User user, String resetLink) {
         try {
             sendTemplateEmail(
                 user.getEmail(),
@@ -218,7 +220,7 @@ public class EmailService {
     // =========================================================
 
     @Async
-    public void sendTripReminderEmail(com.ghanaride.entity.Booking booking, int hoursBefore) {
+    public void sendTripReminderEmail(Booking booking, int hoursBefore) {
         try {
             sendTemplateEmail(
                 booking.getUser().getEmail(),
@@ -244,7 +246,7 @@ public class EmailService {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            
+
             helper.setFrom(fromEmail, fromName);
             helper.setTo(to);
             helper.setSubject(subject);
@@ -252,7 +254,7 @@ public class EmailService {
 
             Context context = new Context();
             context.setVariables(variables);
-            
+
             String html = templateEngine.process(template, context);
             helper.setText(html, true);
 

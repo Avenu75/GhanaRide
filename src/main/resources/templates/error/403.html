@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html th:replace="~{layout :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org"
+<html th:replace="~{layout :: layout(~{::title}, ~{::head}, ~{::main}, ~{::script})}"
+      xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
-    <title>Error 403 — Access Denied | GhanaRide</title>
+    <title>Error 403 - Access Denied | GhanaRide</title>
 </head>
 <body>
 <main th:fragment="main">

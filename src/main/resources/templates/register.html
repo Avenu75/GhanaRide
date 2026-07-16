@@ -1,204 +1,8 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" th:replace="~{layout :: layout(~{::title}, ~{::main})}">
-<head>
-    <title>Register — GhanaRide</title>
-    <meta name="description" content="Create your GhanaRide account to book rides, become a driver, or manage your fleet. Join thousands of travelers across Ghana.">
-    
-    <style th:inline="css">
-        .auth-page {
-            min-height: calc(100vh - var(--header-height));
-            display: flex;
-            align-items: flex-start;
-            padding: var(--space-8) 0 var(--space-12);
-        }
-        
-        .auth-card {
-            background: var(--color-surface);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-xl);
-            box-shadow: var(--shadow-lg);
-            padding: var(--space-6);
-            width: 100%;
-            max-width: 520px;
-            margin: 0 auto;
-        }
-        
-        .auth-header {
-            text-align: center;
-            margin-bottom: var(--space-5);
-        }
-        
-        .auth-logo {
-            display: inline-flex;
-            align-items: center;
-            gap: var(--space-2);
-            margin-bottom: var(--space-3);
-        }
-        
-        .auth-title {
-            font-family: 'Outfit', sans-serif;
-            font-size: 1.75rem;
-            font-weight: 800;
-            margin-bottom: var(--space-1);
-        }
-        
-        .auth-subtitle {
-            color: var(--color-text-muted);
-            margin: 0;
-        }
-        
-        .role-tabs {
-            display: flex;
-            gap: var(--space-1);
-            background: var(--color-surface-hover);
-            border-radius: var(--radius);
-            padding: var(--space-1);
-            margin-bottom: var(--space-5);
-        }
-        
-        .role-tab {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: var(--space-2);
-            padding: var(--space-2) var(--space-3);
-            background: transparent;
-            border: none;
-            border-radius: var(--radius-sm);
-            font-weight: 500;
-            color: var(--color-text-secondary);
-            cursor: pointer;
-            transition: all var(--transition-fast);
-        }
-        
-        .role-tab:hover { color: var(--color-text); }
-        .role-tab.active {
-            background: var(--gold);
-            color: var(--black);
-            box-shadow: var(--shadow-sm);
-        }
-        
-        .role-tab i { font-size: 1.125rem; }
-        
-        .divider {
-            display: flex;
-            align-items: center;
-            gap: var(--space-3);
-            margin: var(--space-4) 0 var(--space-5);
-            color: var(--color-text-muted);
-            font-size: 0.8125rem;
-        }
-        
-        .divider::before,
-        .divider::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: var(--color-border);
-        }
-        
-        .social-login {
-            display: flex;
-            gap: var(--space-3);
-            margin-bottom: var(--space-5);
-        }
-        
-        .social-btn {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: var(--space-2);
-            padding: var(--space-3);
-            background: var(--color-surface);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius);
-            font-weight: 500;
-            color: var(--color-text);
-            transition: all var(--transition-fast);
-        }
-        
-        .social-btn:hover {
-            border-color: var(--gold);
-            background: var(--gold-muted);
-            color: var(--gold-dark);
-        }
-        
-        .social-btn img { height: 20px; }
-        
-        .form-floating > label { padding: 0 var(--space-1); }
-        
-        .password-strength {
-            height: 4px;
-            background: var(--color-border);
-            border-radius: var(--radius-full);
-            margin-top: var(--space-2);
-            overflow: hidden;
-        }
-        
-        .password-strength-bar {
-            height: 100%;
-            width: 0%;
-            border-radius: var(--radius-full);
-            transition: all var(--transition);
-        }
-        
-        .strength-weak { background: var(--color-error); width: 25%; }
-        .strength-fair { background: var(--color-warning); width: 50%; }
-        .strength-good { background: var(--color-info); width: 75%; }
-        .strength-strong { background: var(--color-success); width: 100%; }
-        
-        .strength-text {
-            font-size: 0.75rem;
-            color: var(--color-text-muted);
-            margin-top: var(--space-1);
-            text-align: right;
-        }
-        
-        /* Conditional fields */
-        .conditional-fields {
-            display: none;
-            animation: fadeIn var(--transition) ease;
-        }
-        
-        .conditional-fields.active { display: block; }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .btn-submit {
-            width: 100%;
-            padding: var(--space-3) var(--space-5);
-            font-size: 1rem;
-            margin-top: var(--space-3);
-        }
-        
-        .auth-footer {
-            text-align: center;
-            margin-top: var(--space-5);
-            padding-top: var(--space-5);
-            border-top: 1px solid var(--color-border);
-            color: var(--color-text-secondary);
-        }
-        
-        .auth-footer a { font-weight: 600; }
-        
-        .terms-notice {
-            font-size: 0.75rem;
-            color: var(--color-text-muted);
-            text-align: center;
-            margin-top: var(--space-3);
-        }
-        
-        .terms-notice a { color: var(--gold-dark); }
-        
-        /* Input group password toggle */
-        .input-group .form-control { border-radius: var(--radius) 0 0 var(--radius); }
-        .input-group .password-toggle { border-radius: 0 var(--radius) var(--radius) 0; border-left: none; }
-    </style>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/head :: headContent(${pageTitle}, ${pageDescription}, ${pageUrl})}">
+    <title>Create Account — GhanaRide</title>
+    <meta name="description" content="Join thousands of travelers across Ghana. Book rides, become a driver, or manage your fleet.">
 </head>
 <body>
 <main th:fragment="main">
@@ -317,9 +121,11 @@
                     </div>
                     
                     <div class="password-strength" id="passwordStrength">
-                        <div class="password-strength-bar"></div>
+                        <div class="password-strength-bar" id="passwordStrengthBar">
+                            <div class="password-strength-bar-fill"></div>
+                        </div>
+                        <div class="strength-text" id="strengthText"></div>
                     </div>
-                    <div class="strength-text" id="strengthText"></div>
                     
                     <div class="form-floating mb-3">
                         <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" placeholder="Confirm Password" required autocomplete="new-password">
@@ -394,7 +200,7 @@
         
         // Password Strength Meter
         const passwordInput = document.getElementById('password');
-        const strengthBar = document.querySelector('#passwordStrength .password-strength-bar');
+        const strengthBar = document.querySelector('#passwordStrength .password-strength-bar-fill');
         const strengthText = document.getElementById('strengthText');
         
         if (passwordInput && strengthBar) {
@@ -410,7 +216,7 @@
                 if (/[0-9]/.test(password)) strength++;
                 if (/[^A-Za-z0-9]/.test(password)) strength++;
                 
-                strengthBar.className = 'password-strength-bar';
+                strengthBar.className = 'password-strength-bar-fill';
                 if (strength <= 2) {
                     strengthBar.classList.add('strength-weak');
                     label = 'Weak';
@@ -425,9 +231,10 @@
                     label = 'Strong';
                 }
                 
+                strengthBar.style.width = (strength * 20) + '%';
                 strengthText.textContent = password ? `Strength: ${label}` : '';
             });
-        }
+        });
         
         // Confirm Password Validation
         const confirmPassword = document.getElementById('confirmPassword');
@@ -461,19 +268,19 @@
         });
         
         // Form Loading State
-        document.querySelector('form[data-loading]').addEventListener('submit', function(e) {
-            const submitBtn = this.querySelector('button[type="submit"]');
-            if (submitBtn && this.checkValidity()) {
-                submitBtn.disabled = true;
-                submitBtn.querySelector('.btn-text').classList.add('d-none');
-                submitBtn.querySelector('.btn-loading').classList.remove('d-none');
+        document.querySelector('form[data-loading]').addEventListener('submit', function() {
+            const btn = this.querySelector('button[type="submit"]');
+            if (btn && this.checkValidity()) {
+                btn.disabled = true;
+                btn.querySelector('.btn-text').classList.add('d-none');
+                btn.querySelector('.btn-loading').classList.remove('d-none');
             }
         });
         
         // Bootstrap Validation
         (function() {
             'use strict';
-            const forms = document.querySelectorAll('.needs-validation');
+            const forms = document.query('.needs-validation');
             Array.prototype.slice.call(forms).forEach(function(form) {
                 form.addEventListener('submit', function(event) {
                     if (!form.checkValidity()) {

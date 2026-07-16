@@ -1,13 +1,8 @@
 package com.ghanaride.entity;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-
 /**
  * Booking status lifecycle.
  */
-@Getter
-@RequiredArgsConstructor
 public enum BookingStatus {
     PENDING_PAYMENT("Pending Payment"),
     ACTIVE("Active"),
@@ -19,4 +14,12 @@ public enum BookingStatus {
     NO_SHOW("No Show");
 
     private final String displayName;
+
+    BookingStatus(String displayName) {
+        this.displayName = displayName;
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
 }

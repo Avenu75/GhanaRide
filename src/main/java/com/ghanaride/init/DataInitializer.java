@@ -23,14 +23,14 @@ public class DataInitializer implements CommandLineRunner {
 
         if (adminPassword == null || adminPassword.isEmpty()) {
             System.err.println("WARNING: ADMIN_PASSWORD environment variable not set!");
-            adminPassword = "ChangeMe@2025!"; // fallback only
+            adminPassword = "Admin@12345"; // local-dev fallback only
         }
 
         Optional<User> existingAdmin = userRepository.findByUsername("admin");
         if (existingAdmin.isPresent()) {
             User admin = existingAdmin.get();
             admin.setPassword(passwordEncoder.encode(adminPassword));
-            admin.setEmail("admin@ghanaride.com"); // ensure email is set
+            admin.setEmail("admin@ghanaride.local"); // ensure email is set
             admin.setRole(Role.ADMIN);
             admin.setEnabled(true);
             admin.setEmailVerified(true);
@@ -40,7 +40,7 @@ public class DataInitializer implements CommandLineRunner {
             User admin = new User();
             admin.setUsername("admin");
             admin.setFullName("Administrator");
-            admin.setEmail("admin@ghanaride.com");
+            admin.setEmail("admin@ghanaride.local");
             admin.setPassword(passwordEncoder.encode(adminPassword));
             admin.setPhoneNumber("0200000000");
             admin.setRole(Role.ADMIN);

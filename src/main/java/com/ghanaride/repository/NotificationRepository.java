@@ -9,7 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
-import com.ghanaride.repository.UserRepository;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -23,10 +23,8 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
 
     Page<Notification> findByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
 
-    Optional<Notification> findByIdAndUserId(Long id, Long userId);
-
     @Query("SELECT n FROM Notification n WHERE n.user.id = :userId ORDER BY n.createdAt DESC")
-    List<Notification> findTop10ByUserIdOrderByCreatedAtDesc(@Param("userId") Long userId, Pageable pageable);
+    List<Notification> findTop10ByUserIdOrderByCreatedAtDesc(@Param("userId") Long userId);
 
     @Query("SELECT COUNT(n) FROM Notification n WHERE n.user.id = :userId AND n.read = false")
     long countUnreadByUserId(@Param("userId") Long userId);
@@ -48,10 +46,4 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     @Transactional
     @Query("DELETE FROM Notification WHERE user.id = :userId AND createdAt < :cutoff")
     int deleteOldNotifications(@Param("userId") Long userId, @Param("cutoff") LocalDateTime cutoff);
-
-    @Query("SELECT n FROM Notification n WHERE n.user.id = :userId AND n.type = :type ORDER BY n.createdAt DESC")
-    List<Notification> findByUserIdAndType(@Param("userId") Long userId, @Param("type") NotificationType type);
-
-    @Query("SELECT n FROM Notification n WHERE n.actionUrl = :url AND n.user.id = :userId")
-    Optional<Notification> findByActionUrlAndUserId(@Param("url") String url, @Param("userId") Long userId);
 }

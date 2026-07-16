@@ -1,20 +1,29 @@
 package com.ghanaride.service;
 
-import com.ghanaride.entity.Booking;
-import com.ghanaride.entity.SeatMap;
-import com.ghanaride.entity.Trip;
-import com.ghanaride.repository.SeatMapRepository;
-import com.ghanaride.repository.TripRepository;
+import com.ghanaride.dto.*;
+import com.ghanaride.entity.*;
+import com.ghanaride.exception.*;
+import com.ghanaride.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.ghanaride.repository.UserRepository;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
+/**
+ * Seat Service - Seat management for trips.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -22,6 +31,10 @@ public class SeatService {
 
     private final SeatMapRepository seatMapRepository;
     private final TripRepository tripRepository;
+
+    // =========================================================
+    // SEAT MAP GENERATION
+    // =========================================================
 
     @Transactional
     public List<SeatMap> ensureSeatMap(Trip trip) {
@@ -40,14 +53,14 @@ public class SeatService {
                 SeatMap.SeatType type = col.equals("A") || col.equals("D") ? SeatMap.SeatType.WINDOW : SeatMap.SeatType.AISLE;
                 boolean extraLegroom = row == 1;
                 seats.add(SeatMap.builder()
-                        .trip(trip)
-                        .seatNumber(row + col)
-                        .rowNumber(row)
-                        .columnLabel(col)
-                        .seatType(type)
-                        .extraLegroom(extraLegroom)
-                        .status(SeatMap.SeatStatus.AVAILABLE)
-                        .build());
+                    .trip(trip)
+                    .seatNumber(row + col)
+                    .rowNumber(row)
+                    .columnLabel(col)
+                    .seatType(type)
+                    .extraLegroom(extraLegroom)
+                    .status(SeatMap.SeatStatus.AVAILABLE)
+                    .build());
                 seatCount++;
             }
             row++;
@@ -59,12 +72,16 @@ public class SeatService {
         return seatMapRepository.findByTripIdOrderByRowNumberAscColumnLabelAsc(tripId);
     }
 
-    public java.util.Optional<String> getFirstAvailableSeat(Long tripId) {
+    // =========================================================
+    // SEAT OPERATIONS
+    // =========================================================
+
+    public Optional<String> getFirstAvailableSeat(Long tripId) {
         return seatMapRepository.findByTripIdOrderByRowNumberAscColumnLabelAsc(tripId)
-                .stream()
-                .filter(s -> s.getStatus() == SeatMap.SeatStatus.AVAILABLE)
-                .map(SeatMap::getSeatNumber)
-                .findFirst();
+            .stream()
+            .filter(s -> s.getStatus() == SeatMap.SeatStatus.AVAILABLE)
+            .map(SeatMap::getSeatNumber)
+            .findFirst();
     }
 
     @Transactional
@@ -73,6 +90,7 @@ public class SeatService {
         if (seatOpt.isEmpty()) return false;
         SeatMap seat = seatOpt.get();
         if (seat.getStatus() != SeatMap.SeatStatus.AVAILABLE) return false;
+
         seat.setStatus(SeatMap.SeatStatus.HELD);
         seat.setHeldBy(booking);
         seat.setHoldExpiresAt(LocalDateTime.now().plusMinutes(holdMinutes));

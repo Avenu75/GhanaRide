@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::title}, ~{::head}, ~{::main}, ~{::script})}">
+<head>
+    <title>Popular Routes — GhanaRide</title>
+</head>
+<body>
+<main th:fragment="main" class="container py-5">
+    <div class="mb-4">
+        <h1 class="display-6 fw-bold">Popular Routes Across Ghana</h1>
+        <p class="text-muted">Search live intercity and campus routes on GhanaRide.</p>
+        <a class="btn btn-primary" th:href="@{/rides}">Browse Available Rides</a>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-6 col-lg-4" th:each="route : ${#strings.arraySplit('Accra-Kumasi,Accra-Cape Coast,Accra-Takoradi,Accra-Tamale,Kumasi-Cape Coast,Kumasi-Tamale', ',')}">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title" th:text="${#strings.replace(route,'-',' → ')}">Accra → Kumasi</h5>
+                    <p class="card-text text-muted">Fast booking, secure payment, verified operators.</p>
+                    <a th:href="@{/rides(from=${#strings.arraySplit(route,'-')[0]},to=${#strings.arraySplit(route,'-')[1]})}" class="btn btn-outline-primary btn-sm">Search this route</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>

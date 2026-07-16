@@ -1,292 +1,7 @@
 <!DOCTYPE html>
-<html th:replace="~{layout :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head>
-    <title th:text="${pageTitle}">Dashboard — GhanaRide</title>
-    
-    <style th:inline="css">
-        .dashboard-main {
-            background: var(--color-bg);
-            min-height: calc(100vh - var(--header-height));
-            padding: var(--space-6) 0;
-        }
-        
-        .welcome-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: var(--space-4);
-            margin-bottom: var(--space-6);
-        }
-        
-        .welcome-text h1 { margin-bottom: var(--space-1); }
-        .welcome-text p { color: var(--color-text-muted); margin: 0; }
-        
-        /* Stat Cards Grid */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: var(--space-4);
-            margin-bottom: var(--space-6);
-        }
-        
-        /* Wallet Card */
-        .wallet-card {
-            background: linear-gradient(135deg, var(--black) 0%, var(--black-light) 100%);
-            color: white;
-            border: none;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .wallet-card::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 100%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(252, 209, 22, 0.15) 0%, transparent 70%);
-            pointer-events: none;
-        }
-        
-        .wallet-balance {
-            font-family: var(--font-display);
-            font-size: clamp(2rem, 5vw, 3rem);
-            font-weight: 800;
-            color: var(--gold);
-        }
-        
-        .wallet-actions { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-top: var(--space-4); }
-        
-        /* Section Header */
-        .section-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: var(--space-3);
-            margin-bottom: var(--space-4);
-        }
-        
-        .section-title { margin: 0; font-size: 1.25rem; }
-        
-        /* Trips Grid */
-        .trips-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-            gap: var(--space-4);
-        }
-        
-        @media (max-width: 576px) {
-            .trips-grid { grid-template-columns: 1fr; }
-        }
-        
-        /* Trip Card */
-        .trip-card {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            background: var(--color-surface);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-lg);
-            overflow: hidden;
-            transition: all var(--transition);
-        }
-        
-        .trip-card:hover {
-            box-shadow: var(--shadow);
-            border-color: var(--color-border-strong);
-        }
-        
-        .trip-card-header {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            padding: var(--space-4);
-            border-bottom: 1px solid var(--color-border);
-        }
-        
-        .trip-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: var(--space-1);
-            padding: 0.25rem 0.625rem;
-            font-size: 0.75rem;
-            font-weight: 600;
-            border-radius: var(--radius-full);
-            white-space: nowrap;
-        }
-        
-        .badge-company { background: var(--color-success-bg); color: var(--color-success); }
-        .badge-independent { background: var(--color-info-bg); color: var(--color-info); }
-        .badge-full { background: var(--color-error-bg); color: var(--color-error); }
-        
-        .trip-price {
-            font-family: var(--font-display);
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: var(--color-text);
-            white-space: nowrap;
-        }
-        
-        .trip-route {
-            display: flex;
-            align-items: flex-start;
-            gap: var(--space-3);
-            padding: var(--space-4);
-        }
-        
-        .trip-route-line {
-            flex-shrink: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: var(--space-1);
-        }
-        
-        .trip-route-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            z-index: 1;
-        }
-        
-        .trip-route-dot:first-child { background: var(--green); }
-        .trip-route-dot:last-child { background: var(--red); }
-        
-        .trip-route-line::before {
-            content: '';
-            width: 2px;
-            height: 24px;
-            background: var(--color-border);
-            flex-shrink: 0;
-        }
-        
-        .trip-route-info { flex: 1; min-width: 0; }
-        .trip-route-from, .trip-route-to {
-            font-weight: 600;
-            font-size: 1rem;
-            line-height: 1.4;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .trip-route-to { color: var(--color-text-secondary); }
-        
-        .trip-details {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: var(--space-2);
-            padding: var(--space-3) var(--space-4) 0;
-        }
-        
-        .trip-detail {
-            display: flex;
-            align-items: center;
-            gap: var(--space-2);
-            font-size: 0.8125rem;
-            color: var(--color-text-secondary);
-        }
-        
-        .trip-detail i {
-            font-size: 1rem;
-            color: var(--gold);
-            width: 18px;
-            text-align: center;
-        }
-        
-        .trip-footer {
-            margin-top: auto;
-            padding: var(--space-4);
-            border-top: 1px solid var(--color-border);
-        }
-        
-        .trip-status {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: var(--space-2);
-            padding: 0.75rem;
-            font-weight: 600;
-            border-radius: var(--radius);
-            background: var(--color-error-bg);
-            color: var(--color-error);
-        }
-        
-        .btn-book {
-            width: 100%;
-            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
-            border: none;
-            color: var(--black);
-            font-weight: 700;
-        }
-        
-        .btn-book:hover:not(:disabled) {
-            background: linear-gradient(135deg, var(--gold-light) 0%, var(--gold) 100%);
-            transform: translateY(-1px);
-            box-shadow: var(--shadow);
-        }
-        
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: var(--space-12) var(--space-6);
-            background: var(--color-surface);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-lg);
-        }
-        
-        .empty-icon {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: var(--color-surface-hover);
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: var(--space-4);
-            font-size: 2rem;
-            color: var(--color-text-muted);
-        }
-        
-        /* Upcoming Bookings */
-        .booking-card {
-            display: flex;
-            align-items: center;
-            gap: var(--space-4);
-            padding: var(--space-4);
-            background: var(--color-surface);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius);
-            transition: all var(--transition-fast);
-        }
-        
-        .booking-card:hover { box-shadow: var(--shadow-sm); }
-        
-        .booking-route {
-            flex: 1;
-            min-width: 0;
-        }
-        
-        .booking-route-name { font-weight: 600; color: var(--color-text); }
-        .booking-route-meta { font-size: 0.8125rem; color: var(--color-text-muted); }
-        
-        .booking-status {
-            padding: 0.375rem 0.875rem;
-            font-size: 0.75rem;
-            font-weight: 600;
-            border-radius: var(--radius-full);
-            white-space: nowrap;
-        }
-        
-        .status-active { background: var(--color-success-bg); color: var(--color-success); }
-        .status-confirmed { background: var(--color-info-bg); color: var(--color-info); }
-        .status-completed { background: var(--color-surface-hover); color: var(--color-text-muted); }
-        .status-cancelled { background: var(--color-error-bg); color: var(--color-error); }
-        
-        .booking-actions { display: flex; gap: var(--space-2); }
-    </style>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/head :: headContent(${pageTitle}, ${pageDescription}, ${pageUrl})}">
+    <title>Dashboard — GhanaRide</title>
 </head>
 <body>
 <main th:fragment="main" class="dashboard-main">
@@ -295,8 +10,7 @@
         <div class="welcome-header">
             <div class="welcome-text">
                 <h1 style="font-family: 'Outfit', sans-serif;">Welcome back, <span th:text="${currentUser.fullName}">Traveler</span>!</h1>
-                <p>Find and book your next comfortable ride across Ghana.</p>
-            </div>
+                <p>Find and book your next comfortable ride across Ghana.</            </div>
             <a th:href="@{/rides}" class="btn btn-primary btn-pill">
                 <i class="bi bi-plus-circle me-2"></i> Book a Ride
             </a>
@@ -304,7 +18,6 @@
         
         <!-- Stats Grid -->
         <div class="stats-grid">
-            <!-- Wallet Card -->
             <div class="stat-card wallet-card">
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
@@ -321,21 +34,18 @@
                 </div>
             </div>
             
-            <!-- Upcoming Trips -->
             <div class="stat-card">
                 <div class="stat-icon stat-icon-primary"><i class="bi bi-calendar-event"></i></div>
                 <div class="stat-value" th:text="${upcomingCount}">0</div>
                 <div class="stat-label">Upcoming Trips</div>
             </div>
             
-            <!-- Completed Trips -->
             <div class="stat-card">
                 <div class="stat-icon stat-icon-success"><i class="bi bi-check-circle"></i></div>
                 <div class="stat-value" th:text="${completedCount}">0</div>
                 <div class="stat-label">Completed Rides</div>
             </div>
             
-            <!-- Loyalty Points -->
             <div class="stat-card">
                 <div class="stat-icon stat-icon-warning"><i class="bi bi-star"></i></div>
                 <div class="stat-value" th:text="${#numbers.formatDecimal(wallet.loyaltyPoints, 1, 0, 'COMMA')}">0</div>
@@ -355,15 +65,21 @@
                      th:if="${booking != null and booking.status != 'CANCELLED' and booking.trip != null and booking.trip.departureTime != null and booking.trip.departureTime.isAfter(#dates.createNow())}"
                      class="booking-card">
                     <div class="booking-route">
-                        <div class="booking-route-name" th:text="${booking.trip.fromLocation} + ' → ' + ${booking.trip.toLocation}">Route</div>
-                        <div class="booking-route-meta">
-                            <span th:text="${#temporals.format(booking.trip.departureTime, 'MMM dd, yyyy \'at\' HH:mm')}">Date</span>
-                            <span class="mx-2">•</span>
-                            <span th:text="${booking.trip.car != null ? booking.trip.car.model : 'Standard'}">Car</span>
+                        <div class="booking-route-line">
+                            <div class="booking-route-dot"></div>
+                            <div class="booking-route-dot"></div>
+                        </div>
+                        <div class="booking-route-info">
+                            <div class="booking-route-from" th:text="${booking.trip.fromLocation}">Accra</div>
+                            <div class="booking-route-to" th:text="${booking.trip.toLocation}">Kumasi</div>
                         </div>
                     </div>
-                    <span class="booking-status status-active" th:classappend="${booking.status == 'ACTIVE' ? 'status-active' : (booking.status == 'CONFIRMED' ? 'status-confirmed' : '')}"
-                          th:text="${booking.status}">Active</span>
+                    
+                    <div class="booking-meta">
+                        <span th:text="${#temporals.format(booking.trip.departureTime, 'MMM dd, yyyy \'at\' HH:mm')}">Date</div>
+                        <span th:text="${booking.trip.car != null ? booking.trip.car.model : 'Standard'}">Car</div>
+                    </div>
+                    
                     <div class="booking-actions">
                         <a th:href="@{/booking/receipt/{id}(id=${booking.id})}" class="btn btn-sm btn-ghost">
                             <i class="bi bi-ticket-perforated"></i> Receipt
@@ -379,14 +95,13 @@
         <!-- Available Trips -->
         <div class="section-header">
             <h2 class="section-title" th:text="${isSearchResult ? 'Search Results' : 'Available Trips'}">Available Trips</h2>
-            <a th:if="${isSearchResult}" th:href="@{/rides}" class="btn btn-sm btn-outline-secondary">Clear Search</a>
+            <a th:if="${isSearchResult}" th:href="@{/rides}" class="btn btn-sm btn-ghost">Clear Search</a>
         </div>
         
         <div th:if="${trips == null or trips.isEmpty()}" class="empty-state">
             <div class="empty-icon"><i class="bi bi-search"></i></div>
             <h4 class="fw-bold">No rides found</h4>
-            <p class="text-muted">We couldn't find any trips matching your search criteria. Try different cities or dates.</p>
-            <a th:href="@{/rides}" class="btn btn-primary mt-2">View All Rides</a>
+            <p class="text-muted">We couldn't find any trips matching your search criteria. Try different cities or dates.</            <a th:href="@{/rides}" class="btn btn-primary mt-2">View All Rides</a>
         </div>
         
         <div th:unless="${trips == null or trips.isEmpty()}" class="trips-grid">
@@ -424,7 +139,7 @@
                     </div>
                     <div class="trip-detail">
                         <i class="bi bi-people"></i>
-                        <span th:text="${trip.availableSeats} + ' seats left'">0 seats left</span>
+                        <span th:text="${trip.availableSeats} + ' seats left'">Seats</span>
                     </div>
                 </div>
                 
@@ -434,7 +149,7 @@
                     </div>
                     <a th:unless="${trip.status.name() == 'FULL' || trip.availableSeats == 0}"
                        th:href="@{/booking/{id}(id=${trip.id})}"
-                       class="btn btn-book">
+                       class="btn btn-book w-100">
                         Book Now <i class="bi bi-arrow-right ms-1"></i>
                     </a>
                 </div>

@@ -4,8 +4,6 @@ import jakarta.validation.constraints.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 /**
  * Contact Form DTO.
  */
@@ -21,8 +19,9 @@ public class ContactFormDTO {
     @Email(message = "Invalid email format")
     private String email;
 
+    @NotBlank(message = "Phone number is required")
     @Pattern(regexp = "^[0-9+\\s-]{10,20}$", message = "Invalid phone number format")
-    private String phone;
+    private String phoneNumber;
 
     @NotBlank(message = "Subject is required")
     @Size(max = 200, message = "Subject must not exceed 200 characters")

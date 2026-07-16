@@ -1,21 +1,26 @@
 package com.ghanaride.service;
 
+import com.ghanaride.entity.*;
+import com.ghanaride.repository.*;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import jakarta.annotation.PostConstruct;
 import java.io.IOException;
-import java.nio.file.*;
-import java.util.Arrays;
-import java.util.List;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
- * File Storage Service - Handles file uploads for avatars, car images, documents.
+ * File Storage Service - Handles all file uploads securely.
  */
 @Slf4j
 @Service
@@ -34,34 +39,20 @@ public class FileStorageService {
     @Value("${app.upload.max-file-size:5242880}")
     private long maxFileSize;
 
-    private List<String> allowedTypeList;
-    private Path carUploadPath;
-    private Path profileUploadPath;
-    private Path documentUploadPath;
-
     @PostConstruct
     public void init() {
-        this.allowedTypeList = Arrays.asList(allowedTypes.split(","));
-        
-        this.carUploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
-        this.profileUploadPath = Paths.get(profileUploadDir).toAbsolutePath().normalize();
-        this.documentUploadPath = Paths.get("uploads/documents").toAbsolutePath().normalize();
-
-        // Create directories
-        createDirectories(carUploadPath);
-        createDirectories(profileUploadPath);
-        createDirectories(documentUploadPath);
-
-        log.info("File storage initialized - Cars: {}, Profiles: {}, Documents: {}", 
-            carUploadPath, profileUploadPath, documentUploadPath);
+        createDirectories();
     }
 
-    private void createDirectories(Path path) {
+    private void createDirectories() {
         try {
-            Files.createDirectories(path);
+            Files.createDirectories(Paths.get(uploadDir).toAbsolutePath().normalize());
+            Files.createDirectories(Paths.get(profileUploadDir).toAbsolutePath().normalize());
+            Files.createDirectories(Paths.get("uploads/documents/drivers").toAbsolutePath().normalize());
+            Files.createDirectories(Paths.get("uploads/documents/companies").toAbsolutePath().normalize());
         } catch (IOException e) {
-            log.error("Failed to create upload directory: {}", path, e);
-            throw new RuntimeException("Could not create upload directory", e);
+            log.error("Could not create upload directories", e);
+            throw new RuntimeException("Could not create upload directories", e);
         }
     }
 
@@ -70,11 +61,11 @@ public class FileStorageService {
     // =========================================================
 
     public String storeCarImage(MultipartFile file) {
-        return storeFile(file, carUploadPath, "car");
+        return storeFile(file, Paths.get(uploadDir), "car");
     }
 
     public String storeCarImage(MultipartFile file, String prefix) {
-        return storeFile(file, carUploadPath, prefix);
+        return storeFile(file, Paths.get(uploadDir), prefix);
     }
 
     // =========================================================
@@ -82,7 +73,7 @@ public class FileStorageService {
     // =========================================================
 
     public String storeProfileImage(MultipartFile file) {
-        return storeFile(file, profileUploadPath, "profile");
+        return storeFile(file, Paths.get(profileUploadDir), "profile");
     }
 
     // =========================================================
@@ -90,11 +81,11 @@ public class FileStorageService {
     // =========================================================
 
     public String storeDriverDocument(MultipartFile file, String type) {
-        return storeFile(file, documentUploadPath.resolve("drivers"), "driver_" + type);
+        return storeFile(file, Paths.get("uploads/documents/drivers"), "driver_" + type);
     }
 
     public String storeCompanyDocument(MultipartFile file, String type) {
-        return storeFile(file, documentUploadPath.resolve("companies"), "company_" + type);
+        return storeFile(file, Paths.get("uploads/documents/companies"), "company_" + type);
     }
 
     // =========================================================
@@ -102,7 +93,6 @@ public class FileStorageService {
     // =========================================================
 
     private String storeFile(MultipartFile file, Path targetDir, String prefix) {
-        // Validate
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("File is empty");
         }
@@ -123,32 +113,28 @@ public class FileStorageService {
         }
 
         // Save file
-        Path targetPath = targetDir.resolve(filename);
+        Path targetPath = targetDir.resolve(filename).toAbsolutePath().normalize();
         try {
             Files.copy(file.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
-            log.debug("Stored file: {} -> {}", originalFilename, targetPath);
-            
-            // Return relative path for database storage
+            log.debug("Stored file: {} -> {}", file.getOriginalFilename(), targetPath);
             return targetDir.relativize(targetPath).toString().replace("\\", "/");
         } catch (IOException e) {
-            log.error("Failed to store file: {}", originalFilename, e);
+            log.error("Failed to store file: {}", file.getOriginalFilename(), e);
             throw new RuntimeException("Failed to store file", e);
         }
     }
 
     private void validateFile(MultipartFile file) {
-        // Check size
         if (file.getSize() > maxFileSize) {
             throw new IllegalArgumentException("File size exceeds maximum allowed: " + (maxFileSize / 1024 / 1024) + "MB");
         }
 
-        // Check content type
         String contentType = file.getContentType();
-        if (contentType == null || !allowedTypeList.contains(contentType)) {
-            throw new IllegalArgumentException("File type not allowed. Allowed: " + allowedTypeList);
+        if (contentType == null || !allowedTypes.contains(contentType.toLowerCase())) {
+            throw new IllegalArgumentException("File type not allowed. Allowed: " + allowedTypes);
         }
 
-        // Check filename
+        // Additional safety: check for malicious content
         String filename = StringUtils.cleanPath(file.getOriginalFilename());
         if (filename.contains("..") || filename.contains("/") || filename.contains("\\")) {
             throw new IllegalArgumentException("Invalid filename");
@@ -166,26 +152,31 @@ public class FileStorageService {
 
     public void delete(String relativePath) {
         if (relativePath == null || relativePath.isBlank()) return;
-        
+
         try {
             Path path = Paths.get(relativePath).toAbsolutePath().normalize();
             // Security check - ensure it's within our upload directories
-            if (path.startsWith(carUploadPath) || path.startsWith(profileUploadPath) || path.startsWith(documentUploadPath)) {
-                Files.deleteIfExists(path);
-                log.debug("Deleted file: {}", path);
-            } else {
-                log.warn("Attempted to delete file outside upload directories: {}", path);
+            if (!isPathSafe(path)) {
+                log.warn("Attempted to delete file outside upload directory: {}", path);
+                return;
             }
+            Files.deleteIfExists(path);
+            log.debug("Deleted file: {}", path);
         } catch (IOException e) {
             log.warn("Failed to delete file: {}", relativePath, e);
         }
     }
 
-    public void deleteCarImage(String relativePath) {
-        delete(relativePath);
+    private boolean isPathSafe(Path path) {
+        try {
+            Path carDir = Paths.get(uploadDir).toAbsolutePath().normalize();
+            Path profileDir = Paths.get(profileUploadDir).toAbsolutePath().normalize();
+            Path docDir = Paths.get("uploads/documents").toAbsolutePath().normalize();
+
+            return path.startsWith(carDir) || path.startsWith(profileDir) || path.startsWith(docDir);
+        } catch (Exception e) {
+            return false;
+        }
     }
 
-    public void deleteProfileImage(String relativePath) {
-        delete(relativePath);
-    }
 }

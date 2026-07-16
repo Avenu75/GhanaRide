@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" th:replace="~{layout :: layout(~{::title}, ~{::main})}">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" th:replace="~{layout :: layout(~{::title}, ~{::head}, ~{::main}, ~{::script})}">
 <head>
     <title>Boarding Pass <span th:text="${booking.bookingReference}">GR-XXXXXX</span> — GhanaRide</title>
     <meta name="description" content="GhanaRide boarding pass with QR code for scanning at departure.">
@@ -296,7 +296,7 @@
             <div class="boarding-details">
                 <div class="boarding-detail">
                     <span class="boarding-detail-label">Departure</span>
-                    <span class="boarding-detail-value" th:text="${#temporals.format(booking.trip.departureTime, 'MMM dd, yyyy \'at\' HH:mm')}">Date & Time</span>
+                    <span class="boarding-detail-value" th:text="${#temporals.format(booking.trip.departureTime, 'MMM dd, yyyy ''at'' HH:mm')}">Date & Time</span>
                 </div>
                 <div class="boarding-detail">
                     <span class="boarding-detail-label">Seat</span>
@@ -372,7 +372,7 @@
             trip: {
                 from: /*[[${booking.trip.fromLocation}]]*/ 'Accra',
                 to: /*[[${booking.trip.toLocation}]]*/ 'Kumasi',
-                departure: /*[[${#temporals.format(booking.trip.departureTime, 'yyyy-MM-dd\'T\'HH:mm')}]]*/ '2025-01-15T08:00:00'
+                departure: /*[[${#temporals.format(booking.trip.departureTime, 'yyyy-MM-dd''T''HH:mm')}]]*/ '2025-01-15T08:00:00'
             },
             issued: new Date().toISOString()
         });

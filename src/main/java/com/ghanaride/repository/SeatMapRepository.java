@@ -9,7 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
-import com.ghanaride.repository.UserRepository;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -29,8 +29,8 @@ public interface SeatMapRepository extends JpaRepository<SeatMap, Long> {
 
     @Modifying
     @Transactional
-    @Query("UPDATE SeatMap s SET s.status = 'AVAILABLE', s.heldBy = null, s.holdExpiresAt = null WHERE s.status = 'HELD' AND s.holdExpiresAt < :now")
-    int releaseExpiredHolds(@Param("now") LocalDateTime now);
+    @Query("UPDATE SeatMap s SET s.status = 'AVAILABLE', s.heldBy = null, s.holdExpiresAt = null WHERE s.trip.id = :tripId AND s.status = 'HELD' AND s.holdExpiresAt < :now")
+    int releaseExpiredHolds(@Param("tripId") Long tripId, @Param("now") LocalDateTime now);
 
     @Query("SELECT COUNT(s) FROM SeatMap s WHERE s.trip.id = :tripId AND s.status = 'AVAILABLE'")
     long countAvailableSeats(@Param("tripId") Long tripId);

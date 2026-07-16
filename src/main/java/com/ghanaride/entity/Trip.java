@@ -77,7 +77,6 @@ public class Trip {
     @Column(name = "description", length = 500)
     private String description;
 
-    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 50, nullable = false)
     private TripStatus status = TripStatus.PENDING;

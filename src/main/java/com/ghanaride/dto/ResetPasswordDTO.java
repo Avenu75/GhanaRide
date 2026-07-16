@@ -4,6 +4,8 @@ import jakarta.validation.constraints.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+
 /**
  * Reset Password DTO.
  */

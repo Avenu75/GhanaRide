@@ -1,5 +1,7 @@
 package com.ghanaride.security;
 
+import com.ghanaride.entity.Role;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -10,9 +12,9 @@ import java.util.Map;
 
 /**
  * Bridges OAuth2User and UserDetails so Google logins
- * get proper ROLE_* authorities and work with the
- * existing @PreAuthorize / hasRole checks.
+ * get proper ROLE_* authorities and work with @PreAuthorize / hasRole checks.
  */
+@Slf4j
 public class CustomOAuth2User implements OAuth2User, UserDetails, Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -29,7 +31,7 @@ public class CustomOAuth2User implements OAuth2User, UserDetails, Serializable {
         this.nameAttributeKey = nameAttributeKey;
     }
 
-    // --- OAuth2User ---
+    // ---- OAuth2User ----
     @Override
     public Map<String, Object> getAttributes() {
         return attributes;
@@ -41,7 +43,7 @@ public class CustomOAuth2User implements OAuth2User, UserDetails, Serializable {
         return val != null ? val.toString() : userDetails.getUsername();
     }
 
-    // --- UserDetails delegate ---
+    // ---- UserDetails (delegates to CustomUserDetails) ----
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return userDetails.getAuthorities();
@@ -77,11 +79,11 @@ public class CustomOAuth2User implements OAuth2User, UserDetails, Serializable {
         return userDetails.isEnabled();
     }
 
-    // Convenience getters to avoid extra DB hits
-    public Long getId() { return userDetails.getId(); }
+    // ---- Convenience getters ----
+    public Long getUserId() { return userDetails.getUserId(); }
     public String getEmail() { return userDetails.getEmail(); }
     public String getFullName() { return userDetails.getFullName(); }
-    public com.ghanaride.entity.Role getRole() { return userDetails.getRole(); }
+    public Role getRole() { return userDetails.getRole(); }
 
     public CustomUserDetails getUserDetails() {
         return userDetails;

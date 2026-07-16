@@ -1,233 +1,9 @@
 <!DOCTYPE html>
-<html th:replace="~{layout :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" th:replace="~{layout :: layout(~{::title}, ~{::main})}">
 <head>
     <title>GhanaRide — Ghana's Trusted Transport Platform</title>
     <meta name="description" content="Book affordable intercity and campus rides with trusted drivers. Safe, timely, and easy. Accra, Kumasi, Cape Coast, Tamale and more.">
     <meta name="theme-color" content="#FCD116">
-    
-    <style th:inline="css">
-        /* Hero Section */
-        .hero {
-            position: relative;
-            padding: var(--space-16) 0 var(--space-12);
-            background: linear-gradient(180deg, var(--color-bg) 0%, var(--color-surface) 100%);
-            overflow: hidden;
-        }
-        
-        .hero::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 120%;
-            height: 80%;
-            background: radial-gradient(ellipse at center, var(--gold-muted) 0%, transparent 70%);
-            pointer-events: none;
-        }
-        
-        .hero-content { position: relative; z-index: 1; }
-        
-        .hero-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: var(--space-2);
-            padding: var(--space-2) var(--space-4);
-            background: var(--gold-muted);
-            border: 1px solid var(--gold);
-            border-radius: var(--radius-full);
-            font-size: 0.875rem;
-            font-weight: 600;
-            color: var(--gold-dark);
-            margin-bottom: var(--space-4);
-        }
-        
-        .hero h1 {
-            font-size: clamp(2.5rem, 6vw, 4rem);
-            line-height: 1.1;
-            margin-bottom: var(--space-4);
-        }
-        
-        .hero .lead {
-            font-size: clamp(1.125rem, 2.5vw, 1.375rem);
-            color: var(--color-text-secondary);
-            max-width: 60ch;
-            margin-bottom: var(--space-6);
-        }
-        
-        .hero-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-bottom: var(--space-8); }
-        
-        /* Stats Bar */
-        .stats-bar {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: var(--space-4);
-            margin-top: var(--space-8);
-            padding: var(--space-6);
-            background: var(--color-surface);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-sm);
-        }
-        
-        .stat-item { text-align: center; }
-        .stat-value { font-family: var(--font-display); font-size: 2rem; font-weight: 800; color: var(--color-text); }
-        .stat-label { font-size: 0.8125rem; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
-        
-        /* Search Card */
-        .search-card {
-            background: var(--color-surface);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-xl);
-            padding: var(--space-6);
-            box-shadow: var(--shadow-lg);
-            position: relative;
-            z-index: 10;
-        }
-        
-        .search-fields { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: var(--space-3); align-items: end; }
-        
-        @media (max-width: 992px) {
-            .search-fields { grid-template-columns: 1fr 1fr; }
-            .search-fields > *:last-child { grid-column: span 2; }
-        }
-        
-        @media (max-width: 576px) {
-            .search-fields { grid-template-columns: 1fr; }
-            .search-fields > *:last-child { grid-column: span 1; }
-        }
-        
-        /* Features */
-        .feature-card {
-            padding: var(--space-6);
-            background: var(--color-surface);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-lg);
-            height: 100%;
-            transition: all var(--transition);
-        }
-        
-        .feature-card:hover {
-            border-color: var(--gold);
-            box-shadow: var(--shadow);
-            transform: translateY(-4px);
-        }
-        
-        .feature-icon {
-            width: 64px;
-            height: 64px;
-            border-radius: var(--radius);
-            background: var(--gold-muted);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: var(--space-4);
-            font-size: 1.5rem;
-            color: var(--gold-dark);
-        }
-        
-        /* Popular Routes */
-        .route-card {
-            display: flex;
-            align-items: center;
-            gap: var(--space-4);
-            padding: var(--space-4);
-            background: var(--color-surface);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius);
-            transition: all var(--transition);
-            text-decoration: none;
-        }
-        
-        .route-card:hover {
-            border-color: var(--gold);
-            box-shadow: var(--shadow);
-            transform: translateX(4px);
-        }
-        
-        .route-icon {
-            width: 56px;
-            height: 56px;
-            border-radius: var(--radius);
-            background: var(--gold-muted);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.25rem;
-            color: var(--gold-dark);
-            flex-shrink: 0;
-        }
-        
-        .route-info { flex: 1; min-width: 0; }
-        .route-name { font-weight: 600; color: var(--color-text); margin-bottom: var(--space-1); }
-        .route-meta { display: flex; gap: var(--space-3); font-size: 0.8125rem; color: var(--color-text-muted); }
-        .route-price { font-family: var(--font-display); font-size: 1.25rem; font-weight: 800; color: var(--color-text); }
-        
-        /* Trust Badges */
-        .trust-badges {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: var(--space-4);
-            margin-top: var(--space-8);
-        }
-        
-        .trust-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: var(--space-2);
-            padding: var(--space-2) var(--space-4);
-            background: var(--color-surface);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-full);
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: var(--color-text-secondary);
-        }
-        
-        .trust-badge i { color: var(--gold); }
-        
-        /* Install App Banner */
-        .install-banner {
-            background: linear-gradient(135deg, var(--black) 0%, var(--black-light) 100%);
-            color: white;
-            border-radius: var(--radius-xl);
-            padding: var(--space-8);
-            text-align: center;
-            margin-top: var(--space-12);
-        }
-        
-        .install-banner h2 { color: white; }
-        
-        .app-buttons { display: flex; justify-content: center; gap: var(--space-3); flex-wrap: wrap; margin-top: var(--space-4); }
-        
-        .app-btn {
-            display: flex;
-            align-items: center;
-            gap: var(--space-2);
-            padding: var(--space-3) var(--space-5);
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: var(--radius);
-            color: white;
-            font-weight: 600;
-            transition: all var(--transition-fast);
-        }
-        
-        .app-btn:hover { background: var(--gold); border-color: var(--gold); color: var(--black); transform: translateY(-2px); }
-        
-        /* Animations */
-        @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .animate-fade-up { animation: fadeUp 0.6s ease forwards; }
-        .delay-1 { animation-delay: 0.1s; opacity: 0; }
-        .delay-2 { animation-delay: 0.2s; opacity: 0; }
-        .delay-3 { animation-delay: 0.3s; opacity: 0; }
-        .delay-4 { animation-delay: 0.4s; opacity: 0; }
-    </style>
 </head>
 <body>
 <main th:fragment="main">
@@ -304,7 +80,7 @@
                     <label for="date"><i class="bi bi-calendar3 me-2"></i>Date (Optional)</label>
                 </div>
                 
-                <button type="submit" class="btn btn-primary btn-lg btn-pill btn-block" style="height: 56px;">
+                <button type="submit" class="btn btn-primary btn-lg btn-pill" style="height: 56px;">
                     <i class="bi bi-search"></i> Search <span class="d-none d-sm-inline">247 live trips</span>
                 </button>
             </form>
@@ -338,38 +114,32 @@
             <article class="feature-card">
                 <div class="feature-icon"><i class="bi bi-grid-3x3-gap-fill"></i></div>
                 <h3>Visual Seat Map</h3>
-                <p class="text-muted">Pick window, aisle, or extra legroom — just like an airline. Real-time seat hold for 7 minutes.</p>
-            </article>
+                <p class="text-muted">Pick window, aisle, or extra legroom — just like an airline. Real-time seat hold for 7 minutes.</            </article>
             
             <article class="feature-card">
                 <div class="feature-icon"><i class="bi bi-satellite"></i></div>
                 <h3>Live GPS Tracking</h3>
-                <p class="text-muted">See your bus moving in real-time. ETA, speed, next stop. Share live link with family.</p>
-            </article>
+                <p class="text-muted">See your bus moving in real-time. ETA, speed, next stop. Share live link with family.</            </article>
             
             <article class="feature-card">
                 <div class="feature-icon"><i class="bi bi-credit-card-2-front"></i></div>
                 <h3>Africa-First Payments</h3>
-                <p class="text-muted">MTN MoMo • Vodafone Cash • Paystack • Visa • Apple Pay • GhanaRide Wallet + 2% cashback.</p>
-            </article>
+                <p class="text-muted">MTN MoMo • Vodafone Cash • Paystack • Visa • Apple Pay • GhanaRide Wallet + 2% cashback.</            </article>
             
             <article class="feature-card">
                 <div class="feature-icon"><i class="bi bi-qr-code"></i></div>
                 <h3>QR Boarding Pass</h3>
-                <p class="text-muted">Instant QR after payment. Apple Wallet & Google Wallet ready. Driver scans in 0.4s.</p>
-            </article>
+                <p class="text-muted">Instant QR after payment. Apple Wallet & Google Wallet ready. Driver scans in 0.4s.</            </article>
             
             <article class="feature-card">
                 <div class="feature-icon"><i class="bi bi-arrow-counterclockwise"></i></div>
                 <h3>Instant Refunds</h3>
-                <p class="text-muted">Cancel up to 2h before departure. Money back in your GhanaRide Wallet in 45 seconds.</p>
-            </article>
+                <p class="text-muted">Cancel up to 2h before departure. Money back in your GhanaRide Wallet in 45 seconds.</            </article>
             
             <article class="feature-card">
                 <div class="feature-icon"><i class="bi bi-star-fill"></i></div>
                 <h3>Verified Reviews</h3>
-                <p class="text-muted">Only real passengers review. 5-star drivers get priority. Full transparency.</p>
-            </article>
+                <p class="text-muted">Only real passengers review. 5-star drivers get priority. Full transparency.</            </article>
         </div>
     </section>
 
@@ -435,9 +205,8 @@
     <section class="container mb-5">
         <div class="install-banner">
             <h2 style="font-family: 'Outfit', sans-serif;">Get the GhanaRide App</h2>
-            <p class="lead mb-0">Install our PWA in 1 tap. Offline search. Push notifications. 67% faster.</p>
-            <div class="app-buttons">
-                <button id="installAppBtn" class="app-btn d-none" aria-label="Install GhanaRide app">
+            <p class="lead mb-0">Install our PWA in 1 tap. Offline search. Push notifications. 67% faster.</            <div class="app-buttons">
+                <button id="installAppBtn" class="app-btn" aria-label="Install GhanaRide app">
                     <i class="bi bi-download"></i> Install App
                 </button>
                 <a href="#" class="app-btn"><i class="bi bi-phone"></i> iOS Shortcut</a>

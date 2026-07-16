@@ -20,4 +20,8 @@ public class ChangePasswordDTO {
 
     @NotBlank(message = "Confirm password is required")
     private String confirmPassword;
+
+    public boolean isPasswordMatching() {
+        return newPassword != null && newPassword.equals(confirmPassword);
+    }
 }

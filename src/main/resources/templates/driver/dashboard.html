@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" th:replace="~{layout :: layout(~{::title}, ~{::main})}">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" th:replace="~{layout :: layout(~{::title}, ~{::head}, ~{::main}, ~{::script})}">
 <head>
     <title>Driver Dashboard — GhanaRide</title>
     <meta name="description" content="Driver dashboard for GhanaRide - manage trips, track earnings, view passengers">
@@ -527,7 +527,7 @@
                         </div>
                         <div class="trip-detail">
                             <i class="bi bi-people"></i>
-                            <span th:text="${trip.availableSeats} + '/' + ${trip.totalSeats} + ' seats'">Seats</span>
+                            <span th:text="${trip.availableSeats + '/' + trip.totalSeats}" + ' seats'">Seats</span>
                         </div>
                     </div>
                     

@@ -1,422 +1,479 @@
 package com.ghanaride.controller;
 
+import com.ghanaride.dto.*;
 import com.ghanaride.entity.*;
+import com.ghanaride.repository.*;
 import com.ghanaride.service.*;
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import com.ghanaride.repository.UserRepository;
+
 import java.math.BigDecimal;
 import java.security.Principal;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeParseException;
-import java.util.*;
+import java.util.List;
 
 /**
- * Driver portal controller.
- * Handles trip management, passenger viewing,
- * and driver dashboard.
- *
- * All endpoints require DRIVER or ADMIN role.
+ * Driver Controller - Handles driver-specific operations.
  */
 @Slf4j
 @Controller
 @RequestMapping("/driver")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('DRIVER', 'ADMIN')")  // Class-level security
+@PreAuthorize("hasRole('DRIVER')")
 public class DriverController {
 
-    private final UserService userService;
-    private final CarService carService;
     private final TripService tripService;
+    private final CarService carService;
+    private final UserService userService;
+    private final SeatService seatService;
+    private final WalletService walletService;
     private final BookingService bookingService;
+    private final NotificationService notificationService;
     private final FileStorageService fileStorageService;
-
-    // Ghana cities list — could be moved to DB/config
-    private static final List<String> LOCATIONS = List.of(
-            "Accra", "Cape Coast", "Kumasi", "Takoradi", "Tamale",
-            "Sunyani", "Ho", "Koforidua", "Tema", "Winneba",
-            "Bolgatanga", "Wa", "Techiman", "Obuasi", "Kasoa"
-    );
-
-    // Allowed image MIME types
-    private static final Set<String> ALLOWED_IMAGE_TYPES = Set.of(
-            "image/jpeg", "image/png", "image/webp"
-    );
-
-    private static final long MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+    private final UserRepository userRepository;
+    private final TripRepository tripRepository;
+    private final BookingRepository bookingRepository;
 
     // =========================================================
-    // DASHBOARD
+    // DRIVER DASHBOARD
     // =========================================================
+
     @GetMapping("/dashboard")
     public String dashboard(Principal principal, Model model) {
         User currentUser = userService.getCurrentUser(principal);
-        List<Trip> trips = tripService.findByDriver(currentUser);
-        List<Car> cars = carService.findByDriver(currentUser);
 
-        // Build bookings map for each trip
-        Map<Long, List<Booking>> bookingsMap = new HashMap<>();
-        for (Trip trip : trips) {
-            bookingsMap.put(
-                    trip.getId(),
-                    bookingService.findByTripId(trip.getId())
-            );
-        }
+        // Stats
+        long totalTrips = tripRepository.countByDriver(userRepository.findByEmail(
+            SecurityContextHolder.getContext().getAuthentication().getName()
+        ).orElseThrow());
 
-        // Stats for dashboard cards
-        long totalTrips = trips.size();
-        long activeTrips = trips.stream()
-                .filter(t -> t.getStatus() == TripStatus.APPROVED)
-                .count();
-        long completedTrips = trips.stream()
-                .filter(t -> t.getStatus() == TripStatus.COMPLETED)
-                .count();
-        long totalPassengers = bookingsMap.values().stream()
-                .mapToLong(List::size)
-                .sum();
+        long approvedTrips = tripRepository.countByDriverAndStatus(
+            userRepository.findByEmail(
+                SecurityContextHolder.getContext().getAuthentication().getName()
+            ).orElseThrow(), TripStatus.APPROVED
+        );
 
-        boolean hasActiveTrip =
-                tripService.driverHasActiveTrip(currentUser);
+        long totalPassengers = bookingRepository.countByDriver(
+            userRepository.findByEmail(
+                SecurityContextHolder.getContext().getAuthentication().getName()
+            ).orElseThrow()
+        );
 
-        model.addAttribute("currentUser", currentUser);
-        model.addAttribute("trips", trips);
-        model.addAttribute("cars", cars);
-        model.addAttribute("bookingsMap", bookingsMap);
-        model.addAttribute("hasActiveTrip", hasActiveTrip);
+        BigDecimal totalEarnings = tripService.calculateDriverEarnings(
+            userRepository.findByEmail(
+                SecurityContextHolder.getContext().getAuthentication().getName()
+            ).orElseThrow()
+        );
+
+        Wallet wallet = walletService.getOrCreateWallet(
+            userRepository.findByEmail(
+                SecurityContextHolder.getContext().getAuthentication().getName()
+            ).orElseThrow()
+        );
+
         model.addAttribute("totalTrips", totalTrips);
-        model.addAttribute("activeTrips", activeTrips);
-        model.addAttribute("completedTrips", completedTrips);
+        model.addAttribute("activeTrips", approvedTrips);
         model.addAttribute("totalPassengers", totalPassengers);
-        model.addAttribute("locations", LOCATIONS);
-        model.addAttribute("pageTitle",
-                "Driver Dashboard — GhanaRide");
+        model.addAttribute("totalEarnings", totalEarnings);
+        model.addAttribute("wallet", wallet);
+        model.addAttribute("pageTitle", "Driver Dashboard — GhanaRide");
 
         return "driver/dashboard";
     }
 
     // =========================================================
-    // ADD TRIP — GET
+    // TRIP MANAGEMENT
     // =========================================================
-    @GetMapping("/add-trip")
-    public String showAddTripForm(Principal principal, Model model) {
-        User currentUser = userService.getCurrentUser(principal);
-        List<Car> driverCars = carService.findByDriver(currentUser);
 
-        if (tripService.driverHasActiveTrip(currentUser)) {
-            model.addAttribute("currentUser", currentUser);
-            model.addAttribute("error",
-                    "You already have an active trip. Please complete " +
-                            "or cancel your current trip before adding a new one.");
-            model.addAttribute("locations", LOCATIONS);
-            model.addAttribute("driverCars", driverCars);
-            model.addAttribute("pageTitle",
-                    "Add Trip — GhanaRide Driver Portal");
-            return "driver/add-trip";
+    @GetMapping("/trips")
+    public String myTrips(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) String status,
+            Principal principal,
+            Model model
+    ) {
+        User driver = userRepository.findByEmail(
+            SecurityContextHolder.getContext().getAuthentication().getName()
+        ).orElseThrow();
+
+        Pageable pageable = PageRequest.of(page, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        Page<Trip> tripsPage;
+        if (status != null && !status.isBlank()) {
+            try {
+                TripStatus tripStatus = TripStatus.valueOf(status.toUpperCase());
+                tripsPage = tripRepository.findByDriverAndStatus(
+                    userRepository.findByEmail(
+                        SecurityContextHolder.getContext().getAuthentication().getName()
+                    ).orElseThrow(), 
+                    TripStatus.valueOf(status.toUpperCase()), 
+                    PageRequest.of(page, 10)
+                );
+                model.addAttribute("selectedStatus", status);
+            } catch (IllegalArgumentException e) {
+                tripsPage = tripRepository.findByDriver(driver, PageRequest.of(page, 10));
+            }
+        } else {
+            tripsPage = tripRepository.findByDriver(driver, PageRequest.of(page, 10));
         }
 
-        model.addAttribute("currentUser", currentUser);
-        model.addAttribute("locations", LOCATIONS);
-        model.addAttribute("driverCars", driverCars);
-        model.addAttribute("pageTitle",
-                "Add Trip — GhanaRide Driver Portal");
+        model.addAttribute("tripsPage", tripsPage);
+        model.addAttribute("trips", tripsPage.getContent());
+        model.addAttribute("pageTitle", "My Trips — Driver Dashboard");
+
+        return "driver/trips";
+    }
+
+    @GetMapping("/add-trip")
+    public String showAddTripForm(Model model) {
+        model.addAttribute("pageTitle", "Add New Trip — Driver Dashboard");
+        model.addAttribute("tripForm", new TripFormDTO());
         return "driver/add-trip";
     }
 
-    // =========================================================
-    // ADD TRIP — POST
-    // =========================================================
     @PostMapping("/add-trip")
     public String addTrip(
-            @RequestParam @NotBlank String carBrand,
-            @RequestParam @NotBlank String numberPlate,
-            @RequestParam(required = false) MultipartFile carImage,
-            @RequestParam @NotBlank String fromLocation,
-            @RequestParam @NotBlank String toLocation,
-            @RequestParam(required = false) String pickupStation,
-            @RequestParam @NotBlank String departureTime,
-            @RequestParam @DecimalMin("1.00") BigDecimal tripAmount,
-            @RequestParam @Min(1) Integer totalSeats,
-            @RequestParam(required = false) String description,
-            Principal principal,
-            RedirectAttributes redirectAttributes
+            @Valid @ModelAttribute("tripForm") TripFormDTO tripForm,
+            BindingResult bindingResult,
+            @RequestParam(required = false) MultipartFile imageFile,
+            RedirectAttributes redirectAttributes,
+            Model model
     ) {
-        User currentUser = userService.getCurrentUser(principal);
-
-        // Prevent duplicate active trips
-        if (tripService.driverHasActiveTrip(currentUser)) {
-            redirectAttributes.addFlashAttribute("error",
-                    "You already have an active trip. Please complete " +
-                            "or cancel it before adding a new one.");
-            return "redirect:/driver/dashboard";
+        if (bindingResult.hasErrors()) {
+            return "driver/add-trip";
         }
 
-        // Validate departure time
-        LocalDateTime departureDateTime;
-        try {
-            departureDateTime = LocalDateTime.parse(departureTime);
-            // Must be in the future
-            if (departureDateTime.isBefore(LocalDateTime.now())) {
-                redirectAttributes.addFlashAttribute("error",
-                        "Departure time must be in the future.");
-                return "redirect:/driver/add-trip";
-            }
-        } catch (DateTimeParseException e) {
-            redirectAttributes.addFlashAttribute("error",
-                    "Invalid departure time format. " +
-                            "Please use the date picker.");
-            return "redirect:/driver/add-trip";
+        User driver = userRepository.findByEmail(
+            SecurityContextHolder.getContext().getAuthentication().getName()
+        ).orElseThrow();
+
+        // Check if driver already has an active trip
+        if (tripRepository.driverHasActiveTrip(
+            userRepository.findByEmail(
+                SecurityContextHolder.getContext().getAuthentication().getName()
+            ).orElseThrow()
+        )) {
+            bindingResult.rejectValue("fromLocation", "error.fromLocation", 
+                "You already have an active trip. Delete or complete it first.");
+            return "driver/add-trip";
         }
 
-        // Validate from/to are different
-        if (fromLocation.equalsIgnoreCase(toLocation)) {
-            redirectAttributes.addFlashAttribute("error",
-                    "Departure and destination cannot be the same.");
-            return "redirect:/driver/add-trip";
-        }
-
-        // Handle car — reuse existing or create new
-        Car car;
-        try {
-            if (carService.existsByNumberPlate(numberPlate)) {
-                car = carService.findByDriver(currentUser).stream()
-                        .filter(c -> c.getPlateNumber()
-                                .equalsIgnoreCase(numberPlate))
-                        .findFirst()
-                        .orElse(null);
-
-                if (car == null) {
-                    redirectAttributes.addFlashAttribute("error",
-                            "This number plate is registered to " +
-                                    "another driver.");
-                    return "redirect:/driver/add-trip";
-                }
-            } else {
-                // Create new car
-                car = new Car();
-                car.setDriver(currentUser);
-                car.setCarBrand(carBrand.trim());
-                car.setPlateNumber(
-                        numberPlate.trim().toUpperCase()
-                );
-                car.setStatus(CarStatus.ACTIVE);
-
-                // Handle car image upload
-                if (carImage != null && !carImage.isEmpty()) {
-                    // Validate file type
-                    String contentType = carImage.getContentType();
-                    if (!ALLOWED_IMAGE_TYPES.contains(contentType)) {
-                        redirectAttributes.addFlashAttribute("error",
-                                "Car image must be JPEG, PNG, or WebP.");
-                        return "redirect:/driver/add-trip";
-                    }
-                    // Validate file size
-                    if (carImage.getSize() > MAX_IMAGE_SIZE) {
-                        redirectAttributes.addFlashAttribute("error",
-                                "Car image must be smaller than 5MB.");
-                        return "redirect:/driver/add-trip";
-                    }
-                    String imagePath =
-                            fileStorageService.storeCarImage(carImage);
-                    car.setImagePath("/" + imagePath);
-                }
-                car = carService.saveCar(car);
-            }
-        } catch (Exception e) {
-            log.error("Error processing car for driver: {}",
-                    currentUser.getEmail(), e);
-            redirectAttributes.addFlashAttribute("error",
-                    "Error saving vehicle details. Please try again.");
-            return "redirect:/driver/add-trip";
-        }
-
-        // Create and save trip
         try {
             Trip trip = new Trip();
-            trip.setCar(car);
-            trip.setDriver(currentUser);
-            trip.setFromLocation(fromLocation);
-            trip.setToLocation(toLocation);
-            trip.setPickupStation(pickupStation);
-            trip.setDepartureTime(departureDateTime);
-            trip.setTripAmount(tripAmount);
-            trip.setTotalSeats(totalSeats);
-            trip.setAvailableSeats(totalSeats);
-            trip.setDescription(
-                    description != null ? description.trim() : null
-            );
+            trip.setDriver(userRepository.findByEmail(
+                SecurityContextHolder.getContext().getAuthentication().getName()
+            ).orElseThrow());
+            trip.setFromLocation(tripForm.getFromLocation());
+            trip.setToLocation(tripForm.getToLocation());
+            trip.setPickupStation(tripForm.getPickupStation());
+            trip.setDepartureTime(tripForm.getDepartureTime());
+            trip.setTripAmount(tripForm.getTripAmount());
+            trip.setAvailableSeats(tripForm.getTotalSeats());
+            trip.setTotalSeats(tripForm.getTotalSeats());
+            trip.setDescription(tripForm.getDescription());
             trip.setStatus(TripStatus.PENDING);
 
-            tripService.saveTrip(trip);
+            if (tripForm.getImageFile() != null && !tripForm.getImageFile().isEmpty()) {
+                String path = fileStorageService.storeCarImage(tripForm.getImageFile());
+                trip.setImagePath(path);
+            }
 
-            log.info("Driver {} added new trip: {} → {} on {}",
-                    currentUser.getEmail(),
-                    fromLocation, toLocation,
-                    departureDateTime
-            );
+            tripRepository.save(trip);
 
-            redirectAttributes.addFlashAttribute("success",
-                    "Trip added successfully! It is pending admin " +
-                            "approval and will be visible to passengers soon.");
-            return "redirect:/driver/dashboard";
+            redirectAttributes.addFlashAttribute("success", 
+                "Trip added! Status: PENDING (awaiting admin approval).");
+            return "redirect:/driver/trips";
 
         } catch (Exception e) {
-            log.error("Error saving trip for driver: {}",
-                    currentUser.getEmail(), e);
-            redirectAttributes.addFlashAttribute("error",
-                    "Failed to create trip. Please try again.");
+            log.error("Failed to add trip", e);
+            redirectAttributes.addFlashAttribute("error", "Failed to add trip.");
             return "redirect:/driver/add-trip";
         }
     }
 
-    // =========================================================
-    // CANCEL TRIP
-    // =========================================================
-    @PostMapping("/trips/{tripId}/cancel")
+    @PostMapping("/trip/{tripId}/delete")
+    public String deleteTrip(
+            @PathVariable Long tripId,
+            Principal principal,
+            RedirectAttributes redirectAttributes
+    ) {
+        try {
+            tripService.deleteTrip(tripId);
+            redirectAttributes.addFlashAttribute("success", "Trip deleted successfully.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Cannot delete: trip has active bookings.");
+        }
+        return "redirect:/driver/trips";
+    }
+
+    @PostMapping("/trip/{tripId}/cancel")
     public String cancelTrip(
             @PathVariable Long tripId,
-            @RequestParam String cancelReason,
-            @RequestParam(required = false) String cancelReasonDetails,
+            @RequestParam String reason,
             Principal principal,
             RedirectAttributes redirectAttributes
     ) {
-        User currentUser = userService.getCurrentUser(principal);
-
-        Optional<Trip> tripOpt = tripService.findById(tripId);
-
-        // Ownership check
-        if (tripOpt.isEmpty() ||
-                !tripOpt.get().getDriver().getId()
-                        .equals(currentUser.getId())) {
-            log.warn("Driver {} attempted to cancel trip {} " +
-                            "they don't own",
-                    currentUser.getEmail(), tripId);
-            redirectAttributes.addFlashAttribute("error",
-                    "Trip not found or access denied.");
-            return "redirect:/driver/dashboard";
-        }
-
-        Trip trip = tripOpt.get();
-
-        // Can't cancel already completed/cancelled trips
-        if (trip.getStatus() == TripStatus.COMPLETED ||
-                trip.getStatus() == TripStatus.CANCELLED) {
-            redirectAttributes.addFlashAttribute("error",
-                    "Cannot cancel a trip that is already " +
-                            trip.getStatus().toString().toLowerCase() + ".");
-            return "redirect:/driver/dashboard";
-        }
-
-        // 3-hour rule: can't cancel with bookings < 3h before departure
-        long bookingsCount =
-                bookingService.findByTripId(trip.getId()).size();
-        if (bookingsCount > 0 &&
-                LocalDateTime.now().isAfter(
-                        trip.getDepartureTime().minusHours(3))) {
-            redirectAttributes.addFlashAttribute("error",
-                    "Cannot cancel a trip with bookings less than " +
-                            "3 hours before departure. " +
-                            "Please contact admin for assistance.");
-            return "redirect:/driver/dashboard";
-        }
-
         try {
-            tripService.cancelTrip(
-                    tripId, cancelReason
-            );
-
-            log.info("Driver {} cancelled trip {} reason: {}",
-                    currentUser.getEmail(), tripId, cancelReason);
-
-            redirectAttributes.addFlashAttribute("success",
-                    "Trip cancelled successfully. " +
-                            "Passengers have been notified.");
-
+            tripService.cancelTrip(tripId, reason);
+            redirectAttributes.addFlashAttribute("success", "Trip cancelled successfully.");
         } catch (Exception e) {
-            log.error("Error cancelling trip {} for driver {}",
-                    tripId, currentUser.getEmail(), e);
-            redirectAttributes.addFlashAttribute("error",
-                    "Failed to cancel trip. Please try again or " +
-                            "contact support.");
+            redirectAttributes.addFlashAttribute("error", "Failed to cancel trip: " + e.getMessage());
         }
-        return "redirect:/driver/dashboard";
+        return "redirect:/driver/trips";
     }
 
-    // =========================================================
-    // MARK TRIP AS FULL
-    // =========================================================
-    @PostMapping("/trips/{tripId}/full")
-    public String markTripFull(
+    @PostMapping("/trip/{tripId}/complete")
+    public String completeTrip(
             @PathVariable Long tripId,
             Principal principal,
             RedirectAttributes redirectAttributes
     ) {
-        User currentUser = userService.getCurrentUser(principal);
-        Optional<Trip> tripOpt = tripService.findById(tripId);
-
-        if (tripOpt.isEmpty() ||
-                !tripOpt.get().getDriver().getId()
-                        .equals(currentUser.getId())) {
-            redirectAttributes.addFlashAttribute("error",
-                    "Trip not found or access denied.");
-            return "redirect:/driver/dashboard";
-        }
-
         try {
-            tripService.markAsFull(tripId);
-            log.info("Driver {} marked trip {} as full",
-                    currentUser.getEmail(), tripId);
-            redirectAttributes.addFlashAttribute("success",
-                    "Trip marked as full. " +
-                            "No new bookings will be accepted.");
+            tripService.markTripCompleted(tripId);
+            redirectAttributes.addFlashAttribute("success", "Trip marked as completed!");
         } catch (Exception e) {
-            log.error("Error marking trip {} as full", tripId, e);
-            redirectAttributes.addFlashAttribute("error",
-                    "Failed to update trip status. Please try again.");
+            redirectAttributes.addFlashAttribute("error", "Failed to complete trip: " + e.getMessage());
         }
-        return "redirect:/driver/dashboard";
+        return "redirect:/driver/trips";
     }
 
     // =========================================================
-    // VIEW PASSENGERS
+    // TRIP PASSENGERS
     // =========================================================
-    @GetMapping("/trips/{tripId}/passengers")
-    public String viewPassengers(
+
+    @GetMapping("/trip-passengers/{tripId}")
+    public String tripPassengers(
             @PathVariable Long tripId,
             Principal principal,
             Model model
     ) {
-        User currentUser = userService.getCurrentUser(principal);
-        Optional<Trip> tripOpt = tripService.findById(tripId);
+        User driver = userRepository.findByEmail(
+            SecurityContextHolder.getContext().getAuthentication().getName()
+        ).orElseThrow();
 
-        if (tripOpt.isEmpty() ||
-                !tripOpt.get().getDriver().getId()
-                        .equals(currentUser.getId())) {
-            log.warn("Driver {} attempted to view passengers " +
-                            "of trip {} they don't own",
-                    currentUser.getEmail(), tripId);
-            return "redirect:/driver/dashboard";
+        Trip trip = tripRepository.findById(tripId)
+            .orElseThrow(() -> new ResourceNotFoundException("Trip not found"));
+
+        // Verify ownership
+        if (!trip.getDriver().getId().equals(driver.getId())) {
+            throw new AccessDeniedException("Not your trip");
         }
 
-        Trip trip = tripOpt.get();
-        List<Booking> bookings =
-                bookingService.findByTripId(tripId);
+        List<Booking> passengers = bookingRepository.findByTripAndStatusIn(trip, 
+            List.of(BookingStatus.ACTIVE, BookingStatus.CONFIRMED, BookingStatus.PENDING_PAYMENT));
 
-        model.addAttribute("currentUser", currentUser);
         model.addAttribute("trip", trip);
-        model.addAttribute("bookings", bookings);
-        model.addAttribute("pageTitle",
-                "Passengers — Trip to " + trip.getToLocation() +
-                        " | GhanaRide");
+        model.addAttribute("passengers", passengers);
+        model.addAttribute("pageTitle", "Passengers — " + trip.getFromLocation() + " → " + trip.getToLocation());
 
         return "driver/trip-passengers";
+    }
+
+    // =========================================================
+    // EARNINGS
+    // =========================================================
+
+    @GetMapping("/earnings")
+    public String earnings(
+            @RequestParam(defaultValue = "0") int page,
+            Principal principal,
+            Model model
+    ) {
+        User driver = userRepository.findByEmail(
+            SecurityContextHolder.getContext().getAuthentication().getName()
+        ).orElseThrow();
+
+        Pageable pageable = PageRequest.of(page, 10, Sort.by(Sort.Direction.DESC, "bookingDate"));
+        Page<Booking> earningsPage = bookingRepository.findByDriverOrderByBookingDateDesc(driver, PageRequest.of(page, 10));
+
+        BigDecimal totalEarnings = bookingRepository.getDriverTotalEarnings(driver);
+        BigDecimal pendingEarnings = bookingRepository.getDriverPendingEarnings(driver);
+        BigDecimal thisMonthEarnings = bookingRepository.getDriverEarningsThisMonth(driver);
+
+        model.addAttribute("earningsPage", earningsPage);
+        model.addAttribute("totalEarnings", totalEarnings);
+        model.addAttribute("pendingEarnings", pendingEarnings);
+        model.addAttribute("thisMonthEarnings", thisMonthEarnings);
+        model.addAttribute("pageTitle", "Earnings — Driver Dashboard");
+
+        return "driver/earnings";
+    }
+
+    // =========================================================
+    // WALLET
+    // =========================================================
+
+    @GetMapping("/wallet")
+    public String wallet(Principal principal, Model model) {
+        User driver = userRepository.findByEmail(
+            SecurityContextHolder.getContext().getAuthentication().getName()
+        ).orElseThrow();
+
+        Wallet wallet = walletService.getOrCreateWallet(driver);
+        Pageable pageable = PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<WalletTransaction> transactions = walletTransactionRepository
+            .findByUserOrderByCreatedAtDesc(driver, PageRequest.of(0, 20));
+
+        model.addAttribute("wallet", wallet);
+        model.addAttribute("transactions", transactions.getContent());
+        model.addAttribute("pageTitle", "Driver Wallet — GhanaRide");
+
+        return "driver/wallet";
+    }
+
+    // =========================================================
+    // PROFILE
+    // =========================================================
+
+    @GetMapping("/profile")
+    public String profile(Principal principal, Model model) {
+        User driver = userRepository.findByEmail(
+            SecurityContextHolder.getContext().getAuthentication().getName()
+        ).orElseThrow();
+
+        model.addAttribute("currentUser", driver);
+        model.addAttribute("pageTitle", "Driver Profile");
+        return "driver/profile";
+    }
+
+    @PostMapping("/profile")
+    public String updateProfile(
+            @Valid @ModelAttribute("profileForm") ProfileUpdateDTO profileForm,
+            BindingResult bindingResult,
+            @RequestParam(required = false) MultipartFile profileImage,
+            Principal principal,
+            RedirectAttributes redirectAttributes,
+            Model model
+    ) {
+        if (bindingResult.hasErrors()) {
+            return "driver/profile";
+        }
+
+        User driver = userRepository.findByEmail(
+            SecurityContextHolder.getContext().getAuthentication().getName()
+        ).orElseThrow();
+
+        if (profileForm.getFullName() != null) driver.setFullName(profileForm.getFullName());
+        if (profileForm.getPhoneNumber() != null) driver.setPhoneNumber(profileForm.getPhoneNumber());
+        if (profileForm.getDateOfBirth() != null) driver.setDateOfBirth(profileForm.getDateOfBirth());
+        if (profileForm.getGender() != null) driver.setGender(profileForm.getGender());
+        if (profileForm.getAddress() != null) driver.setAddress(profileForm.getAddress());
+
+        if (profileImage != null && !profileImage.isEmpty()) {
+            String path = fileStorageService.storeProfileImage(profileImage);
+            driver.setProfileImagePath(path);
+        }
+
+        userRepository.save(driver);
+        redirectAttributes.addFlashAttribute("success", "Profile updated successfully!");
+        return "redirect:/driver/profile";
+    }
+
+    // =========================================================
+    // VEHICLE
+    // =========================================================
+
+    @GetMapping("/vehicle")
+    public String vehicle(Principal principal, Model model) {
+        User driver = userRepository.findByEmail(
+            SecurityContextHolder.getContext().getAuthentication().getName()
+        ).orElseThrow();
+
+        Car car = carRepository.findByDriver(driver).orElse(null);
+
+        model.addAttribute("car", car);
+        model.addAttribute("pageTitle", "My Vehicle — Driver Dashboard");
+        return "driver/vehicle";
+    }
+
+    @PostMapping("/vehicle")
+    public String updateVehicle(
+            @Valid @ModelAttribute("carForm") CarFormDTO carForm,
+            BindingResult bindingResult,
+            @RequestParam(required = false) MultipartFile imageFile,
+            Principal principal,
+            RedirectAttributes redirectAttributes,
+            Model model
+    ) {
+        if (bindingResult.hasErrors()) {
+            return "driver/vehicle";
+        }
+
+        User driver = userRepository.findByEmail(
+            SecurityContextHolder.getContext().getAuthentication().getName()
+        ).orElseThrow();
+
+        Car car = carRepository.findByDriver(driver).orElse(new Car());
+        car.setDriver(driver);
+        car.setPlateNumber(carForm.getPlateNumber());
+        car.setCarBrand(carForm.getCarBrand());
+        car.setModel(carForm.getModel());
+        car.setYear(carForm.getYear());
+        car.setColor(carForm.getColor());
+        car.setTotalSeats(carForm.getTotalSeats());
+        car.setFuelType(carForm.getFuelType());
+
+        if (imageFile != null && !imageFile.isEmpty()) {
+            String path = fileStorageService.storeCarImage(imageFile);
+            car.setImagePath(path);
+        }
+
+        carRepository.save(car);
+        redirectAttributes.addFlashAttribute("success", "Vehicle details saved!");
+        return "redirect:/driver/vehicle";
+    }
+
+    // =========================================================
+    // DOCUMENTS
+    // =========================================================
+
+    @GetMapping("/documents")
+    public String documents(Principal principal, Model model) {
+        User driver = userRepository.findByEmail(
+            SecurityContextHolder.getContext().getAuthentication().getName()
+        ).orElseThrow();
+
+        model.addAttribute("driver", driver);
+        model.addAttribute("pageTitle", "Documents — Driver Dashboard");
+        return "driver/documents";
+    }
+
+    @PostMapping("/documents/upload")
+    public String uploadDocument(
+            @RequestParam MultipartFile file,
+            @RequestParam String type, // LICENSE or ID
+            Principal principal,
+            RedirectAttributes redirectAttributes
+    ) {
+        User driver = userRepository.findByEmail(
+            SecurityContextHolder.getContext().getAuthentication().getName()
+        ).orElseThrow();
+
+        try {
+            String path = fileStorageService.storeDriverDocument(file, type);
+            if ("LICENSE".equals(type)) {
+                driver.setLicenseDocumentPath(path);
+            } else {
+                driver.setIdDocumentPath(path);
+            }
+            userRepository.save(driver);
+            redirectAttributes.addFlashAttribute("success", "Document uploaded successfully!");
+        } catch (Exception e) {
+            log.error("Document upload failed", e);
+            redirectAttributes.addFlashAttribute("error", "Upload failed: " + e.getMessage());
+        }
+        return "redirect:/driver/documents";
     }
 }

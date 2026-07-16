@@ -6,6 +6,7 @@ import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * Represents a seat booking on a trip.
@@ -15,7 +16,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-@ToString(exclude = {"user", "trip", "seatMap", "walletTransaction", "review", "cancelledBy"})
+@ToString(exclude = {"user", "trip", "seatMap", "walletTransaction", "review"})
 @Entity
 @Table(
     name = "bookings",
@@ -149,6 +150,10 @@ public class Booking {
         if (seatMap != null) return seatMap.getSeatNumber();
         return seatNumber != null ? seatNumber.toString() : "—";
     }
+
+    // =========================================================
+    // EQUALS & HASHCODE
+    // =========================================================
 
     @Override
     public boolean equals(Object o) {

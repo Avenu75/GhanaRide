@@ -17,10 +17,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         // Enable simple in-memory broker for user queues
         registry.enableSimpleBroker("/queue", "/topic", "/user");
-        
+
         // Application destination prefix for @MessageMapping
         registry.setApplicationDestinationPrefixes("/app");
-        
+
         // User destination prefix for @SendToUser
         registry.setUserDestinationPrefix("/user");
     }
@@ -28,10 +28,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
-            .setAllowedOriginPatterns("*")
-            .withSockJS(); // Fallback for older browsers
-        
+                .setAllowedOriginPatterns("*")
+                .withSockJS(); // Fallback for older browsers
+
         registry.addEndpoint("/ws")
-            .setAllowedOriginPatterns("*");
+                .setAllowedOriginPatterns("*");
     }
 }

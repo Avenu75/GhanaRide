@@ -1,12 +1,15 @@
-package com.ghanaride.service;
+package com.ghanaride.security;
 
-import com.ghanaride.entity.Role;
 import com.ghanaride.entity.User;
-import com.ghanaride.security.CustomOAuth2User;
-import com.ghanaride.security.CustomUserDetails;
+import com.ghanaride.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
@@ -20,11 +23,8 @@ import java.util.Collections;
 import java.util.Map;
 
 /**
- * Loads (or auto-registers) a Google user and returns
- * a CustomOAuth2User that carries ROLE_USER etc.,
- * fixing the 500 / 403 after "Continue with Google".
- *
- * v3.1a – 2026-07-10 – lambda final capture fix
+ * Custom OAuth2 User Service - Handles Google login flow.
+ * Creates or updates users from OAuth2 profile data.
  */
 @Slf4j
 @Service
@@ -41,7 +41,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
         String userNameAttributeName = userRequest.getClientRegistration()
-                .getProviderDetails().getUserInfoEndpoint().getUserNameAttributeName();
+            .getProviderDetails().getUserInfoEndpoint().getUserNameAttributeName();
 
         Map<String, Object> attributes = oauth2User.getAttributes();
 
@@ -63,34 +63,34 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         User user;
         try {
             user = userService.findByEmail(email)
-                    .orElseGet(() -> {
-                        log.info("Auto-registering new OAuth user: {} via {}", email, registrationId);
-                        return userService.registerOAuthUser(email, displayName, googleId);
-                    });
+                .orElseGet(() -> {
+                    log.info("Auto-registering new OAuth user: {} via {}", email, registrationId);
+                    return userService.registerOAuthUser(email, displayName, googleId);
+                });
         } catch (Exception e) {
             // Defensive: if registerOAuthUser race hits duplicate, load existing
             log.warn("OAuth auto-register failed for {}, trying load existing: {}", email, e.getMessage());
             user = userService.findByEmail(email)
-                    .orElseThrow(() -> new OAuth2AuthenticationException(
-                            new OAuth2Error("user_create_failed"), e.getMessage(), e));
+                .orElseThrow(() -> new OAuth2AuthenticationException(
+                    new OAuth2Error("user_create_failed"), e.getMessage(), e));
         }
 
         if (!user.isEnabled()) {
             throw new OAuth2AuthenticationException(new OAuth2Error("disabled"), "Account disabled");
         }
 
-        // Build a proper UserDetails with ROLE_*
+        // Build a proper UserDetails with ROLE_* for Spring Security
         CustomUserDetails userDetails = new CustomUserDetails(
-                user.getUsername(),
-                user.getPassword(),
-                user.isEmailVerified(),
-                user.isEnabled(),
-                !user.isAccountLocked(),
-                Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole().name())),
-                user.getId(),
-                user.getEmail(),
-                user.getFullName(),
-                user.getRole()
+            user.getUsername(),
+            user.getPassword(),
+            user.isEmailVerified(),
+            user.isEnabled(),
+            !user.isAccountLocked(),
+            Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole().name())),
+            user.getId(),
+            user.getEmail(),
+            user.getFullName(),
+            user.getRole()
         );
 
         // Return bridge object that is BOTH OAuth2User and UserDetails

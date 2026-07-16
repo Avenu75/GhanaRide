@@ -6,10 +6,14 @@ import com.ghanaride.exception.*;
 import com.ghanaride.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.ghanaride.repository.UserRepository;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -97,8 +101,8 @@ public class BookingService {
                     booking.setTransactionReference("WALLET-" + booking.getBookingReference());
                 }
             }
-            case PAYSTACK, MTN_MOMO, VODAFONE_CASH -> {
-                // Handled on frontend, booking stays PENDING
+            case PAYSTACK -> {
+                // Paystack handled on frontend, booking stays PENDING
                 booking.setPaymentStatus(PaymentStatus.PENDING);
             }
             case CASH -> {
@@ -117,11 +121,6 @@ public class BookingService {
         }
 
         Booking finalBooking = bookingRepository.save(booking);
-
-        // Send confirmation
-        if (booking.getPaymentStatus() == PaymentStatus.PAID) {
-            sendBookingConfirmation(finalBooking);
-        }
 
         log.info("Booking created: {} for user {} on trip {}",
             finalBooking.getBookingReference(), user.getEmail(), tripId);
@@ -142,16 +141,9 @@ public class BookingService {
         if (trip.getDriver() != null && trip.getDriver().getId().equals(user.getId())) {
             throw new IllegalStateException("You cannot book your own trip");
         }
-        if (hasActiveBookingForTrip(user, trip)) {
+        if (bookingRepository.hasActiveBookingForTrip(user, trip)) {
             throw new IllegalStateException("You already have an active booking for this trip");
         }
-    }
-
-    public boolean hasActiveBookingForTrip(User user, Trip trip) {
-        return bookingRepository.existsByUserAndTripAndStatusIn(
-            user, trip,
-            List.of(BookingStatus.ACTIVE, BookingStatus.CONFIRMED, BookingStatus.PENDING_PAYMENT)
-        );
     }
 
     // =========================================================
@@ -164,10 +156,6 @@ public class BookingService {
 
     public Optional<Booking> findByReference(String reference) {
         return bookingRepository.findByBookingReference(reference);
-    }
-
-    public List<Booking> findByTripId(Long tripId) {
-        return bookingRepository.findByTripId(tripId);
     }
 
     public Optional<Booking> findByReferenceWithDetails(String reference) {
@@ -220,24 +208,27 @@ public class BookingService {
     // =========================================================
 
     @Transactional
-    public void cancelBooking(Long bookingId) {
+    public void cancelBooking(Long bookingId, User currentUser) {
         Booking booking = bookingRepository.findById(bookingId)
             .orElseThrow(() -> new ResourceNotFoundException("Booking", bookingId));
 
-        if (!canCancelBooking(booking)) {
-            throw new BookingException("Booking cannot be cancelled. " +
-                "Cancellations must be made at least 2 hours before departure.");
+        if (!booking.getUser().getId().equals(currentUser.getId())) {
+            throw new IllegalStateException("You can only cancel your own bookings");
+        }
+
+        if (!bookingService.canCancelBooking(booking)) {
+            throw new BookingException("This booking can no longer be cancelled. " +
+                "Cancellations must be made at least 2 hours before departure. " +
+                "Please contact support for help.");
         }
 
         // Release seat
         seatService.releaseSeat(booking.getTrip().getId(),
-            booking.getSeatMap() != null ? booking.getSeatMap().getSeatNumber() :
-                String.valueOf(booking.getSeatNumber()));
+            booking.getSeatMap() != null ? booking.getSeatMap().getSeatNumber() : String.valueOf(booking.getSeatNumber()));
         tripService.incrementAvailableSeats(booking.getTrip().getId());
 
         // Update booking
         booking.setStatus(BookingStatus.CANCELLED);
-        booking.setCancelledAt(LocalDateTime.now());
         bookingRepository.save(booking);
 
         // Process refund if paid
@@ -247,24 +238,22 @@ public class BookingService {
 
         // Notify
         notificationService.createNotification(
-            booking.getUser(),
+            currentUser,
             NotificationType.BOOKING_CANCELLED,
             "Booking Cancelled",
-            "Your booking " + booking.getBookingReference() + " has been cancelled.",
+            "Booking " + booking.getBookingReference() + " has been cancelled. " +
+                (booking.getPaymentStatus() == PaymentStatus.PAID ? "Refund will be processed to your wallet." : ""),
             "/my-bookings"
         );
 
-        log.info("Booking {} cancelled by user {}", bookingId, booking.getUser().getEmail());
+        log.info("Booking {} cancelled by user {}", bookingId, currentUser.getEmail());
     }
 
-    public boolean canCancelBooking(Booking booking) {
-        if (booking.getStatus() == BookingStatus.CANCELLED ||
-            booking.getStatus() == BookingStatus.COMPLETED) {
+    private boolean canCancelBooking(Booking booking) {
+        if (booking.getStatus() == BookingStatus.CANCELLED || booking.getStatus() == BookingStatus.COMPLETED) {
             return false;
         }
-        if (booking.getTrip() == null || booking.getTrip().getDepartureTime() == null) {
-            return false;
-        }
+        if (booking.getTrip().getDepartureTime() == null) return false;
         return booking.getTrip().getDepartureTime().isAfter(LocalDateTime.now().plusHours(2));
     }
 
@@ -290,14 +279,12 @@ public class BookingService {
     // =========================================================
 
     private void sendBookingConfirmation(Booking booking) {
-        try {
-            // Email with receipt
-            // QR code generation
-            // WebSocket notification
-            log.info("Booking confirmation sent for {}", booking.getBookingReference());
-        } catch (Exception e) {
-            log.warn("Failed to send booking confirmation for {}", booking.getBookingReference(), e);
-        }
+        // EmailService.sendBookingConfirmationEmail(booking);
+        notificationService.createNotification(booking.getUser(), NotificationType.BOOKING_CONFIRMED,
+            "Booking Confirmed",
+            "Your booking " + booking.getBookingReference() + " is confirmed. " +
+            "Trip: " + booking.getTrip().getFromLocation() + " → " + booking.getTrip().getToLocation(),
+            "/booking/receipt/" + booking.getId());
     }
 
     // =========================================================
@@ -309,20 +296,5 @@ public class BookingService {
         String timestamp = String.valueOf(System.currentTimeMillis()).substring(5);
         String random = UUID.randomUUID().toString().substring(0, 4).toUpperCase();
         return prefix + timestamp + random;
-    }
-
-    public Object countAll() {
-        return null;
-    }
-
-    public Object findRecentBookings(int i) {
-        return null;
-    }
-
-    public Page<Booking> findAllBookings(Pageable pageable) {
-        return null;
-    }
-
-    public void deleteBooking(Long bookingId) {
     }
 }

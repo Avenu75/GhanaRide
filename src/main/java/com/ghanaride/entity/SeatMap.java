@@ -5,7 +5,6 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 /**
  * Seat map for a specific trip.
@@ -15,7 +14,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-@ToString(exclude = {"trip", "car", "heldBy"})
+@ToString(exclude = {"trip", "car", "booking"})
 @Entity
 @Table(
     name = "seat_maps",
@@ -48,16 +47,13 @@ public class SeatMap {
     @Column(name = "column_label", length = 5)
     private String columnLabel;
 
-    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(name = "seat_type", length = 20, nullable = false)
     private SeatType seatType = SeatType.STANDARD;
 
-    @Builder.Default
     @Column(name = "extra_legroom")
     private Boolean extraLegroom = false;
 
-    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 20, nullable = false)
     private SeatStatus status = SeatStatus.AVAILABLE;

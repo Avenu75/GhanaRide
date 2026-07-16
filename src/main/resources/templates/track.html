@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html th:replace="~{layout :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<html th:replace="~{layout :: layout(~{::title}, ~{::head}, ~{::main}, ~{::script})}" xmlns:th="http://www.thymeleaf.org">
 <head>
     <title th:text="${pageTitle}">Live Track — GhanaRide</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -28,7 +28,7 @@
                     <div class="text-muted small">Arriving at <strong th:text="${trip.toLocation}">Kumasi</strong></div>
                 </div>
                 <div class="text-end">
-                    <div class="fw-bold" th:text="${trip.fromLocation} + ' → ' + ${trip.toLocation}">Accra → Kumasi</div>
+                    <div class="fw-bold" th:text="${trip.fromLocation + ' → ' + trip.toLocation}"">Accra → Kumasi</div>
                     <div class="small text-muted" th:text="'#'+${booking.bookingReference}">GR-XXXX</div>
                     <div class="small" style="color:#0F9D58"><span id="liveSpeed">78</span> km/h • <span id="liveDist">124</span> km left</div>
                 </div>

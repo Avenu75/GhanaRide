@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <body>
-<nav th:fragment="navbar" class="navbar navbar-expand-lg fixed-top bg-white shadow-sm" id="mainNavbar" role="navigation" aria-label="Main navigation">
+<nav th:fragment="navbar" class="navbar navbar-expand-lg fixed-top bg-white border-bottom shadow-sm" id="mainNavbar" role="navigation" aria-label="Main navigation">
     <div class="container">
         
         <!-- Brand / Logo -->
         <a class="navbar-brand d-flex align-items-center" th:href="@{/}" aria-label="GhanaRide Home">
             <img th:src="@{/images/icon-192.svg}" alt="GhanaRide Logo" width="36" height="36" class="me-2 rounded-circle bg-gold-subtle p-1">
-            <span class="fw-bold fs-4 text-gold" style="font-family: 'Outfit', sans-serif;">GhanaRide</span>
+            <span class="fw-bold fs-4" style="color: #FCD116; font-family: 'Outfit', sans-serif;">GhanaRide</span>
         </a>
 
         <!-- Mobile Toggle Button -->
@@ -44,14 +44,11 @@
 
             <!-- Right Side Actions -->
             <div class="d-flex align-items-center gap-2">
-
-                <!-- Notifications Bell (v5) -->
-                <a sec:authorize="isAuthenticated()" th:href="@{/notifications}" 
-                   class="btn btn-sm position-relative p-2" style="color: var(--text-muted);" 
-                   title="Notifications" aria-label="Notifications">
+                
+                <!-- Notifications Bell – v5 -->
+                <a sec:authorize="isAuthenticated()" th:href="@{/notifications}" class="btn btn-sm position-relative p-2" style="color:var(--text-muted);" title="Notifications" aria-label="Notifications">
                     <i class="bi bi-bell fs-5"></i>
-                    <span id="notifBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" 
-                          style="font-size: .6rem; display: none;">0</span>
+                    <span id="notifBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:.6rem; display:none;">0</span>
                 </a>
 
                 <!-- Dark/Light Mode Toggle -->
@@ -59,34 +56,37 @@
                     <i id="themeIcon" class="bi bi-moon-fill fs-6"></i>
                 </button>
 
-                <!-- Install App Button (PWA) - Hidden by default, shown via JS if installable -->
+                <!-- Install App Button (Hidden by default, shown via JS if PWA is installable) -->
                 <button id="installAppBtn" class="btn btn-outline-warning btn-sm d-none rounded-pill px-3" aria-label="Install GhanaRide app">
                     <i class="bi bi-download me-1"></i> Install App
                 </button>
 
-                <!-- Anonymous Users: Login / Sign Up -->
+                <!-- Anonymous Users -->
                 <div sec:authorize="isAnonymous()" class="d-flex gap-2">
-                    <a th:href="@{/login}" class="btn btn-link text-decoration-none fw-medium nav-link px-3" aria-label="Login">Login</a>
+                    <a th:href="@{/login}" class="btn btn-link text-decoration-none fw-medium nav-link" aria-label="Login">Login</a>
                     <a th:href="@{/register}" class="btn btn-primary rounded-pill px-4 fw-medium shadow-sm" aria-label="Sign up">Sign Up</a>
                 </div>
 
-                <!-- Authenticated Users: User Dropdown -->
+                <!-- Authenticated Users -->
                 <div sec:authorize="isAuthenticated()" class="dropdown">
-                    <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle nav-link" 
+                    <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle nav-link"
                        id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false" aria-label="User menu">
-                        <div class="avatar-circle me-1 d-flex justify-content-center align-items-center fw-bold" 
-                             style="width: 36px; height: 36px; background-color: #FCD116; color: #1a1a2e; border-radius: 50%; font-size: 0.9rem;"
-                             aria-hidden="true">
-                            <span sec:authentication="name" th:text="${#strings.substring(#authentication.name, 0, 1).toUpperCase()}">U</span>
+                        <div class="avatar-circle me-1 d-flex justify-content-center align-items-center fw-bold"
+                             style="width: 36px; height: 36px; background-color: #FCD116; color: #1a1a2e; border-radius: 50%; font-size: 0.9rem;">
+                            <span th:text="${#strings.substring(#authentication.name, 0, 1).toUpperCase()}">U</span>
                         </div>
-                        <span class="d-none d-lg-inline ms-1 small fw-medium" sec:authentication="name">User</span>
+                        <span class="d-none d-lg-inline ms-1 small fw-medium" th:text="${#authentication.name}">User</span>
                     </a>
 
                     <ul class="dropdown-menu dropdown-menu-end shadow-lg" aria-labelledby="userDropdown" style="min-width: 280px;">
-                        <!-- User Info Header -->
                         <li class="px-3 py-2 border-bottom mb-1">
                             <div class="fw-bold" sec:authentication="name">User Name</div>
-                            <div class="small text-muted">Logged in</div>
+                            <div class="small text-muted">
+                                <span sec:authorize="hasRole('USER')"><i class="bi bi-person-circle me-1"></i> Passenger</span>
+                                <span sec:authorize="hasRole('DRIVER')"><i class="bi bi-car-front me-1"></i> Driver</span>
+                                <span sec:authorize="hasRole('COMPANY')"><i class="bi bi-building me-1"></i> Company</span>
+                                <span sec:authorize="hasRole('ADMIN')"><i class="bi bi-shield-lock me-1 text-danger"></i> Admin</span>
+                            </div>
                         </li>
 
                         <!-- Role-based Dashboard Links -->
@@ -109,7 +109,7 @@
                             <a class="dropdown-item" th:href="@{/my-bookings}"><i class="bi bi-ticket-perforated me-2 text-secondary"></i> My Bookings</a>
                         </li>
                         <li>
-                            <a class="dropdown-item" th:href="@{/wallet}"><i class="bi bi-wallet2 me-2" style="color: #FCD116;"></i> GhanaRide Pay <span class="badge bg-success-subtle text-success ms-1" style="font-size: .65rem">v5</span></a>
+                            <a class="dropdown-item" th:href="@{/wallet}"><i class="bi bi-wallet2 me-2" style="color:#FCD116"></i> GhanaRide Pay <span class="badge bg-success-subtle text-success ms-1" style="font-size:.65rem">v5</span></a>
                         </li>
                         <li>
                             <a class="dropdown-item" th:href="@{/notifications}"><i class="bi bi-bell me-2 text-info"></i> Notifications</a>

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" th:replace="~{layout :: layout(~{::title}, ~{::main})}">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" th:replace="~{layout :: layout(~{::title}, ~{::head}, ~{::main}, ~{::script})}">
 <head>
     <title>Admin Command Center — GhanaRide</title>
     <meta name="description" content="Admin dashboard for GhanaRide - manage trips, users, revenue, and platform analytics">
@@ -475,7 +475,7 @@
                         <tbody>
                             <tr th:each="trip : ${recentTrips}">
                                 <td>
-                                    <div class="fw-medium" th:text="${trip.fromLocation} + ' → ' + ${trip.toLocation}">Route</div>
+                                    <div class="fw-medium" th:text="${trip.fromLocation + ' → ' + trip.toLocation}"">Route</div>
                                     <small class="text-muted" th:text="${trip.pickupStation}">Station</small>
                                 </td>
                                 <td>

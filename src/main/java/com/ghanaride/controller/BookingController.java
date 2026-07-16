@@ -183,7 +183,7 @@ public class BookingController {
             Model model,
             RedirectAttributes redirectAttributes
     ) {
-        Optional<Trip> tripOpt = tripService.findById(tripId);
+        Optional<Trip> tripOpt = tripService.findByIdWithDetails(tripId);
 
         if (tripOpt.isEmpty()) {
             redirectAttributes.addFlashAttribute("error", "Trip not found.");
@@ -300,7 +300,7 @@ public class BookingController {
             RedirectAttributes redirectAttributes
     ) {
         User currentUser = userService.getCurrentUser(principal);
-        Optional<Booking> bookingOpt = bookingService.findById(id);
+        Optional<Booking> bookingOpt = bookingService.findByIdWithDetails(id);
 
         if (bookingOpt.isEmpty()) {
             redirectAttributes.addFlashAttribute("error", "Booking not found.");
@@ -360,7 +360,7 @@ public class BookingController {
             RedirectAttributes redirectAttributes
     ) {
         User currentUser = userService.getCurrentUser(principal);
-        Optional<Booking> bookingOpt = bookingService.findById(id);
+        Optional<Booking> bookingOpt = bookingService.findByIdWithDetails(id);
 
         if (bookingOpt.isEmpty()) {
             redirectAttributes.addFlashAttribute("error", "Booking not found.");
@@ -420,7 +420,7 @@ public class BookingController {
             RedirectAttributes redirectAttributes
     ) {
         User currentUser = userService.getCurrentUser(principal);
-        Optional<Booking> bookingOpt = bookingService.findById(bookingId);
+        Optional<Booking> bookingOpt = bookingService.findByIdWithDetails(bookingId);
 
         if (bookingOpt.isEmpty()) {
             redirectAttributes.addFlashAttribute("error", "Booking not found.");

@@ -67,7 +67,7 @@ public class PaymentController {
     ) {
         User currentUser = userService.getCurrentUser(principal);
         Optional<Booking> bookingOpt =
-                bookingService.findById(bookingId);
+                bookingService.findByIdWithDetails(bookingId);
 
         // Validate booking exists and belongs to this user
         if (bookingOpt.isEmpty()) {
@@ -150,7 +150,7 @@ public class PaymentController {
     ) {
         User currentUser = userService.getCurrentUser(principal);
         Optional<Booking> bookingOpt =
-                bookingService.findById(bookingId);
+                bookingService.findByIdWithDetails(bookingId);
 
         // Validate ownership
         if (bookingOpt.isEmpty() ||

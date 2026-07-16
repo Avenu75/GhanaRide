@@ -1,399 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" th:replace="~{layout :: layout(~{::title}, ~{::main})}">
 <head>
-    <title th:text="${pageTitle}">Book Your Trip — GhanaRide</title>
-    
-    <style th:inline="css">
-        .booking-layout {
-            display: grid;
-            grid-template-columns: 1fr 420px;
-            gap: var(--space-6);
-            align-items: start;
-        }
-        
-        @media (max-width: 992px) {
-            .booking-layout { grid-template-columns: 1fr; }
-        }
-        
-        .booking-sticky {
-            position: sticky;
-            top: calc(var(--header-height) + var(--space-6));
-        }
-        
-        /* Trip Summary Card */
-        .trip-summary {
-            background: var(--color-surface);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-xl);
-            padding: var(--space-5);
-            box-shadow: var(--shadow-sm);
-        }
-        
-        .trip-route {
-            display: flex;
-            align-items: flex-start;
-            gap: var(--space-3);
-            margin-bottom: var(--space-4);
-        }
-        
-        .trip-route-line {
-            flex-shrink: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: var(--space-1);
-        }
-        
-        .trip-route-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            z-index: 1;
-        }
-        
-        .trip-route-dot:first-child { background: var(--green); }
-        .trip-route-dot:last-child { background: var(--red); }
-        
-        .trip-route-line::before {
-            content: '';
-            width: 2px;
-            height: 32px;
-            background: var(--color-border);
-        }
-        
-        .trip-route-info { flex: 1; min-width: 0; }
-        .trip-route-from { font-weight: 600; font-size: 1.125rem; }
-        .trip-route-to { font-weight: 600; font-size: 1.125rem; color: var(--color-text-secondary); }
-        
-        .trip-meta {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: var(--space-2);
-            padding-top: var(--space-3);
-            border-top: 1px solid var(--color-border);
-            margin-bottom: var(--space-4);
-        }
-        
-        .trip-meta-item {
-            display: flex;
-            align-items: center;
-            gap: var(--space-2);
-            font-size: 0.875rem;
-            color: var(--color-text-secondary);
-        }
-        
-        .trip-meta-item i {
-            color: var(--gold);
-            width: 18px;
-            text-align: center;
-        }
-        
-        .trip-operator {
-            display: flex;
-            align-items: center;
-            gap: var(--space-2);
-            padding: var(--space-3);
-            background: var(--color-surface-hover);
-            border-radius: var(--radius);
-        }
-        
-        .operator-avatar {
-            width: 44px;
-            height: 44px;
-            border-radius: var(--radius);
-            background: var(--gold-muted);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--gold-dark);
-            font-size: 1.25rem;
-        }
-        
-        .operator-info { flex: 1; }
-        .operator-name { font-weight: 600; }
-        .operator-rating { font-size: 0.8125rem; color: var(--color-text-muted); }
-        
-        /* Seat Map */
-        .seat-map-container {
-            background: var(--color-surface);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-xl);
-            padding: var(--space-5);
-            overflow-x: auto;
-        }
-        
-        .seat-map-title {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: var(--space-4);
-        }
-        
-        .seat-map {
-            display: flex;
-            flex-direction: column;
-            gap: var(--space-2);
-        }
-        
-        .seat-row {
-            display: flex;
-            align-items: center;
-            gap: var(--space-2);
-        }
-        
-        .seat-row-label {
-            width: 40px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: var(--color-text-muted);
-            text-align: right;
-            padding-right: var(--space-2);
-            border-right: 1px dashed var(--color-border);
-        }
-        
-        .seat {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 44px;
-            height: 44px;
-            border-radius: var(--radius);
-            font-size: 0.75rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all var(--transition-fast);
-            user-select: none;
-            border: 2px solid transparent;
-        }
-        
-        .seat-available {
-            background: var(--color-surface);
-            border-color: var(--color-border);
-            color: var(--color-text-secondary);
-        }
-        
-        .seat-available:hover {
-            border-color: var(--gold);
-            color: var(--gold-dark);
-            transform: scale(1.1);
-            z-index: 1;
-        }
-        
-        .seat-available:focus-visible {
-            outline: 2px solid var(--gold);
-            outline-offset: 2px;
-        }
-        
-        .seat-selected {
-            background: var(--gold);
-            border-color: var(--gold-dark);
-            color: var(--black);
-            box-shadow: var(--shadow);
-        }
-        
-        .seat-held {
-            background: var(--color-warning-bg);
-            border-color: var(--color-warning);
-            color: var(--color-warning);
-            cursor: not-allowed;
-        }
-        
-        .seat-booked {
-            background: var(--color-surface-hover);
-            border-color: var(--color-border);
-            color: var(--color-text-muted);
-            cursor: not-allowed;
-            opacity: 0.5;
-        }
-        
-        .seat-legend {
-            display: flex;
-            flex-wrap: wrap;
-            gap: var(--space-3);
-            margin-top: var(--space-4);
-            padding-top: var(--space-4);
-            border-top: 1px solid var(--color-border);
-        }
-        
-        .seat-legend-item {
-            display: flex;
-            align-items: center;
-            gap: var(--space-2);
-            font-size: 0.8125rem;
-            color: var(--color-text-secondary);
-        }
-        
-        .seat-legend-box {
-            width: 24px;
-            height: 24px;
-            border-radius: var(--radius-sm);
-            flex-shrink: 0;
-        }
-        
-        /* Booking Summary */
-        .booking-summary {
-            background: var(--color-surface);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-xl);
-            padding: var(--space-5);
-            box-shadow: var(--shadow-sm);
-        }
-        
-        .summary-title {
-            font-weight: 700;
-            margin-bottom: var(--space-4);
-            padding-bottom: var(--space-3);
-            border-bottom: 1px solid var(--color-border);
-        }
-        
-        .summary-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: var(--space-3);
-            font-size: 0.9375rem;
-        }
-        
-        .summary-row.total {
-            font-weight: 700;
-            font-size: 1.125rem;
-            padding-top: var(--space-3);
-            margin-top: var(--space-2);
-            border-top: 1px solid var(--color-border);
-        }
-        
-        .summary-row .label { color: var(--color-text-secondary); }
-        .summary-row .value { color: var(--color-text); font-weight: 600; }
-        .summary-row.total .value { color: var(--gold-dark); font-family: var(--font-display); font-size: 1.5rem; }
-        
-        /* Payment Methods */
-        .payment-methods {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: var(--space-3);
-            margin-bottom: var(--space-5);
-        }
-        
-        .payment-option {
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: var(--space-2);
-            padding: var(--space-4);
-            border: 2px solid var(--color-border);
-            border-radius: var(--radius-lg);
-            cursor: pointer;
-            transition: all var(--transition-fast);
-        }
-        
-        .payment-option input {
-            position: absolute;
-            opacity: 0;
-            pointer-events: none;
-        }
-        
-        .payment-option:hover {
-            border-color: var(--gold);
-        }
-        
-        .payment-option:has(input:checked) {
-            border-color: var(--gold);
-            background: var(--gold-muted);
-            box-shadow: var(--shadow);
-        }
-        
-        .payment-icon {
-            font-size: 2rem;
-            color: var(--color-text-muted);
-            transition: color var(--transition-fast);
-        }
-        
-        .payment-option:hover .payment-icon,
-        .payment-option:has(input:checked) .payment-icon {
-            color: var(--gold-dark);
-        }
-        
-        .payment-label {
-            font-size: 0.8125rem;
-            font-weight: 500;
-            color: var(--color-text);
-            text-align: center;
-        }
-        
-        /* Wallet Balance */
-        .wallet-balance-mini {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: var(--space-3);
-            background: var(--gold-muted);
-            border-radius: var(--radius);
-            margin-bottom: var(--space-4);
-        }
-        
-        .wallet-balance-info { display: flex; align-items: center; gap: var(--space-2); }
-        .wallet-balance-icon {
-            width: 36px;
-            height: 36px;
-            border-radius: var(--radius);
-            background: var(--gold);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--black);
-        }
-        
-        .wallet-balance-amount {
-            font-family: var(--font-display);
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: var(--gold-dark);
-        }
-        
-        /* Form Actions */
-        .form-actions {
-            display: flex;
-            gap: var(--space-3);
-        }
-        
-        .btn-continue {
-            flex: 1;
-        }
-        
-        .btn-back {
-            flex: 1;
-        }
-        
-        /* Seat Selection Notice */
-        .seat-notice {
-            display: flex;
-            align-items: flex-start;
-            gap: var(--space-3);
-            padding: var(--space-3);
-            background: var(--color-info-bg);
-            border: 1px solid var(--color-info);
-            border-radius: var(--radius);
-            margin-bottom: var(--space-4);
-        }
-        
-        .seat-notice i { flex-shrink: 0; margin-top: 0.125rem; color: var(--color-info); }
-        .seat-notice p { margin: 0; font-size: 0.875rem; color: var(--color-info); }
-        
-        /* Passenger Details */
-        .passenger-section {
-            margin-top: var(--space-5);
-            padding-top: var(--space-5);
-            border-top: 1px solid var(--color-border);
-        }
-        
-        .passenger-section h4 { margin-bottom: var(--space-3); }
-        
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
-        
-        @media (max-width: 576px) {
-            .form-row { grid-template-columns: 1fr; }
-        }
-    </style>
+    <title>Book Your Trip — GhanaRide</title>
 </head>
 <body>
 <main th:fragment="main">
@@ -466,8 +74,7 @@
                     
                     <div class="seat-notice">
                         <i class="bi bi-info-circle"></i>
-                        <p>Click a seat to select. <strong>Selected seats are held for 7 minutes</strong> while you complete booking.</p>
-                    </div>
+                        <p>Click a seat to select. <strong>Selected seats are held for 7 minutes</strong> while you complete booking.</                    </div>
                     
                     <div class="seat-map" id="seatMap">
                         <div th:each="row : ${seatMap}" class="seat-row">
@@ -481,7 +88,7 @@
                                  th:data-column="${seat.columnLabel}"
                                  tabindex="0"
                                  role="button"
-                                 th:aria-label="${seat.seatNumber} + ' ' + ${seat.seatType} + ', ' + (${seat.status == 'AVAILABLE' ? 'Available' : 'Unavailable'})">
+                                 th:aria-label="${seat.seatNumber} + ' ' + ${seat.seatType} + ', ' + ${seat.status}">
                                 <span th:text="${seat.seatNumber}">1A</span>
                             </div>
                         </div>
@@ -518,14 +125,14 @@
                         <span class="value" th:text="${trip.fromLocation} + ' → ' + ${trip.toLocation}">Route</span>
                     </div>
                     
-                    <div class="summary-row">
-                        <span class="label">Departure</span>
-                        <span class="value" th:text="${#temporals.format(trip.departureTime, 'MMM dd, yyyy \'at\' HH:mm')}">Date & Time</span>
-                    </div>
-                    
                     <div class="summary-row" id="seatSummary" style="display: none;">
                         <span class="label">Seat</span>
                         <span class="value" id="selectedSeatDisplay">—</span>
+                    </div>
+                    
+                    <div class="summary-row">
+                        <span class="label">Departure</span>
+                        <span class="value" th:text="${#temporals.format(trip.departureTime, 'MMM dd, yyyy \'at\' HH:mm')}">Date & Time</span>
                     </div>
                     
                     <div class="summary-row">
@@ -557,11 +164,12 @@
                             <input type="radio" name="paymentMethod" value="WALLET" id="payWallet" th:checked="${wallet.balance.compareTo(trip.tripAmount) >= 0}">
                             <i class="payment-icon bi bi-wallet2"></i>
                             <span class="payment-label">GhanaRide Pay</span>
+                            <span class="payment-balance" th:text="'GH₵' + ${#numbers.formatDecimal(wallet.balance, 1, 2, 'COMMA')}">GH₵0.00</span>
                         </label>
                         
                         <label class="payment-option">
                             <input type="radio" name="paymentMethod" value="PAYSTACK" id="payPaystack" checked>
-                            <i class="payment-icon"><img src="https://js.paystack.co/v1/inline/gh/logo.png" alt="Paystack" height="32"></i>
+                            <i class="payment-icon"><img src="https://js.paystack.co/v1/inline/gh/logo.png" alt="Paystack" height="28"></i>
                             <span class="payment-label">Paystack (Card/MoMo)</span>
                         </label>
                         
@@ -574,36 +182,35 @@
                     
                     <!-- Passenger Details (for relative bookings) -->
                     <div class="passenger-section" id="passengerSection" style="display: none;">
-                        <h4>Passenger Details</h4>
-                        <p class="text-muted small mb-3">Booking for someone else? Enter their details.</p>
+                        <h5 class="mb-3">Passenger Details</h4>
                         <div class="form-row">
-                            <div class="form-floating">
+                            <div class="form-floating mb-3">
                                 <input type="text" class="form-control" id="passengerName" name="passengerName" placeholder="Passenger Name" autocomplete="name">
                                 <label for="passengerName">Passenger Name</label>
                             </div>
-                            <div class="form-floating">
-                                <input type="tel" class="form-control" id="passengerPhone" name="passengerPhone" placeholder="Phone Number" autocomplete="tel">
+                            <div class="form-floating mb-3">
+                                <input type="tel" class="form-control" id="passengerPhone" name="passengerPhone" placeholder="Phone Number" autocomplete="tel" inputmode="tel">
                                 <label for="passengerPhone">Phone Number</label>
                             </div>
                         </div>
                     </div>
                     
                     <!-- Form Actions -->
-                    <div class="form-actions mt-4">
-                        <a th:href="@{/rides}" class="btn btn-secondary btn-back">
-                            <i class="bi bi-arrow-left"></i> Back
-                        </a>
-                        <button type="submit" id="confirmBookingBtn" class="btn btn-primary btn-continue" disabled>
-                            <span class="btn-text">Continue to Payment</span>
-                            <span class="btn-loading d-none"><i class="bi bi-arrow-clockwise spin me-2"></i>Processing...</span>
-                        </button>
-                    </div>
-                    
-                    <form id="bookingForm" th:action="@{/booking/{tripId}(tripId=${trip.id})}" method="post" style="display: none;">
+                    <form id="bookingForm" th:action="@{/booking/{tripId}(tripId=${trip.id})}" method="post">
                         <input type="hidden" name="seatNumber" id="seatNumberInput">
-                        <input type="hidden" name="paymentMethod" id="paymentMethodInput">
+                        <input type="hidden" name="paymentMethod" id="paymentMethodInput" value="PAYSTACK">
                         <input type="hidden" name="passengerName" id="passengerNameInput">
                         <input type="hidden" name="passengerPhone" id="passengerPhoneInput">
+                        
+                        <div class="form-actions mt-4">
+                            <a th:href="@{/rides}" class="btn btn-secondary btn-back">
+                                <i class="bi bi-arrow-left"></i> Back
+                            </a>
+                            <button type="submit" id="confirmBookingBtn" class="btn btn-primary btn-continue" disabled>
+                                <span class="btn-text">Continue to Payment</span>
+                                <span class="btn-loading d-none"><i class="bi bi-arrow-clockwise spin me-2"></i>Processing...</span>
+                            </button>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -621,94 +228,89 @@
         const totalAmount = document.getElementById('totalAmount');
         const seatNumberInput = document.getElementById('seatNumberInput');
         const paymentMethodInput = document.getElementById('paymentMethodInput');
-        const passengerNameInput = document.getElementById('passengerNameInput');
-        const passengerPhoneInput = document.getElementById('passengerPhoneInput');
         const passengerSection = document.getElementById('passengerSection');
-        const bookingForm = document.getElementById('bookingForm');
+        const confirmBtn = document.getElementById('confirmBookingBtn');
+        const basePrice = /*[[${trip.tripAmount}]]*/ 0;
         
         let selectedSeat = null;
-        const basePrice = /*[[${trip.tripAmount}]]*/ 0;
         
         seats.forEach(seat => {
             seat.addEventListener('click', function() {
-                // Deselect previous
-                if (selectedSeat) {
-                    selectedSeat.classList.remove('seat-selected');
-                    selectedSeat.classList.add('seat-available');
-                }
-                
-                // Select new
-                if (selectedSeat === this) {
-                    selectedSeat = null;
-                } else {
+                if (this.classList.contains('seat-available')) {
+                    // Deselect previous
+                    if (selectedSeat) {
+                        selectedSeat.classList.remove('seat-selected');
+                        selectedSeat.classList.add('seat-available');
+                    }
+                    
+                    // Select new
                     this.classList.remove('seat-available');
                     this.classList.add('seat-selected');
                     selectedSeat = this;
-                }
-                
-                updateUI();
+                    
+                    // Update UI
+                    const seatNum = this.dataset.seat;
+                    const seatType = this.dataset.type;
+                    seatSummary.style.display = 'flex';
+                    selectedSeatDisplay.textContent = seatNum + ' (' + seatType + ')';
+                    totalAmount.textContent = 'GH₵' + (/*[[${trip.tripAmount}]]*/ 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                    seatNumberInput.value = seatNum;
+                    confirmBtn.disabled = false;
+                    confirmBtn.querySelector('.btn-text').textContent = 'Continue to Payment';
+                });
             });
             
             // Keyboard support
-            seat.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter' || e.key === ' ') {
+            document.querySelectorAll('.seat').forEach(seat => {
+                seat.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        this.click();
+                    }
+                });
+            });
+            
+            // Payment method change
+            document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    paymentMethodInput.value = this.value;
+                    const passengerSection = document.getElementById('passengerSection');
+                    if (this.value === 'WALLET') {
+                        passengerSection.style.display = 'none';
+                    } else {
+                        passengerSection.style.display = 'block';
+                    }
+                });
+            });
+            
+            // Form submission
+            document.getElementById('bookingForm').addEventListener('submit', function(e) {
+                if (!selectedSeat) {
                     e.preventDefault();
-                    this.click();
+                    alert('Please select a seat first.');
+                    return;
                 }
-            });
-        });
-        
-        function updateUI() {
-            if (selectedSeat) {
-                const seatNum = selectedSeat.dataset.seat;
-                const seatType = selectedSeat.dataset.type;
                 
-                seatNumberInput.value = seatNum;
-                seatSummary.style.display = 'flex';
-                selectedSeatDisplay.textContent = seatNum + ' (' + seatType + ')';
-                totalAmount.textContent = 'GH₵' + basePrice.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-                confirmBtn.disabled = false;
-                confirmBtn.querySelector('.btn-text').textContent = 'Continue to Payment';
-            } else {
-                seatNumberInput.value = '';
-                seatSummary.style.display = 'none';
-                totalAmount.textContent = 'GH₵' + basePrice.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
+                paymentMethodInput.value = paymentMethod;
+                
+                if (paymentMethod === 'WALLET') {
+                    // Check wallet balance
+                    const walletBalance = /*[[${wallet.balance}]]*/ 0;
+                    const tripPrice = /*[[${trip.tripAmount}]]*/ 0;
+                    if (walletBalance < tripPrice) {
+                        e.preventDefault();
+                        alert('Insufficient wallet balance. Please top up or choose another payment method.');
+                        return;
+                    }
+                }
+                
+                // Show loading
                 confirmBtn.disabled = true;
-                confirmBtn.querySelector('.btn-text').textContent = 'Select a seat to continue';
-            }
-        }
-        
-        // Payment method change
-        document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
-            radio.addEventListener('change', function() {
-                paymentMethodInput.value = this.value;
-                
-                // Show passenger section for wallet payments (relative bookings)
-                if (this.value === 'WALLET') {
-                    // Could add relative booking toggle here
-                }
+                confirmBtn.querySelector('.btn-text').classList.add('d-none');
+                confirmBtn.querySelector('.btn-loading').classList.remove('d-none');
             });
-        });
-        
-        // Form submission
-        confirmBtn.addEventListener('click', function() {
-            if (!selectedSeat) return;
-            
-            // Show loading
-            this.disabled = true;
-            this.querySelector('.btn-text').classList.add('d-none');
-            this.querySelector('.btn-loading').classList.remove('d-none');
-            
-            // Collect payment method
-            const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || 'PAYSTACK';
-            paymentMethodInput.value = paymentMethod;
-            
-            // Submit form
-            setTimeout(() => {
-                bookingForm.submit();
-            }, 100);
-        });
-    })();
-</script>
+        })();
+    </script>
 </body>
 </html>

@@ -10,7 +10,6 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,7 +28,7 @@ public interface WalletTransactionRepository extends JpaRepository<WalletTransac
     Page<WalletTransaction> findByUserOrderByCreatedAtDesc(@Param("user") User user, Pageable pageable);
 
     @Query("SELECT t FROM WalletTransaction t WHERE t.user = :user ORDER BY t.createdAt DESC")
-    List<WalletTransaction> findTop10ByUserOrderByCreatedAtDesc(@Param("user") User user);
+    List<WalletTransaction> findTop10ByUserIdOrderByCreatedAtDesc(@Param("user") User user);
 
     @Query("SELECT t FROM WalletTransaction t WHERE t.user = :user AND t.type = :type ORDER BY t.createdAt DESC")
     List<WalletTransaction> findByUserAndType(@Param("user") User user, @Param("type") WalletTransaction.TxType type);
